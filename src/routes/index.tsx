@@ -47,7 +47,7 @@ function LandingPage() {
       <Header />
       <Hero />
       <HowItWorks />
-      <TrilhasSection />
+      <LivrosSection />
       <EventosSection />
       <Testimonials />
       <FaqSection />
