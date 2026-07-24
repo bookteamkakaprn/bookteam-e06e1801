@@ -50,6 +50,8 @@ function LandingPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <Hero />
+      <QuemSomosSection />
+      <CronogramaSection />
       <HowItWorks />
       <LivrosSection />
       <EventosSection />
@@ -61,6 +63,150 @@ function LandingPage() {
     </div>
   );
 }
+
+function QuemSomosSection() {
+  const blocks = [
+    {
+      titulo: "Quem somos",
+      texto:
+        "Somos um ministério cristão que incentiva a leitura de livros que inspiram a buscar um estilo de vida pleno e abundante em Deus.",
+    },
+    {
+      titulo: "Como funcionamos",
+      texto:
+        "Lemos livros e os capítulos indicados em grupo, compartilhamos os aprendizados e as experiências pessoais em encontros presenciais.",
+    },
+    {
+      titulo: "Público",
+      texto:
+        "Homens, mulheres e casais que querem conhecer mais de Deus e aprender à luz da palavra.",
+    },
+    {
+      titulo: "Visão",
+      texto:
+        "Todas as pessoas precisam conhecer o amor de Deus, independente de sua placa de igreja ou título pessoal ou profissional.",
+    },
+    {
+      titulo: "Missão",
+      texto:
+        "Mostrar a possibilidade de viver o amor de Deus na sua plenitude, orientado pelo Espírito Santo, sendo cada um seu Perfeito Eu.",
+    },
+    {
+      titulo: "Objetivo",
+      texto:
+        "Ajudar homens e mulheres a encontrar sua real identidade em Cristo.",
+    },
+  ];
+  return (
+    <section id="quem-somos" className="border-t border-border/60 py-20">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="max-w-2xl">
+          <p className="text-sm font-medium uppercase tracking-wider text-accent">
+            Ministério Book Team
+          </p>
+          <h2 className="mt-2 font-serif text-4xl font-semibold">Quem somos</h2>
+          <p className="mt-4 text-muted-foreground">
+            Amor e honra vividos como cultura — na palavra, nos livros e nos
+            encontros.
+          </p>
+        </div>
+        <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {blocks.map((b) => (
+            <div
+              key={b.titulo}
+              className="rounded-2xl border border-border bg-card p-6"
+            >
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                {b.titulo}
+              </p>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                {b.texto}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CronogramaSection() {
+  const trilhas = [
+    {
+      nivel: "Básico",
+      descricao: "Fundamentos de amor e honra.",
+      livros: [
+        { titulo: "Mantenha Seu Amor Aceso", autor: "Danny Silk" },
+        { titulo: "Cultura da Honra", autor: "Danny Silk" },
+      ],
+    },
+    {
+      nivel: "Avançado",
+      descricao: "Identidade, mente renovada e o Perfeito Eu.",
+      livros: [
+        { titulo: "Seu Perfeito Você", autor: "Dra. Caroline Leaf" },
+        { titulo: "Ative Seu Cérebro", autor: "Dra. Caroline Leaf" },
+      ],
+    },
+  ];
+  return (
+    <section id="cronograma" className="border-t border-border/60 bg-secondary/40 py-20">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="max-w-2xl">
+          <p className="text-sm font-medium uppercase tracking-wider text-accent">
+            Cronograma
+          </p>
+          <h2 className="mt-2 font-serif text-4xl font-semibold">
+            Cronograma de livros
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            Cada trilha segue uma sequência: para começar o próximo livro, é
+            preciso concluir o anterior. O histórico de cada participante
+            registra o caminho percorrido.
+          </p>
+        </div>
+        <div className="mt-12 grid gap-6 md:grid-cols-2">
+          {trilhas.map((t) => (
+            <div
+              key={t.nivel}
+              className="rounded-3xl border border-border bg-card p-8"
+            >
+              <div className="flex items-baseline justify-between">
+                <h3 className="font-serif text-2xl font-semibold">
+                  Book Team{" "}
+                  <span className="text-primary">{t.nivel}</span>
+                </h3>
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Trilha sequencial
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-muted-foreground">{t.descricao}</p>
+              <ol className="mt-6 space-y-3">
+                {t.livros.map((l, idx) => (
+                  <li
+                    key={l.titulo}
+                    className="flex items-start gap-4 rounded-xl border border-border bg-background p-4"
+                  >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
+                      {idx + 1}
+                    </span>
+                    <div>
+                      <p className="font-serif text-base font-semibold">
+                        {l.titulo}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{l.autor}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 
 function Logo({ className = "h-9 w-9" }: { className?: string }) {
   return (
