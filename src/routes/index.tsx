@@ -17,9 +17,13 @@ import {
   Instagram,
   MessageCircle,
   ArrowRight,
+  Phone,
+  Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import logoAsset from "@/assets/book-team-logo.png.asset.json";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -49,6 +53,8 @@ function LandingPage() {
       <HowItWorks />
       <LivrosSection />
       <EventosSection />
+      <EventosEspeciaisSection />
+      <ContatoEventosSection />
       <Testimonials />
       <FaqSection />
       <Footer />
@@ -56,18 +62,29 @@ function LandingPage() {
   );
 }
 
+function Logo({ className = "h-9 w-9" }: { className?: string }) {
+  return (
+    <img
+      src={logoAsset.url}
+      alt="Book Team — amor e honra"
+      className={`${className} rounded-full object-cover`}
+    />
+  );
+}
+
 function Header() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <BookOpen className="h-6 w-6 text-primary" strokeWidth={2.2} />
-          <span className="font-serif text-xl font-semibold">Book Clube</span>
+        <Link to="/" className="flex items-center gap-3">
+          <Logo />
+          <span className="font-serif text-lg font-semibold tracking-tight">Book Team</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           <a href="#como-funciona" className="hover:text-foreground">Como funciona</a>
           <a href="#livros" className="hover:text-foreground">Livros</a>
           <a href="#eventos" className="hover:text-foreground">Encontros</a>
+          <a href="#contato" className="hover:text-foreground">Contato</a>
           <a href="#faq" className="hover:text-foreground">FAQ</a>
         </nav>
         <div className="flex items-center gap-2">
@@ -82,6 +99,7 @@ function Header() {
     </header>
   );
 }
+
 
 function Hero() {
   return (
@@ -109,27 +127,15 @@ function Hero() {
             </Button>
           </div>
         </div>
-        <div className="relative">
-          <div className="absolute -left-6 -top-6 h-40 w-40 rounded-full bg-accent/20 blur-3xl" />
-          <div className="absolute -bottom-8 -right-4 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
-          <div className="relative grid grid-cols-2 gap-4">
-            {[
-              { Icon: BookOpen, label: "Trilhas guiadas", desc: "Livros escolhidos com propósito" },
-              { Icon: Users, label: "Comunidade", desc: "Encontros presenciais" },
-              { Icon: Calendar, label: "Ritmo mensal", desc: "Um livro por mês" },
-              { Icon: Award, label: "Certificado", desc: "Ao concluir a trilha" },
-            ].map(({ Icon, label, desc }) => (
-              <div
-                key={label}
-                className="shadow-book rounded-2xl border border-border bg-card p-5"
-              >
-                <Icon className="h-6 w-6 text-primary" />
-                <p className="mt-3 font-serif text-lg font-semibold">{label}</p>
-                <p className="text-sm text-muted-foreground">{desc}</p>
-              </div>
-            ))}
-          </div>
+        <div className="relative flex items-center justify-center">
+          <div className="absolute inset-0 -z-10 rounded-full bg-accent/10 blur-3xl" />
+          <img
+            src={logoAsset.url}
+            alt="Book Team — amor e honra"
+            className="w-full max-w-sm rounded-full shadow-book"
+          />
         </div>
+
       </div>
     </section>
   );
@@ -293,6 +299,96 @@ function EventosSection() {
     </section>
   );
 }
+
+function EventosEspeciaisSection() {
+  return (
+    <section className="py-20">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="grid gap-8 rounded-3xl border border-border bg-card p-8 md:grid-cols-[1.1fr_1fr] md:p-12">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent-foreground">
+              <Sparkles className="h-3.5 w-3.5" /> Encontros especiais
+            </span>
+            <h2 className="mt-4 font-serif text-3xl font-semibold md:text-4xl">
+              Momentos abertos para todos
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Além das trilhas dos livros, promovemos encontros especiais —
+              retiros, celebrações, conferências e eventos temáticos —
+              abertos ao público, mesmo para quem ainda não faz parte de uma
+              trilha. Um convite para viver a cultura de amor e honra.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button asChild>
+                <a href="#contato">Reservar um evento</a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href="#eventos">Ver agenda</a>
+              </Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              "Retiros",
+              "Conferências",
+              "Celebrações",
+              "Eventos temáticos",
+            ].map((tag) => (
+              <div
+                key={tag}
+                className="flex aspect-square items-center justify-center rounded-2xl border border-dashed border-border bg-secondary text-center text-sm text-muted-foreground"
+              >
+                {tag}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ContatoEventosSection() {
+  const phone = "41 3082-5553";
+  const whatsappHref = `https://wa.me/554130825553`;
+  return (
+    <section id="contato" className="border-t border-border/60 bg-secondary/40 py-20">
+      <div className="mx-auto max-w-4xl px-4 text-center">
+        <p className="text-sm font-medium uppercase tracking-wider text-accent">Contato para eventos</p>
+        <h2 className="mt-2 font-serif text-3xl font-semibold md:text-4xl">
+          Vamos organizar um encontro?
+        </h2>
+        <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+          Para agendar um evento, tirar dúvidas sobre próximas datas ou levar o
+          Book Team para a sua cidade, fale com a nossa equipe.
+        </p>
+        <div className="mt-8 inline-flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-8 py-6 sm:flex-row">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Phone className="h-5 w-5" />
+          </div>
+          <div className="text-left">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              Eventos
+            </p>
+            <a
+              href={`tel:+554130825553`}
+              className="block font-serif text-2xl font-semibold text-foreground"
+            >
+              {phone}
+            </a>
+          </div>
+          <Button asChild variant="outline" className="sm:ml-6">
+            <a href={whatsappHref} target="_blank" rel="noreferrer">
+              <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
+            </a>
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
 
 function Testimonials() {
   const items = [

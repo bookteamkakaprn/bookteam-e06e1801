@@ -12,7 +12,8 @@
 
 @theme inline {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Fraunces", "Playfair Display", Georgia, serif;
+  --font-serif: "Space Grotesk", "Inter", ui-sans-serif, sans-serif;
+
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -63,30 +64,30 @@
 :root {
   --radius: 0.75rem;
 
-  /* Fundo creme quente inspirado no logo BOOK TEAM */
-  --background: oklch(0.97 0.015 60);
-  --foreground: oklch(0.22 0.04 25);
+  /* Fundo branco minimalista */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.2 0.02 25);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.04 25);
+  --card-foreground: oklch(0.2 0.02 25);
 
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.04 25);
+  --popover-foreground: oklch(0.2 0.02 25);
 
   /* Bordô profundo (marca BOOK TEAM) */
   --primary: oklch(0.38 0.11 25);
-  --primary-foreground: oklch(0.97 0.02 80);
+  --primary-foreground: oklch(0.98 0.005 80);
 
-  /* Areia clara */
-  --secondary: oklch(0.93 0.025 65);
-  --secondary-foreground: oklch(0.28 0.05 30);
+  /* Cinza-neutro claro */
+  --secondary: oklch(0.97 0.003 60);
+  --secondary-foreground: oklch(0.25 0.02 25);
 
-  --muted: oklch(0.95 0.02 65);
-  --muted-foreground: oklch(0.46 0.04 35);
+  --muted: oklch(0.97 0.003 60);
+  --muted-foreground: oklch(0.5 0.02 30);
 
   /* Dourado quente (acento do logo) */
-  --accent: oklch(0.74 0.13 75);
-  --accent-foreground: oklch(0.22 0.04 25);
+  --accent: oklch(0.72 0.13 75);
+  --accent-foreground: oklch(0.2 0.02 25);
 
   --destructive: oklch(0.5 0.2 25);
   --destructive-foreground: oklch(0.98 0.01 80);
@@ -95,27 +96,28 @@
   --success-foreground: oklch(0.99 0.005 85);
 
   --warning: oklch(0.75 0.15 75);
-  --warning-foreground: oklch(0.22 0.04 25);
+  --warning-foreground: oklch(0.2 0.02 25);
 
-  --border: oklch(0.88 0.02 60);
-  --input: oklch(0.88 0.02 60);
+  --border: oklch(0.92 0.005 60);
+  --input: oklch(0.92 0.005 60);
   --ring: oklch(0.38 0.11 25);
 
   --chart-1: oklch(0.38 0.11 25);
-  --chart-2: oklch(0.74 0.13 75);
+  --chart-2: oklch(0.72 0.13 75);
   --chart-3: oklch(0.5 0.09 30);
   --chart-4: oklch(0.65 0.12 55);
   --chart-5: oklch(0.4 0.06 20);
 
-  --sidebar: oklch(0.28 0.08 25);
-  --sidebar-foreground: oklch(0.95 0.02 75);
-  --sidebar-primary: oklch(0.74 0.13 75);
-  --sidebar-primary-foreground: oklch(0.22 0.04 25);
-  --sidebar-accent: oklch(0.34 0.09 25);
-  --sidebar-accent-foreground: oklch(0.95 0.02 75);
-  --sidebar-border: oklch(0.34 0.09 25);
-  --sidebar-ring: oklch(0.74 0.13 75);
+  --sidebar: oklch(0.99 0.003 60);
+  --sidebar-foreground: oklch(0.25 0.02 25);
+  --sidebar-primary: oklch(0.38 0.11 25);
+  --sidebar-primary-foreground: oklch(0.98 0.005 80);
+  --sidebar-accent: oklch(0.96 0.005 60);
+  --sidebar-accent-foreground: oklch(0.25 0.02 25);
+  --sidebar-border: oklch(0.92 0.005 60);
+  --sidebar-ring: oklch(0.38 0.11 25);
 }
+
 
 .dark {
   --background: oklch(0.18 0.03 25);
@@ -175,13 +177,13 @@
 
 @utility gradient-hero {
   background:
-    radial-gradient(ellipse at top left, color-mix(in oklab, var(--accent) 20%, transparent), transparent 60%),
-    radial-gradient(ellipse at bottom right, color-mix(in oklab, var(--primary) 25%, transparent), transparent 55%),
+    radial-gradient(ellipse at top right, color-mix(in oklab, var(--accent) 10%, transparent), transparent 60%),
     var(--background);
 }
 
 @utility shadow-book {
   box-shadow:
-    0 1px 2px color-mix(in oklab, var(--foreground) 8%, transparent),
-    0 8px 24px -12px color-mix(in oklab, var(--primary) 25%, transparent);
+    0 1px 2px color-mix(in oklab, var(--foreground) 5%, transparent),
+    0 8px 24px -14px color-mix(in oklab, var(--primary) 18%, transparent);
 }
+
