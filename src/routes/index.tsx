@@ -300,6 +300,96 @@ function EventosSection() {
   );
 }
 
+function EventosEspeciaisSection() {
+  return (
+    <section className="py-20">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="grid gap-8 rounded-3xl border border-border bg-card p-8 md:grid-cols-[1.1fr_1fr] md:p-12">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full bg-accent/15 px-3 py-1 text-xs font-medium text-accent-foreground">
+              <Sparkles className="h-3.5 w-3.5" /> Encontros especiais
+            </span>
+            <h2 className="mt-4 font-serif text-3xl font-semibold md:text-4xl">
+              Momentos abertos para todos
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Além das trilhas dos livros, promovemos encontros especiais —
+              retiros, celebrações, conferências e eventos temáticos —
+              abertos ao público, mesmo para quem ainda não faz parte de uma
+              trilha. Um convite para viver a cultura de amor e honra.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button asChild>
+                <a href="#contato">Reservar um evento</a>
+              </Button>
+              <Button asChild variant="outline">
+                <a href="#eventos">Ver agenda</a>
+              </Button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              "Retiros",
+              "Conferências",
+              "Celebrações",
+              "Eventos temáticos",
+            ].map((tag) => (
+              <div
+                key={tag}
+                className="flex aspect-square items-center justify-center rounded-2xl border border-dashed border-border bg-secondary text-center text-sm text-muted-foreground"
+              >
+                {tag}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ContatoEventosSection() {
+  const phone = "41 3082-5553";
+  const whatsappHref = `https://wa.me/554130825553`;
+  return (
+    <section id="contato" className="border-t border-border/60 bg-secondary/40 py-20">
+      <div className="mx-auto max-w-4xl px-4 text-center">
+        <p className="text-sm font-medium uppercase tracking-wider text-accent">Contato para eventos</p>
+        <h2 className="mt-2 font-serif text-3xl font-semibold md:text-4xl">
+          Vamos organizar um encontro?
+        </h2>
+        <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+          Para agendar um evento, tirar dúvidas sobre próximas datas ou levar o
+          Book Team para a sua cidade, fale com a nossa equipe.
+        </p>
+        <div className="mt-8 inline-flex flex-col items-center gap-4 rounded-2xl border border-border bg-card px-8 py-6 sm:flex-row">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Phone className="h-5 w-5" />
+          </div>
+          <div className="text-left">
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              Eventos
+            </p>
+            <a
+              href={`tel:+554130825553`}
+              className="block font-serif text-2xl font-semibold text-foreground"
+            >
+              {phone}
+            </a>
+          </div>
+          <Button asChild variant="outline" className="sm:ml-6">
+            <a href={whatsappHref} target="_blank" rel="noreferrer">
+              <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
+            </a>
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+
 function Testimonials() {
   const items = [
     {
