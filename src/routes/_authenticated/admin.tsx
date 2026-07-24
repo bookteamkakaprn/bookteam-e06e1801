@@ -17,7 +17,8 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
-const menu = [
+type MenuItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+const menu: MenuItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/participantes", label: "Participantes / CRM", icon: Users },
   { to: "/admin/trilhas", label: "Trilhas", icon: BookMarked },
@@ -27,7 +28,7 @@ const menu = [
   { to: "/admin/presencas", label: "Presenças", icon: CheckSquare },
   { to: "/admin/certificados", label: "Certificados", icon: Award },
   { to: "/admin/relatorios", label: "Relatórios", icon: FileText },
-] as const;
+];
 
 function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
