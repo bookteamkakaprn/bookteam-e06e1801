@@ -127,27 +127,15 @@ function Hero() {
             </Button>
           </div>
         </div>
-        <div className="relative">
-          <div className="absolute -left-6 -top-6 h-40 w-40 rounded-full bg-accent/20 blur-3xl" />
-          <div className="absolute -bottom-8 -right-4 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
-          <div className="relative grid grid-cols-2 gap-4">
-            {[
-              { Icon: BookOpen, label: "Trilhas guiadas", desc: "Livros escolhidos com propósito" },
-              { Icon: Users, label: "Comunidade", desc: "Encontros presenciais" },
-              { Icon: Calendar, label: "Ritmo mensal", desc: "Um livro por mês" },
-              { Icon: Award, label: "Certificado", desc: "Ao concluir a trilha" },
-            ].map(({ Icon, label, desc }) => (
-              <div
-                key={label}
-                className="shadow-book rounded-2xl border border-border bg-card p-5"
-              >
-                <Icon className="h-6 w-6 text-primary" />
-                <p className="mt-3 font-serif text-lg font-semibold">{label}</p>
-                <p className="text-sm text-muted-foreground">{desc}</p>
-              </div>
-            ))}
-          </div>
+        <div className="relative flex items-center justify-center">
+          <div className="absolute inset-0 -z-10 rounded-full bg-accent/10 blur-3xl" />
+          <img
+            src={logoAsset.url}
+            alt="Book Team — amor e honra"
+            className="w-full max-w-sm rounded-full shadow-book"
+          />
         </div>
+
       </div>
     </section>
   );
