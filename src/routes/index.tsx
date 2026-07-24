@@ -255,9 +255,10 @@ function Hero() {
           <span className="inline-flex items-center rounded-full border border-border bg-card/70 px-3 py-1 text-xs font-medium text-muted-foreground">
             Clube de leitura & desenvolvimento
           </span>
-          <h1 className="mt-6 font-serif text-4xl font-bold leading-tight md:text-5xl">
-            O Ministério <span className="text-accent">Book Team</span> estuda livros cristãos que ensinam Homens e Mulheres a viver uma cultura de <span className="text-accent">AMOR & HONRA</span>!
+          <h1 className="mt-6 font-serif text-2xl font-semibold leading-snug text-primary md:text-3xl">
+            O Ministério <span className="text-accent">Book Team</span> estuda livros cristãos que ensinam Homens e Mulheres a viver uma cultura de <span className="text-accent">AMOR & HONRA</span>.
           </h1>
+
           <p className="mt-6 text-lg text-muted-foreground">
             Trilhas guiadas, encontros presenciais e uma comunidade que
             transforma páginas em conversas — e conversas em jornada.
