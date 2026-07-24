@@ -17,9 +17,13 @@ import {
   Instagram,
   MessageCircle,
   ArrowRight,
+  Phone,
+  Sparkles,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import logoAsset from "@/assets/book-team-logo.png.asset.json";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -49,6 +53,8 @@ function LandingPage() {
       <HowItWorks />
       <LivrosSection />
       <EventosSection />
+      <EventosEspeciaisSection />
+      <ContatoEventosSection />
       <Testimonials />
       <FaqSection />
       <Footer />
@@ -56,18 +62,29 @@ function LandingPage() {
   );
 }
 
+function Logo({ className = "h-9 w-9" }: { className?: string }) {
+  return (
+    <img
+      src={logoAsset.url}
+      alt="Book Team — amor e honra"
+      className={`${className} rounded-full object-cover`}
+    />
+  );
+}
+
 function Header() {
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <BookOpen className="h-6 w-6 text-primary" strokeWidth={2.2} />
-          <span className="font-serif text-xl font-semibold">Book Clube</span>
+        <Link to="/" className="flex items-center gap-3">
+          <Logo />
+          <span className="font-serif text-lg font-semibold tracking-tight">Book Team</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           <a href="#como-funciona" className="hover:text-foreground">Como funciona</a>
           <a href="#livros" className="hover:text-foreground">Livros</a>
           <a href="#eventos" className="hover:text-foreground">Encontros</a>
+          <a href="#contato" className="hover:text-foreground">Contato</a>
           <a href="#faq" className="hover:text-foreground">FAQ</a>
         </nav>
         <div className="flex items-center gap-2">
@@ -82,6 +99,7 @@ function Header() {
     </header>
   );
 }
+
 
 function Hero() {
   return (
