@@ -1,24 +1,392 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  BookOpen,
+  Users,
+  Calendar,
+  Award,
+  CheckCircle2,
+  Instagram,
+  MessageCircle,
+  ArrowRight,
+} from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
 export const Route = createFileRoute("/")({
-  component: Index,
+  head: () => ({
+    meta: [
+      { title: "Book Clube — Trilhas de leitura, encontros e certificados" },
+      {
+        name: "description",
+        content:
+          "Escolha uma trilha, inscreva-se em encontros presenciais, leia com propósito e receba seu certificado. Bem-vindo ao Book Clube.",
+      },
+      { property: "og:title", content: "Book Clube — Trilhas de leitura" },
+      {
+        property: "og:description",
+        content:
+          "Comunidade de leitura com trilhas guiadas, encontros presenciais e certificados de participação.",
+      },
+    ],
+  }),
+  component: LandingPage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function LandingPage() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="min-h-screen bg-background text-foreground">
+      <Header />
+      <Hero />
+      <HowItWorks />
+      <TrilhasSection />
+      <EventosSection />
+      <Testimonials />
+      <FaqSection />
+      <Footer />
     </div>
+  );
+}
+
+function Header() {
+  return (
+    <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+        <Link to="/" className="flex items-center gap-2">
+          <BookOpen className="h-6 w-6 text-primary" strokeWidth={2.2} />
+          <span className="font-serif text-xl font-semibold">Book Clube</span>
+        </Link>
+        <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+          <a href="#como-funciona" className="hover:text-foreground">Como funciona</a>
+          <a href="#trilhas" className="hover:text-foreground">Trilhas</a>
+          <a href="#eventos" className="hover:text-foreground">Encontros</a>
+          <a href="#faq" className="hover:text-foreground">FAQ</a>
+        </nav>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/auth">Entrar</Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link to="/auth" search={{ mode: "signup" }}>Quero participar</Link>
+          </Button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function Hero() {
+  return (
+    <section className="gradient-hero relative overflow-hidden">
+      <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 md:grid-cols-2 md:items-center md:py-28">
+        <div>
+          <span className="inline-flex items-center rounded-full border border-border bg-card/70 px-3 py-1 text-xs font-medium text-muted-foreground">
+            Clube de leitura & desenvolvimento
+          </span>
+          <h1 className="mt-6 font-serif text-5xl font-bold leading-tight md:text-6xl">
+            Ler em <span className="text-accent">boa companhia</span> muda tudo.
+          </h1>
+          <p className="mt-6 text-lg text-muted-foreground">
+            Trilhas guiadas, encontros presenciais mensais e uma comunidade que
+            transforma páginas em conversas — e conversas em jornada.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button asChild size="lg">
+              <Link to="/auth" search={{ mode: "signup" }}>
+                Quero participar <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline">
+              <a href="#trilhas">Ver trilhas</a>
+            </Button>
+          </div>
+        </div>
+        <div className="relative">
+          <div className="absolute -left-6 -top-6 h-40 w-40 rounded-full bg-accent/20 blur-3xl" />
+          <div className="absolute -bottom-8 -right-4 h-48 w-48 rounded-full bg-primary/20 blur-3xl" />
+          <div className="relative grid grid-cols-2 gap-4">
+            {[
+              { Icon: BookOpen, label: "Trilhas guiadas", desc: "Livros escolhidos com propósito" },
+              { Icon: Users, label: "Comunidade", desc: "Encontros presenciais" },
+              { Icon: Calendar, label: "Ritmo mensal", desc: "Um livro por mês" },
+              { Icon: Award, label: "Certificado", desc: "Ao concluir a trilha" },
+            ].map(({ Icon, label, desc }) => (
+              <div
+                key={label}
+                className="shadow-book rounded-2xl border border-border bg-card p-5"
+              >
+                <Icon className="h-6 w-6 text-primary" />
+                <p className="mt-3 font-serif text-lg font-semibold">{label}</p>
+                <p className="text-sm text-muted-foreground">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HowItWorks() {
+  const steps = [
+    { n: 1, title: "Escolha uma trilha", desc: "Selecione o tema que faz sentido para você." },
+    { n: 2, title: "Inscreva-se em um encontro", desc: "Reserve sua vaga com poucos cliques." },
+    { n: 3, title: "Pague via PIX", desc: "Envie o comprovante e receba a confirmação." },
+    { n: 4, title: "Participe do encontro", desc: "Presencial, com pessoas incríveis." },
+    { n: 5, title: "Continue sua jornada", desc: "Próximo livro, próxima conversa." },
+  ];
+  return (
+    <section id="como-funciona" className="border-t border-border/60 bg-secondary/30 py-20">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="max-w-2xl">
+          <p className="text-sm font-medium uppercase tracking-wider text-accent">Como funciona</p>
+          <h2 className="mt-2 font-serif text-4xl font-bold">Cinco passos simples</h2>
+        </div>
+        <ol className="mt-12 grid gap-4 md:grid-cols-5">
+          {steps.map((s) => (
+            <li
+              key={s.n}
+              className="rounded-2xl border border-border bg-card p-5"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground font-serif text-lg font-bold">
+                {s.n}
+              </div>
+              <p className="mt-4 font-semibold">{s.title}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{s.desc}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+function TrilhasSection() {
+  const { data: trilhas = [] } = useQuery({
+    queryKey: ["landing-trilhas"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("trilhas")
+        .select("id, nome, descricao, cor, imagem_url")
+        .eq("status", "ativa")
+        .order("nome");
+      return data ?? [];
+    },
+  });
+
+  return (
+    <section id="trilhas" className="py-20">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-wider text-accent">Trilhas</p>
+            <h2 className="mt-2 font-serif text-4xl font-bold">Escolha sua jornada</h2>
+          </div>
+        </div>
+        {trilhas.length === 0 ? (
+          <div className="mt-10 rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center text-muted-foreground">
+            Novas trilhas em breve. Cadastre-se para ser avisado.
+          </div>
+        ) : (
+          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {trilhas.map((t) => (
+              <article
+                key={t.id}
+                className="shadow-book overflow-hidden rounded-2xl border border-border bg-card"
+              >
+                <div
+                  className="h-32 w-full"
+                  style={{
+                    background: t.imagem_url
+                      ? `url(${t.imagem_url}) center/cover`
+                      : `linear-gradient(135deg, ${t.cor ?? "var(--primary)"}, var(--accent))`,
+                  }}
+                />
+                <div className="p-5">
+                  <h3 className="font-serif text-xl font-semibold">{t.nome}</h3>
+                  {t.descricao && (
+                    <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
+                      {t.descricao}
+                    </p>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function EventosSection() {
+  const { data: eventos = [] } = useQuery({
+    queryKey: ["landing-eventos"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("eventos")
+        .select("id, titulo, cidade, local, data, hora, vagas")
+        .eq("status", "aberto")
+        .gte("data", new Date().toISOString().slice(0, 10))
+        .order("data")
+        .limit(6);
+      return data ?? [];
+    },
+  });
+
+  return (
+    <section id="eventos" className="border-t border-border/60 bg-secondary/30 py-20">
+      <div className="mx-auto max-w-6xl px-4">
+        <p className="text-sm font-medium uppercase tracking-wider text-accent">Próximos encontros</p>
+        <h2 className="mt-2 font-serif text-4xl font-bold">Reserve seu lugar</h2>
+
+        {eventos.length === 0 ? (
+          <div className="mt-10 rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center text-muted-foreground">
+            Nenhum encontro agendado no momento. Cadastre-se para ser avisado.
+          </div>
+        ) : (
+          <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {eventos.map((e) => (
+              <div key={e.id} className="rounded-2xl border border-border bg-card p-5">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  {format(new Date(e.data + "T00:00:00"), "dd 'de' MMMM", { locale: ptBR })}
+                  {e.hora ? ` · ${e.hora.slice(0, 5)}` : ""}
+                </p>
+                <h3 className="mt-2 font-serif text-lg font-semibold">{e.titulo}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {[e.cidade, e.local].filter(Boolean).join(" · ")}
+                </p>
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {e.vagas > 0 ? `${e.vagas} vagas` : "Vagas limitadas"}
+                  </span>
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/auth" search={{ mode: "signup" }}>Inscrever-se</Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function Testimonials() {
+  const items = [
+    {
+      q: "Voltei a ler no ritmo que sempre quis, com gente que topa conversar de verdade.",
+      a: "Marina R.",
+    },
+    {
+      q: "Os encontros presenciais são o diferencial. Saio de cada um com ideias novas.",
+      a: "Bruno L.",
+    },
+    {
+      q: "A trilha de liderança mudou como eu conduzo meu time.",
+      a: "Camila F.",
+    },
+  ];
+  return (
+    <section className="py-20">
+      <div className="mx-auto max-w-6xl px-4">
+        <p className="text-sm font-medium uppercase tracking-wider text-accent">Depoimentos</p>
+        <h2 className="mt-2 font-serif text-4xl font-bold">Quem vive, conta</h2>
+        <div className="mt-10 grid gap-6 md:grid-cols-3">
+          {items.map((i) => (
+            <blockquote
+              key={i.a}
+              className="rounded-2xl border border-border bg-card p-6"
+            >
+              <CheckCircle2 className="h-5 w-5 text-accent" />
+              <p className="mt-3 font-serif text-lg leading-snug">"{i.q}"</p>
+              <footer className="mt-4 text-sm text-muted-foreground">— {i.a}</footer>
+            </blockquote>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FaqSection() {
+  const items = [
+    {
+      q: "Preciso pagar mensalidade?",
+      a: "Não. Você paga apenas pelos encontros em que se inscrever, via PIX.",
+    },
+    {
+      q: "Os encontros são online?",
+      a: "Não. Todos os encontros são presenciais. A cidade é indicada em cada evento.",
+    },
+    {
+      q: "Como recebo o certificado?",
+      a: "Ao concluir uma trilha (todos os encontros com presença registrada), o certificado é emitido pela administração e fica disponível na sua área.",
+    },
+    {
+      q: "Posso escolher qualquer livro?",
+      a: "As leituras seguem a ordem da trilha escolhida — assim a comunidade caminha junta.",
+    },
+  ];
+  return (
+    <section id="faq" className="border-t border-border/60 bg-secondary/30 py-20">
+      <div className="mx-auto max-w-3xl px-4">
+        <p className="text-sm font-medium uppercase tracking-wider text-accent">Perguntas frequentes</p>
+        <h2 className="mt-2 font-serif text-4xl font-bold">Dúvidas comuns</h2>
+        <Accordion type="single" collapsible className="mt-8">
+          {items.map((i, idx) => (
+            <AccordionItem key={idx} value={`item-${idx}`}>
+              <AccordionTrigger className="text-left font-medium">{i.q}</AccordionTrigger>
+              <AccordionContent className="text-muted-foreground">{i.a}</AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-border bg-card py-12">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 md:grid-cols-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-primary" />
+            <span className="font-serif text-lg font-semibold">Book Clube</span>
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Ler em boa companhia muda tudo.
+          </p>
+        </div>
+        <div>
+          <p className="text-sm font-semibold">Contato</p>
+          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <li className="flex items-center gap-2"><Instagram className="h-4 w-4" /> @bookclube</li>
+            <li className="flex items-center gap-2"><MessageCircle className="h-4 w-4" /> WhatsApp</li>
+          </ul>
+        </div>
+        <div>
+          <p className="text-sm font-semibold">Comece agora</p>
+          <div className="mt-3">
+            <Button asChild>
+              <Link to="/auth" search={{ mode: "signup" }}>Criar minha conta</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+      <p className="mt-10 text-center text-xs text-muted-foreground">
+        © {new Date().getFullYear()} Book Clube. Todos os direitos reservados.
+      </p>
+    </footer>
   );
 }
