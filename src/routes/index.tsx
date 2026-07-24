@@ -105,7 +105,7 @@ function Hero() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <a href="#trilhas">Ver trilhas</a>
+              <a href="#livros">Ver livros</a>
             </Button>
           </div>
         </div>
