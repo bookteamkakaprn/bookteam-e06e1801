@@ -47,7 +47,7 @@ function LandingPage() {
       <Header />
       <Hero />
       <HowItWorks />
-      <TrilhasSection />
+      <LivrosSection />
       <EventosSection />
       <Testimonials />
       <FaqSection />
@@ -66,7 +66,7 @@ function Header() {
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           <a href="#como-funciona" className="hover:text-foreground">Como funciona</a>
-          <a href="#trilhas" className="hover:text-foreground">Trilhas</a>
+          <a href="#livros" className="hover:text-foreground">Livros</a>
           <a href="#eventos" className="hover:text-foreground">Encontros</a>
           <a href="#faq" className="hover:text-foreground">FAQ</a>
         </nav>
@@ -91,11 +91,11 @@ function Hero() {
           <span className="inline-flex items-center rounded-full border border-border bg-card/70 px-3 py-1 text-xs font-medium text-muted-foreground">
             Clube de leitura & desenvolvimento
           </span>
-          <h1 className="mt-6 font-serif text-5xl font-bold leading-tight md:text-6xl">
-            Ler em <span className="text-accent">boa companhia</span> muda tudo.
+          <h1 className="mt-6 font-serif text-4xl font-bold leading-tight md:text-5xl">
+            O Ministério <span className="text-accent">Book Team</span> estuda livros cristãos que ensinam Homens e Mulheres a viver uma cultura de <span className="text-accent">AMOR & HONRA</span>!
           </h1>
           <p className="mt-6 text-lg text-muted-foreground">
-            Trilhas guiadas, encontros presenciais mensais e uma comunidade que
+            Trilhas guiadas, encontros presenciais e uma comunidade que
             transforma páginas em conversas — e conversas em jornada.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -105,7 +105,7 @@ function Hero() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <a href="#trilhas">Ver trilhas</a>
+              <a href="#livros">Ver livros</a>
             </Button>
           </div>
         </div>
@@ -169,55 +169,68 @@ function HowItWorks() {
   );
 }
 
-function TrilhasSection() {
-  const { data: trilhas = [] } = useQuery({
-    queryKey: ["landing-trilhas"],
+function LivrosSection() {
+  const { data: livros = [] } = useQuery({
+    queryKey: ["landing-livros"],
     queryFn: async () => {
       const { data } = await supabase
-        .from("trilhas")
-        .select("id, nome, descricao, cor, imagem_url")
-        .eq("status", "ativa")
-        .order("nome");
+        .from("livros")
+        .select("id, titulo, autor, imagem_url")
+        .eq("status", "ativo")
+        .order("ordem")
+        .limit(12);
       return data ?? [];
     },
   });
 
   return (
-    <section id="trilhas" className="py-20">
+    <section id="livros" className="py-20">
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-medium uppercase tracking-wider text-accent">Trilhas</p>
-            <h2 className="mt-2 font-serif text-4xl font-bold">Escolha sua jornada</h2>
+            <p className="text-sm font-medium uppercase tracking-wider text-accent">Biblioteca</p>
+            <h2 className="mt-2 font-serif text-4xl font-bold">Nossos livros</h2>
+            <p className="mt-3 max-w-2xl text-muted-foreground">
+              Leituras cristãs que sustentam nossos encontros e formam a cultura de amor e honra.
+            </p>
           </div>
         </div>
-        {trilhas.length === 0 ? (
-          <div className="mt-10 rounded-2xl border border-dashed border-border bg-card/50 p-10 text-center text-muted-foreground">
-            Novas trilhas em breve. Cadastre-se para ser avisado.
+
+        {livros.length === 0 ? (
+          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="shadow-book flex aspect-[2/3] items-center justify-center rounded-xl border border-dashed border-border bg-card/60 p-3 text-center text-xs text-muted-foreground"
+              >
+                Espaço para foto do livro
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {trilhas.map((t) => (
-              <article
-                key={t.id}
-                className="shadow-book overflow-hidden rounded-2xl border border-border bg-card"
-              >
-                <div
-                  className="h-32 w-full"
-                  style={{
-                    background: t.imagem_url
-                      ? `url(${t.imagem_url}) center/cover`
-                      : `linear-gradient(135deg, ${t.cor ?? "var(--primary)"}, var(--accent))`,
-                  }}
-                />
-                <div className="p-5">
-                  <h3 className="font-serif text-xl font-semibold">{t.nome}</h3>
-                  {t.descricao && (
-                    <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">
-                      {t.descricao}
-                    </p>
-                  )}
+          <div className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {livros.map((l) => (
+              <article key={l.id} className="group">
+                <div className="shadow-book overflow-hidden rounded-xl border border-border bg-card">
+                  <div
+                    className="aspect-[2/3] w-full bg-secondary"
+                    style={
+                      l.imagem_url
+                        ? { background: `url(${l.imagem_url}) center/cover` }
+                        : undefined
+                    }
+                  >
+                    {!l.imagem_url && (
+                      <div className="flex h-full items-center justify-center p-3 text-center text-xs text-muted-foreground">
+                        Foto em breve
+                      </div>
+                    )}
+                  </div>
                 </div>
+                <p className="mt-3 line-clamp-2 font-serif text-sm font-semibold">{l.titulo}</p>
+                {l.autor && (
+                  <p className="text-xs text-muted-foreground">{l.autor}</p>
+                )}
               </article>
             ))}
           </div>
