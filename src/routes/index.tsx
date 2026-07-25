@@ -598,13 +598,6 @@ function TrilhasNetflix() {
             <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
               Nossas trilhas
             </span>
-            <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
-              Escolha sua jornada
-            </h2>
-            <p className="mt-4 text-[15px] text-foreground/70">
-              Cada trilha é uma sequência viva. Cada livro concluído preenche
-              seu coração de novos aprendizados.
-            </p>
           </div>
           <div className="hidden gap-2 md:flex">
             <button
