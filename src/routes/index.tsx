@@ -357,7 +357,7 @@ function JornadaLivros() {
   return (
     <section
       id="cronograma"
-      className="relative border-t border-border/40 bg-gradient-to-b from-background via-card/30 to-background py-24 md:py-32"
+      className="relative border-t border-border/40 bg-gradient-to-b from-background via-card/30 to-background py-16 md:py-20"
     >
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -501,7 +501,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="como-funciona" className="relative border-t border-border/40 py-24 md:py-32">
+    <section id="como-funciona" className="relative border-t border-border/40 py-16 md:py-20">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="max-w-2xl">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
@@ -578,7 +578,7 @@ function HowItWorks() {
 
 function EventosEspeciais() {
   return (
-    <section className="relative py-24 md:py-32">
+    <section className="relative py-16 md:py-20">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="relative overflow-hidden rounded-3xl border border-gold/20 gradient-wine p-8 shadow-premium md:p-14">
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
@@ -639,7 +639,7 @@ function Testimonials() {
     { q: "A cultura de honra mudou como eu conduzo meu casamento e meu trabalho.", a: "Camila F.", cidade: "Curitiba - PR", nota: 5 },
   ];
   return (
-    <section className="relative border-t border-border/40 bg-gradient-to-b from-card/40 to-background py-24 md:py-32">
+    <section className="relative border-t border-border/40 bg-gradient-to-b from-card/40 to-background py-16 md:py-20">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
@@ -687,7 +687,7 @@ function ContatoEventos() {
   const phone = "41 3082-5553";
   const whatsappHref = `https://wa.me/554130825553`;
   return (
-    <section id="contato" className="relative py-24 md:py-32">
+    <section id="contato" className="relative py-16 md:py-20">
       <div className="mx-auto max-w-4xl px-4 text-center md:px-8">
         <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
           Contato para eventos
@@ -736,7 +736,7 @@ function FaqSection() {
     { q: "Posso escolher qualquer livro?", a: "As leituras seguem a ordem da trilha escolhida — assim a comunidade caminha junta." },
   ];
   return (
-    <section id="faq" className="border-t border-border/40 py-24 md:py-32">
+    <section id="faq" className="border-t border-border/40 py-16 md:py-20">
       <div className="mx-auto max-w-3xl px-4 md:px-8">
         <div className="text-center">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
