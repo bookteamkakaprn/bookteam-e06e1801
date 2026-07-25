@@ -290,59 +290,31 @@ function HeroQuemSomos() {
         </div>
       </div>
 
-      {/* ———— QUEM SOMOS (integrado) ———— */}
-      <div className="relative mx-auto grid max-w-7xl gap-12 px-4 pb-24 pt-8 md:px-8 md:pb-32 lg:grid-cols-2 lg:items-center lg:gap-20">
-        <div className="relative">
-          <div className="absolute -inset-4 -z-10 rounded-3xl bg-gradient-to-br from-gold/20 via-transparent to-secondary/20 blur-2xl" />
-          <div className="overflow-hidden rounded-3xl shadow-premium">
-            <img
-              src={quemSomosImage}
-              alt="Casal segurando a bíblia"
-              loading="lazy"
-              width={1200}
-              height={1408}
-              className="h-full w-full object-cover"
-            />
-          </div>
-          <div className="absolute -bottom-6 -right-6 hidden rounded-2xl border border-gold/30 bg-card/90 p-4 shadow-premium backdrop-blur md:block">
-            <Heart className="h-6 w-6 fill-gold text-gold" />
-          </div>
-        </div>
-
-        <div>
+      {/* ———— PILARES: Visão / Missão / Objetivo ———— */}
+      <div id="quem-somos" className="relative mx-auto max-w-7xl px-4 pb-24 pt-8 md:px-8 md:pb-32">
+        <div className="mx-auto max-w-2xl text-center">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
             Quem somos
           </span>
-          <h2 className="mt-3 font-serif text-3xl font-semibold leading-tight md:text-4xl lg:text-5xl">
-            Um ministério cristão que{" "}
-            <span className="text-gradient-gold italic">acende conversas</span>{" "}
-            profundas.
-          </h2>
-          <p className="mt-6 text-[15px] leading-relaxed text-foreground/75 md:text-base">
-            Lemos livros e capítulos indicados em grupo, compartilhamos os
-            aprendizados e as experiências pessoais em encontros presenciais.
-            Homens, mulheres e casais que querem conhecer mais de Deus e
-            aprender à luz da palavra.
-          </p>
-
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            {pilares.map((p) => (
-              <div
-                key={p.title}
-                className="group rounded-2xl border border-border/60 bg-card/60 p-5 transition-all hover:border-gold/40 hover:bg-card"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/10 text-gold transition-colors group-hover:bg-gold group-hover:text-primary-foreground">
-                  <p.icon className="h-5 w-5" />
-                </div>
-                <p className="mt-4 font-serif text-lg font-semibold">{p.title}</p>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/70">
-                  {p.text}
-                </p>
+        </div>
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          {pilares.map((p) => (
+            <div
+              key={p.title}
+              className="group rounded-2xl border border-border/60 bg-card/60 p-6 transition-all hover:border-gold/40 hover:bg-card"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/10 text-gold transition-colors group-hover:bg-gold group-hover:text-primary-foreground">
+                <p.icon className="h-5 w-5" />
               </div>
-            ))}
-          </div>
+              <p className="mt-4 font-serif text-lg font-semibold">{p.title}</p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/70">
+                {p.text}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
+
     </section>
   );
 }
