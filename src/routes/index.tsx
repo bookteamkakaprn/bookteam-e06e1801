@@ -550,6 +550,16 @@ function HowItWorks() {
                   <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/70 md:text-sm">
                     {s.desc}
                   </p>
+                  {"href" in s && s.href ? (
+                    <Link
+                      to={s.href}
+                      search={{ mode: "signup" }}
+                      className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-gold hover:text-gold/80"
+                    >
+                      {(s as { cta?: string }).cta ?? "Acessar"} <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  ) : null}
+
                 </div>
               </li>
             ))}
