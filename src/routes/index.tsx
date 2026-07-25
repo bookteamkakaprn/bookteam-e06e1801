@@ -354,9 +354,9 @@ function JornadaLivros() {
   const { data: trilhaMap } = useQuery({
     queryKey: ["livros-trilha-map"],
     queryFn: async () => {
-      const { data } = await supabase.from("livros").select("titulo, trilha_id");
+      const { data } = await supabase.from("livros").select("id, titulo");
       const m = new Map<string, string>();
-      for (const l of data ?? []) m.set(l.titulo, l.trilha_id);
+      for (const l of data ?? []) m.set(l.titulo, l.id);
       return m;
     },
   });
@@ -409,13 +409,13 @@ function JornadaLivros() {
         className="scrollbar-hidden mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 md:px-8"
       >
         {livros.map((l) => {
-          const trilhaId = trilhaMap?.get(l.titulo);
+          const livroId = trilhaMap?.get(l.titulo);
           const card = <JornadaLivroCard l={l} />;
-          return trilhaId ? (
+          return livroId ? (
             <Link
               key={l.id}
-              to="/trilhas/$id"
-              params={{ id: trilhaId }}
+              to="/livros/$id"
+              params={{ id: livroId }}
               className="shrink-0 snap-start"
             >
               {card}

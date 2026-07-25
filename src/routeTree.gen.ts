@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrilhasIdRouteImport } from './routes/trilhas.$id'
+import { Route as LivrosIdRouteImport } from './routes/livros.$id'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedPagamentosRouteImport } from './routes/_authenticated/pagamentos'
 import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
@@ -59,6 +60,11 @@ const IndexRoute = IndexRouteImport.update({
 const TrilhasIdRoute = TrilhasIdRouteImport.update({
   id: '/trilhas/$id',
   path: '/trilhas/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LivrosIdRoute = LivrosIdRouteImport.update({
+  id: '/livros/$id',
+  path: '/livros/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
@@ -163,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/inicio': typeof AuthenticatedInicioRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AuthenticatedAdminCertificadosRoute
   '/admin/eventos': typeof AuthenticatedAdminEventosRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/inicio': typeof AuthenticatedInicioRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AuthenticatedAdminCertificadosRoute
   '/admin/eventos': typeof AuthenticatedAdminEventosRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/_authenticated/inicio': typeof AuthenticatedInicioRoute
   '/_authenticated/pagamentos': typeof AuthenticatedPagamentosRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
   '/_authenticated/admin/certificados': typeof AuthenticatedAdminCertificadosRoute
   '/_authenticated/admin/eventos': typeof AuthenticatedAdminEventosRoute
@@ -235,6 +244,7 @@ export interface FileRouteTypes {
     | '/inicio'
     | '/pagamentos'
     | '/perfil'
+    | '/livros/$id'
     | '/trilhas/$id'
     | '/admin/certificados'
     | '/admin/eventos'
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/inicio'
     | '/pagamentos'
     | '/perfil'
+    | '/livros/$id'
     | '/trilhas/$id'
     | '/admin/certificados'
     | '/admin/eventos'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inicio'
     | '/_authenticated/pagamentos'
     | '/_authenticated/perfil'
+    | '/livros/$id'
     | '/trilhas/$id'
     | '/_authenticated/admin/certificados'
     | '/_authenticated/admin/eventos'
@@ -300,6 +312,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  LivrosIdRoute: typeof LivrosIdRoute
   TrilhasIdRoute: typeof TrilhasIdRoute
 }
 
@@ -345,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/trilhas/$id'
       fullPath: '/trilhas/$id'
       preLoaderRoute: typeof TrilhasIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/livros/$id': {
+      id: '/livros/$id'
+      path: '/livros/$id'
+      fullPath: '/livros/$id'
+      preLoaderRoute: typeof LivrosIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/perfil': {
@@ -518,6 +538,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  LivrosIdRoute: LivrosIdRoute,
   TrilhasIdRoute: TrilhasIdRoute,
 }
 export const routeTree = rootRouteImport
