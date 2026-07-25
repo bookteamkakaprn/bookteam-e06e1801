@@ -413,7 +413,7 @@ function JornadaLivros() {
 function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
   return (
     <article
-      className={`group poster-hover relative aspect-[2/3] w-[240px] shrink-0 snap-start overflow-hidden rounded-2xl bg-gradient-to-br ${l.cor} shadow-book md:w-[280px]`}
+      className={`group poster-hover relative aspect-[2/3] w-[240px] shrink-0 snap-start overflow-hidden rounded-r-2xl rounded-l-md bg-gradient-to-br ${l.cor} shadow-book md:w-[280px]`}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_60%)]" />
 
@@ -426,6 +426,10 @@ function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
         />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+
+      {/* lombada do livro (efeito de encadernação à esquerda) */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 left-3 w-px bg-white/10" />
 
       {/* corações de posição na trilha (topo direito) */}
       <div className="absolute right-3 top-3 flex gap-0.5">
