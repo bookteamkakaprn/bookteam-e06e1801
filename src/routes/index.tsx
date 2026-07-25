@@ -504,66 +504,91 @@ type JornadaLivroCardProps = JornadaLivro;
 
 function HowItWorks() {
   const steps = [
-    { icon: Compass, title: "Escolha sua trilha", desc: "Selecione o tema que faz sentido para você agora." },
-    { icon: BookOpen, title: "Leia o livro", desc: "No seu ritmo, com o material de apoio do ministério." },
-    { icon: Users, title: "Participe do encontro", desc: "Presencial, conversa aberta, comunidade que acolhe." },
-    { icon: Award, title: "Conclua com certificado", desc: "Presença registrada, jornada reconhecida." },
-    { icon: Heart, title: "Avance", desc: "Siga para o próximo livro da sua trilha." },
+    {
+      icon: BookMarked,
+      title: "Inicie pelo livro 1",
+      desc: "Toda jornada começa no primeiro livro da trilha — a ordem preserva o sentido da leitura.",
+    },
+    {
+      icon: Compass,
+      title: "Escolha sua trilha",
+      desc: "Selecione entre Básico, Avançado ou os próximos módulos que fazem sentido para você.",
+    },
+    {
+      icon: UserPlus,
+      title: "Faça sua inscrição",
+      desc: "Preencha seus dados e reserve sua vaga no próximo encontro presencial.",
+    },
+    {
+      icon: Receipt,
+      title: "Pague e envie o comprovante",
+      desc: "Faça o PIX e anexe o comprovante direto no seu painel — é rápido e seguro.",
+    },
+    {
+      icon: Mail,
+      title: "Aguarde a confirmação",
+      desc: "Você receberá no seu e-mail a confirmação e todos os dados da inscrição.",
+    },
   ];
 
   return (
-    <section id="como-funciona" className="relative py-24 md:py-32">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="mx-auto max-w-2xl text-center">
+    <section id="como-funciona" className="relative border-t border-border/40 py-24 md:py-32">
+      <div className="mx-auto max-w-5xl px-4 md:px-8">
+        <div className="max-w-2xl">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
             Como funciona
           </span>
           <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
             Cinco passos, uma jornada
           </h2>
+          <p className="mt-4 text-[15px] leading-relaxed text-foreground/70">
+            Do primeiro livro ao seu lugar no encontro — um caminho simples,
+            organizado e acompanhado por e-mail.
+          </p>
         </div>
 
-        <div className="relative mt-16">
-          {/* linha */}
-          <div className="absolute left-8 top-8 bottom-8 w-px bg-gradient-to-b from-transparent via-gold/40 to-transparent md:left-1/2 md:-translate-x-1/2" />
+        <div className="relative mt-16 pl-16 md:pl-20">
+          {/* Linha do tempo lateral */}
+          <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-gold/10 via-gold/50 to-gold/10 md:left-8" />
 
-          <ol className="space-y-8 md:space-y-14">
+          <ol className="space-y-8 md:space-y-10">
             {steps.map((s, i) => (
-              <li
-                key={s.title}
-                className={`relative flex gap-6 md:grid md:grid-cols-2 md:gap-14 ${
-                  i % 2 === 1 ? "md:flex-row-reverse" : ""
-                }`}
-              >
-                <div
-                  className={`md:col-start-${i % 2 === 0 ? 1 : 2} ${
-                    i % 2 === 1 ? "md:text-right" : ""
-                  }`}
-                >
-                  <div className={`inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-5 shadow-book md:p-6 ${i % 2 === 1 ? "md:flex-row-reverse" : ""}`}>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-gold text-primary-foreground">
-                      <s.icon className="h-5 w-5" />
-                    </div>
-                    <div className={i % 2 === 1 ? "md:text-right" : ""}>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-gold">
-                        Passo {i + 1}
-                      </p>
-                      <p className="mt-0.5 font-serif text-lg font-semibold">{s.title}</p>
-                      <p className="mt-1 text-[13px] text-foreground/70">{s.desc}</p>
-                    </div>
-                  </div>
-                </div>
+              <li key={s.title} className="group relative">
+                {/* Nó da linha */}
+                <span className="absolute -left-[46px] top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 bg-background shadow-glow-gold md:-left-[54px]">
+                  <s.icon className="h-4.5 w-4.5 text-gold" />
+                </span>
+                {/* Ponto conector no eixo */}
+                <span className="absolute -left-[27px] top-[26px] hidden h-2 w-2 rounded-full bg-gold md:block" />
 
-                {/* ponto na linha */}
-                <span className="absolute left-[26px] top-8 z-10 h-3 w-3 rounded-full bg-gold ring-4 ring-background md:left-1/2 md:-translate-x-1/2" />
+                <div className="rounded-2xl border border-border/60 bg-card/70 p-5 shadow-book backdrop-blur transition-all group-hover:border-gold/40 md:p-6">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
+                    Passo {i + 1}
+                  </p>
+                  <p className="mt-1 font-serif text-lg font-semibold md:text-xl">
+                    {s.title}
+                  </p>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/70 md:text-sm">
+                    {s.desc}
+                  </p>
+                </div>
               </li>
             ))}
           </ol>
+
+          {/* Encerramento da linha */}
+          <div className="mt-8 flex items-center gap-3 pl-1 md:pl-2">
+            <CheckCircle2 className="h-5 w-5 text-gold" />
+            <p className="text-sm font-medium text-foreground/80">
+              Inscrição confirmada — pronto para viver o encontro.
+            </p>
+          </div>
         </div>
       </div>
     </section>
   );
 }
+
 
 /* ———————————————— TRILHAS NETFLIX ———————————————— */
 
