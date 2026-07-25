@@ -72,7 +72,6 @@ function LandingPage() {
       <HeroQuemSomos />
 
       <HowItWorks />
-      <TrilhasNetflix />
       <JornadaLivros />
       <EventosSection />
 
@@ -100,8 +99,7 @@ function Header() {
 
   const links = [
     { href: "#quem-somos", label: "Quem somos" },
-    { href: "#trilhas", label: "Trilhas" },
-    { href: "#livros", label: "Livros" },
+    { href: "#cronograma", label: "Livros" },
     { href: "#eventos", label: "Encontros" },
     { href: "#contato", label: "Contato" },
   ];
@@ -279,8 +277,8 @@ function HeroQuemSomos() {
                 variant="outline"
                 className="h-12 border-foreground/20 bg-background/30 px-6 text-[15px] text-foreground backdrop-blur hover:bg-background/60"
               >
-                <a href="#trilhas">
-                  <Play className="mr-2 h-4 w-4" /> Conheça as trilhas
+                <a href="#cronograma">
+                  <Play className="mr-2 h-4 w-4" /> Conheça os livros
                 </a>
               </Button>
             </div>
