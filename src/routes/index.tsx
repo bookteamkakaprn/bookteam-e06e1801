@@ -260,27 +260,37 @@ function HeroQuemSomos() {
             que transforma livros em conversas — e conversas em jornada.
           </p>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Button
-              asChild
-              size="lg"
-              className="h-12 bg-gold px-6 text-[15px] font-semibold text-primary-foreground shadow-glow-gold hover:bg-gold/90"
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button
+                asChild
+                size="lg"
+                className="h-12 bg-gold px-6 text-[15px] font-semibold text-primary-foreground shadow-glow-gold hover:bg-gold/90"
+              >
+                <a href="#como-funciona">
+                  Quero participar <ArrowRight className="ml-2 h-4 w-4" />
+                </a>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-12 border-foreground/20 bg-background/30 px-6 text-[15px] text-foreground backdrop-blur hover:bg-background/60"
+              >
+                <a href="#trilhas">
+                  <Play className="mr-2 h-4 w-4" /> Conheça as trilhas
+                </a>
+              </Button>
+            </div>
+            <a
+              href="#como-funciona"
+              aria-label="Ver como funciona"
+              className="group mt-2 flex flex-col items-center text-gold/70 transition hover:text-gold"
             >
-              <Link to="/auth" search={{ mode: "signup" }}>
-                Quero participar <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="h-12 border-foreground/20 bg-background/30 px-6 text-[15px] text-foreground backdrop-blur hover:bg-background/60"
-            >
-              <a href="#trilhas">
-                <Play className="mr-2 h-4 w-4" /> Conheça as trilhas
-              </a>
-            </Button>
+              <ChevronDown className="h-6 w-6 animate-bounce" />
+            </a>
           </div>
+
 
           <div className="mt-12 flex flex-wrap justify-center gap-x-10 gap-y-4 border-t border-white/10 pt-6 text-sm">
             <Stat n="4" label="Trilhas guiadas" />
