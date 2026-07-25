@@ -555,13 +555,6 @@ function HowItWorks() {
             ))}
           </ol>
 
-          {/* Encerramento */}
-          <div className="mt-10 flex items-center justify-center gap-3">
-            <CheckCircle2 className="h-5 w-5 text-gold" />
-            <p className="text-sm font-medium text-foreground/80">
-              Inscrição confirmada — pronto para viver o encontro.
-            </p>
-          </div>
         </div>
 
       </div>
