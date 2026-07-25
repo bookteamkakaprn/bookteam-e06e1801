@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.sync_inscricao_from_pagamento() FROM PUBLIC, anon, authenticated;
