@@ -361,93 +361,145 @@ function QuemSomos() {
 
 /* ———————————————— CRONOGRAMA ———————————————— */
 
-function Cronograma() {
-  const trilhas = [
-    {
-      nivel: "Básico",
-      descricao: "Fundamentos de amor e honra.",
-      livros: [
-        { titulo: "Mantenha Seu Amor Aceso", autor: "Danny Silk" },
-        { titulo: "Cultura da Honra", autor: "Danny Silk" },
-      ],
-    },
-    {
-      nivel: "Avançado",
-      descricao: "Identidade, mente renovada e o Perfeito Eu.",
-      livros: [
-        { titulo: "Seu Perfeito Você", autor: "Dra. Caroline Leaf" },
-        { titulo: "Ative Seu Cérebro", autor: "Dra. Caroline Leaf" },
-      ],
-    },
+/* ———————————————— JORNADA EM LIVROS (Cronograma + Biblioteca — carrossel) ———————————————— */
+
+type JornadaLivro = {
+  id: string;
+  titulo: string;
+  autor: string;
+  trilha: string;
+  ordem: number;
+  total: number;
+  imagem_url?: string | null;
+  cor: string;
+};
+
+function JornadaLivros() {
+  const livros: JornadaLivro[] = [
+    { id: "b1", titulo: "Mantenha Seu Amor Aceso", autor: "Danny Silk", trilha: "Book Team Básico", ordem: 1, total: 2, cor: "from-[oklch(0.4_0.12_25)] to-[oklch(0.22_0.06_25)]" },
+    { id: "b2", titulo: "Cultura da Honra", autor: "Danny Silk", trilha: "Book Team Básico", ordem: 2, total: 2, cor: "from-[oklch(0.38_0.11_20)] to-[oklch(0.2_0.05_20)]" },
+    { id: "a1", titulo: "Seu Perfeito Você", autor: "Dra. Caroline Leaf", trilha: "Book Team Avançado", ordem: 1, total: 2, cor: "from-[oklch(0.42_0.1_45)] to-[oklch(0.24_0.05_45)]" },
+    { id: "a2", titulo: "Ative Seu Cérebro", autor: "Dra. Caroline Leaf", trilha: "Book Team Avançado", ordem: 2, total: 2, cor: "from-[oklch(0.36_0.09_40)] to-[oklch(0.2_0.04_40)]" },
   ];
 
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const scrollBy = (dir: 1 | -1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: "smooth" });
+  };
+
   return (
-    <section id="cronograma" className="relative border-t border-border/50 bg-gradient-to-b from-background via-card/30 to-background py-24 md:py-32">
+    <section
+      id="cronograma"
+      className="relative border-t border-border/40 bg-gradient-to-b from-background via-card/30 to-background py-24 md:py-32"
+    >
       <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="max-w-2xl">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
-            Cronograma
-          </span>
-          <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
-            Uma jornada em sequência
-          </h2>
-          <p className="mt-5 text-[15px] leading-relaxed text-foreground/70 md:text-base">
-            Cada trilha segue uma ordem. Para começar o próximo livro, é
-            preciso concluir o anterior — e o histórico de cada participante
-            registra todo o caminho percorrido.
-          </p>
-        </div>
-
-        <div className="mt-14 grid gap-6 md:grid-cols-2 md:gap-8">
-          {trilhas.map((t) => (
-            <div
-              key={t.nivel}
-              className="group relative overflow-hidden rounded-3xl border border-border/60 bg-card p-8 transition-all hover:border-gold/30 hover:shadow-premium md:p-10"
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="max-w-2xl">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
+              Cronograma & Biblioteca
+            </span>
+            <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
+              Uma jornada em livros
+            </h2>
+            <p className="mt-4 text-[15px] leading-relaxed text-foreground/70">
+              Cada trilha segue uma ordem — para começar o próximo livro, é
+              preciso concluir o anterior. Seu histórico registra todo o
+              caminho percorrido.
+            </p>
+          </div>
+          <div className="hidden gap-2 md:flex">
+            <button
+              onClick={() => scrollBy(-1)}
+              aria-label="Anterior"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-card/60 text-foreground/80 backdrop-blur transition-all hover:border-gold/40 hover:text-gold"
             >
-              <div className="absolute -right-16 -top-16 h-40 w-40 rounded-full bg-gold/5 blur-2xl transition-all group-hover:bg-gold/15" />
-              <div className="relative">
-                <div className="flex items-baseline justify-between gap-4">
-                  <h3 className="font-serif text-2xl font-semibold md:text-3xl">
-                    Book Team{" "}
-                    <span className="text-gradient-gold italic">{t.nivel}</span>
-                  </h3>
-                  <span className="rounded-full border border-border/60 px-2.5 py-1 text-[10px] uppercase tracking-wider text-foreground/60">
-                    {t.livros.length} livros
-                  </span>
-                </div>
-                <p className="mt-2 text-sm text-foreground/70">{t.descricao}</p>
-
-                <ol className="mt-8 space-y-3">
-                  {t.livros.map((l, idx) => (
-                    <li
-                      key={l.titulo}
-                      className="relative flex items-start gap-4 rounded-2xl border border-border/50 bg-background/40 p-4 transition-colors hover:border-gold/30"
-                    >
-                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-wine font-serif text-sm font-semibold text-foreground">
-                        {idx + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="font-serif text-[15px] font-semibold">
-                          {l.titulo}
-                        </p>
-                        <p className="mt-0.5 text-xs text-foreground/60">
-                          {l.autor}
-                        </p>
-                      </div>
-                      {idx < t.livros.length - 1 && (
-                        <span className="absolute -bottom-3 left-[26px] h-3 w-px bg-gold/30" />
-                      )}
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            </div>
-          ))}
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => scrollBy(1)}
+              aria-label="Próximo"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-card/60 text-foreground/80 backdrop-blur transition-all hover:border-gold/40 hover:text-gold"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
         </div>
+      </div>
+
+      <div
+        ref={scrollerRef}
+        className="scrollbar-hidden mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 md:px-8"
+      >
+        {livros.map((l) => (
+          <JornadaLivroCard key={l.id} l={l} />
+        ))}
+        <div className="shrink-0 pr-2 md:pr-4" />
       </div>
     </section>
   );
 }
+
+function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
+  return (
+    <article
+      className={`group poster-hover relative aspect-[2/3] w-[240px] shrink-0 snap-start overflow-hidden rounded-2xl bg-gradient-to-br ${l.cor} shadow-book md:w-[280px]`}
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_60%)]" />
+
+      {l.imagem_url && (
+        <img
+          src={l.imagem_url}
+          alt={l.titulo}
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105"
+        />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+
+      {/* corações de posição na trilha (topo direito) */}
+      <div className="absolute right-3 top-3 flex gap-0.5">
+        {Array.from({ length: l.total }).map((_, i) => (
+          <Heart
+            key={i}
+            className={`h-3.5 w-3.5 ${
+              i < l.ordem ? "fill-gold text-gold" : "text-white/40"
+            }`}
+          />
+        ))}
+      </div>
+
+      {!l.imagem_url && (
+        <BookOpen className="absolute left-1/2 top-[38%] h-9 w-9 -translate-x-1/2 text-gold/70" />
+      )}
+
+      {/* conteúdo */}
+      <div className="absolute inset-x-0 bottom-0 p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold/90">
+          {l.trilha}
+        </p>
+        <p className="mt-1 font-serif text-xl font-semibold italic leading-tight text-foreground drop-shadow-md">
+          {l.titulo}
+        </p>
+        <p className="mt-1 text-[12px] text-foreground/75">{l.autor}</p>
+        <div className="mt-3 flex items-center justify-between text-[11px]">
+          <span className="text-foreground/60">Livro {l.ordem} de {l.total}</span>
+          <span className="text-gold">{l.ordem}/{l.total}</span>
+        </div>
+        <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full bg-gradient-gold"
+            style={{ width: `${(l.ordem / l.total) * 100}%` }}
+          />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+type JornadaLivroCardProps = JornadaLivro;
+
 
 /* ———————————————— HOW IT WORKS (TIMELINE) ———————————————— */
 
