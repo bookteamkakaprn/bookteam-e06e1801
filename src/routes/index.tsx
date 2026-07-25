@@ -230,62 +230,54 @@ function HeroQuemSomos() {
         }}
       />
 
-      {/* ———— HERO ———— */}
-      <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 pb-16 pt-32 text-center md:px-8 md:pt-40">
-        <div className="animate-fade-in flex flex-col items-center">
+      {/* ———— HERO (split: logo à esquerda, texto à direita) ———— */}
+      <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-4 pb-12 pt-28 md:grid-cols-2 md:gap-14 md:px-8 md:pt-32 md:pb-16">
+        <div className="animate-fade-in flex justify-center md:justify-start">
           <img
             src={logoAsset.url}
             alt="Book Team — Amor & Honra"
-            className="h-40 w-40 rounded-full shadow-2xl ring-1 ring-gold/40 md:h-56 md:w-56"
+            className="h-56 w-56 rounded-full shadow-2xl ring-1 ring-gold/40 md:h-80 md:w-80 lg:h-[22rem] lg:w-[22rem]"
           />
+        </div>
 
-          <span className="mt-8 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-background/40 px-3.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-gold backdrop-blur">
+        <div className="animate-fade-in flex flex-col items-center text-center md:items-start md:text-left">
+          <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-background/40 px-3.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-gold backdrop-blur">
             <Sparkles className="h-3 w-3" /> Ministério Book Team
           </span>
 
-          <h1 className="mt-6 max-w-4xl font-serif text-3xl font-semibold leading-[1.1] text-foreground md:text-4xl lg:text-5xl">
+          <h1 className="mt-5 font-serif text-3xl font-semibold leading-[1.1] text-foreground md:text-4xl lg:text-5xl">
             O Ministério Book Team estuda livros cristãos que ensinam Homens e Mulheres a viver uma cultura de{" "}
             <span className="text-gradient-gold italic">amor & honra</span>!
           </h1>
 
-          <p className="mt-6 max-w-xl text-base leading-relaxed text-foreground/75 md:text-[17px]">
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-foreground/75 md:text-[17px]">
             Trilhas de leitura cristã, encontros presenciais e uma comunidade
             que transforma livros em conversas — e conversas em jornada.
           </p>
 
-          <div className="mt-8 flex flex-col items-center gap-4">
-            <div className="flex flex-wrap justify-center gap-3">
-              <Button
-                asChild
-                size="lg"
-                className="h-12 bg-gold px-6 text-[15px] font-semibold text-primary-foreground shadow-glow-gold hover:bg-gold/90"
-              >
-                <a href="#como-funciona">
-                  Quero participar <ArrowRight className="ml-2 h-4 w-4" />
-                </a>
-              </Button>
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="h-12 border-foreground/20 bg-background/30 px-6 text-[15px] text-foreground backdrop-blur hover:bg-background/60"
-              >
-                <a href="#cronograma">
-                  <Play className="mr-2 h-4 w-4" /> Conheça os livros
-                </a>
-              </Button>
-            </div>
-            <a
-              href="#como-funciona"
-              aria-label="Ver como funciona"
-              className="group mt-2 flex flex-col items-center text-gold/70 transition hover:text-gold"
+          <div className="mt-7 flex flex-wrap justify-center gap-3 md:justify-start">
+            <Button
+              asChild
+              size="lg"
+              className="h-12 bg-gold px-6 text-[15px] font-semibold text-primary-foreground shadow-glow-gold hover:bg-gold/90"
             >
-              <ChevronDown className="h-6 w-6 animate-bounce" />
-            </a>
+              <a href="#como-funciona">
+                Quero participar <ArrowRight className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="h-12 border-foreground/20 bg-background/30 px-6 text-[15px] text-foreground backdrop-blur hover:bg-background/60"
+            >
+              <a href="#cronograma">
+                <Play className="mr-2 h-4 w-4" /> Conheça os livros
+              </a>
+            </Button>
           </div>
 
-
-          <div className="mt-12 flex flex-wrap justify-center gap-x-10 gap-y-4 border-t border-white/10 pt-6 text-sm">
+          <div className="mt-8 flex flex-wrap justify-center gap-x-10 gap-y-4 border-t border-white/10 pt-5 text-sm md:justify-start">
             <Stat n="4" label="Trilhas guiadas" />
             <Stat n="+200" label="Participantes" />
             <Stat n="+30" label="Encontros por ano" />
@@ -294,7 +286,7 @@ function HeroQuemSomos() {
       </div>
 
       {/* ———— PILARES: Visão / Missão / Objetivo ———— */}
-      <div id="quem-somos" className="relative mx-auto max-w-7xl px-4 pb-24 pt-8 md:px-8 md:pb-32">
+      <div id="quem-somos" className="relative mx-auto max-w-7xl px-4 pb-16 pt-4 md:px-8 md:pb-20">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
             Quem somos
