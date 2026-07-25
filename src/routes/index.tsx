@@ -22,6 +22,8 @@ import {
   Award,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+
   Menu,
   X,
   Play,
