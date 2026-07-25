@@ -75,7 +75,6 @@ function LandingPage() {
 
       <EventosEspeciais />
       <Testimonials />
-      <ContatoEventos />
       <FaqSection />
       <Footer />
     </div>
@@ -98,7 +97,6 @@ function Header() {
   const links = [
     { href: "#quem-somos", label: "Quem somos" },
     { href: "#cronograma", label: "Livros" },
-    { href: "#contato", label: "Contato" },
   ];
 
   return (
