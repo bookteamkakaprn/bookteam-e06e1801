@@ -75,7 +75,6 @@ function LandingPage() {
 
       <EventosEspeciais />
       <Testimonials />
-      <ContatoEventos />
       <FaqSection />
       <Footer />
     </div>
@@ -98,7 +97,6 @@ function Header() {
   const links = [
     { href: "#quem-somos", label: "Quem somos" },
     { href: "#cronograma", label: "Livros" },
-    { href: "#contato", label: "Contato" },
   ];
 
   return (
@@ -680,49 +678,6 @@ function Testimonials() {
 }
 
 /* ———————————————— CONTATO ———————————————— */
-
-function ContatoEventos() {
-  const phone = "41 3082-5553";
-  const whatsappHref = `https://wa.me/554130825553`;
-  return (
-    <section id="contato" className="relative py-10 md:py-14">
-      <div className="mx-auto max-w-4xl px-4 text-center md:px-8">
-        <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
-          Contato para eventos
-        </span>
-        <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
-          Vamos organizar um encontro?
-        </h2>
-        <p className="mx-auto mt-5 max-w-2xl text-[15px] text-foreground/70">
-          Para agendar um evento, tirar dúvidas sobre próximas datas ou levar
-          o Book Team para a sua cidade, fale com a nossa equipe.
-        </p>
-
-        <div className="mt-10 inline-flex flex-col items-center gap-5 rounded-3xl border border-gold/20 bg-card px-8 py-7 shadow-premium sm:flex-row sm:gap-8">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-gold text-primary-foreground">
-            <Phone className="h-6 w-6" />
-          </div>
-          <div className="sm:text-left">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-foreground/60">
-              Eventos
-            </p>
-            <a
-              href="tel:+554130825553"
-              className="mt-1 block font-serif text-2xl font-semibold text-foreground md:text-3xl"
-            >
-              {phone}
-            </a>
-          </div>
-          <Button asChild className="bg-gold text-primary-foreground hover:bg-gold/90 sm:ml-4">
-            <a href={whatsappHref} target="_blank" rel="noreferrer">
-              <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
-            </a>
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 /* ———————————————— FAQ ———————————————— */
 
