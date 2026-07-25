@@ -14,6 +14,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TrilhasIdRouteImport } from './routes/trilhas.$id'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedPagamentosRouteImport } from './routes/_authenticated/pagamentos'
 import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
@@ -21,6 +22,7 @@ import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCertificadosRouteImport } from './routes/_authenticated/certificados'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedInscricaoEventoIdRouteImport } from './routes/_authenticated/inscricao.$eventoId'
 import { Route as AuthenticatedAdminTrilhasRouteImport } from './routes/_authenticated/admin.trilhas'
 import { Route as AuthenticatedAdminRelatoriosRouteImport } from './routes/_authenticated/admin.relatorios'
 import { Route as AuthenticatedAdminPresencasRouteImport } from './routes/_authenticated/admin.presencas'
@@ -52,6 +54,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrilhasIdRoute = TrilhasIdRouteImport.update({
+  id: '/trilhas/$id',
+  path: '/trilhas/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
@@ -90,6 +97,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedInscricaoEventoIdRoute =
+  AuthenticatedInscricaoEventoIdRouteImport.update({
+    id: '/inscricao/$eventoId',
+    path: '/inscricao/$eventoId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminTrilhasRoute =
   AuthenticatedAdminTrilhasRouteImport.update({
     id: '/trilhas',
@@ -150,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/inicio': typeof AuthenticatedInicioRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AuthenticatedAdminCertificadosRoute
   '/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/admin/livros': typeof AuthenticatedAdminLivrosRoute
@@ -158,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/admin/presencas': typeof AuthenticatedAdminPresencasRoute
   '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
   '/admin/trilhas': typeof AuthenticatedAdminTrilhasRoute
+  '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -170,6 +185,7 @@ export interface FileRoutesByTo {
   '/inicio': typeof AuthenticatedInicioRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AuthenticatedAdminCertificadosRoute
   '/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/admin/livros': typeof AuthenticatedAdminLivrosRoute
@@ -178,6 +194,7 @@ export interface FileRoutesByTo {
   '/admin/presencas': typeof AuthenticatedAdminPresencasRoute
   '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
   '/admin/trilhas': typeof AuthenticatedAdminTrilhasRoute
+  '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -193,6 +210,7 @@ export interface FileRoutesById {
   '/_authenticated/inicio': typeof AuthenticatedInicioRoute
   '/_authenticated/pagamentos': typeof AuthenticatedPagamentosRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/trilhas/$id': typeof TrilhasIdRoute
   '/_authenticated/admin/certificados': typeof AuthenticatedAdminCertificadosRoute
   '/_authenticated/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/_authenticated/admin/livros': typeof AuthenticatedAdminLivrosRoute
@@ -201,6 +219,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/presencas': typeof AuthenticatedAdminPresencasRoute
   '/_authenticated/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
   '/_authenticated/admin/trilhas': typeof AuthenticatedAdminTrilhasRoute
+  '/_authenticated/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -216,6 +235,7 @@ export interface FileRouteTypes {
     | '/inicio'
     | '/pagamentos'
     | '/perfil'
+    | '/trilhas/$id'
     | '/admin/certificados'
     | '/admin/eventos'
     | '/admin/livros'
@@ -224,6 +244,7 @@ export interface FileRouteTypes {
     | '/admin/presencas'
     | '/admin/relatorios'
     | '/admin/trilhas'
+    | '/inscricao/$eventoId'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -236,6 +257,7 @@ export interface FileRouteTypes {
     | '/inicio'
     | '/pagamentos'
     | '/perfil'
+    | '/trilhas/$id'
     | '/admin/certificados'
     | '/admin/eventos'
     | '/admin/livros'
@@ -244,6 +266,7 @@ export interface FileRouteTypes {
     | '/admin/presencas'
     | '/admin/relatorios'
     | '/admin/trilhas'
+    | '/inscricao/$eventoId'
     | '/admin'
   id:
     | '__root__'
@@ -258,6 +281,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inicio'
     | '/_authenticated/pagamentos'
     | '/_authenticated/perfil'
+    | '/trilhas/$id'
     | '/_authenticated/admin/certificados'
     | '/_authenticated/admin/eventos'
     | '/_authenticated/admin/livros'
@@ -266,6 +290,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/presencas'
     | '/_authenticated/admin/relatorios'
     | '/_authenticated/admin/trilhas'
+    | '/_authenticated/inscricao/$eventoId'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -275,6 +300,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TrilhasIdRoute: typeof TrilhasIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -312,6 +338,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trilhas/$id': {
+      id: '/trilhas/$id'
+      path: '/trilhas/$id'
+      fullPath: '/trilhas/$id'
+      preLoaderRoute: typeof TrilhasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/perfil': {
@@ -362,6 +395,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/inscricao/$eventoId': {
+      id: '/_authenticated/inscricao/$eventoId'
+      path: '/inscricao/$eventoId'
+      fullPath: '/inscricao/$eventoId'
+      preLoaderRoute: typeof AuthenticatedInscricaoEventoIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/trilhas': {
       id: '/_authenticated/admin/trilhas'
@@ -456,6 +496,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
   AuthenticatedPagamentosRoute: typeof AuthenticatedPagamentosRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedInscricaoEventoIdRoute: typeof AuthenticatedInscricaoEventoIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -465,6 +506,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInicioRoute: AuthenticatedInicioRoute,
   AuthenticatedPagamentosRoute: AuthenticatedPagamentosRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedInscricaoEventoIdRoute: AuthenticatedInscricaoEventoIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -476,6 +518,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TrilhasIdRoute: TrilhasIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
