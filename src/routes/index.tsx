@@ -366,10 +366,7 @@ function JornadaLivros() {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-2xl">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
-              Cronograma & Biblioteca
-            </span>
-            <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
+            <h2 className="font-serif text-2xl font-semibold md:text-3xl">
               Uma jornada em livros
             </h2>
             <p className="mt-4 text-[15px] leading-relaxed text-foreground/70">
