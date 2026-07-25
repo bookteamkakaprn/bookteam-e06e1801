@@ -34,7 +34,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logoAsset from "@/assets/book-team-logo.png.asset.json";
-import heroImage from "@/assets/hero-reading.jpg";
+
 import quemSomosImage from "@/assets/quem-somos.jpg";
 
 export const Route = createFileRoute("/")({
@@ -193,23 +193,36 @@ function Header() {
 function Hero() {
   return (
     <section className="relative min-h-[92vh] overflow-hidden">
-      <img
-        src={heroImage}
-        alt="Comunidade lendo junto"
-        className="absolute inset-0 h-full w-full object-cover"
-        width={1920}
-        height={1280}
+      {/* Ambient glow behind the logo */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background" />
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[680px] w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-70 blur-3xl"
+        style={{
+          background:
+            "radial-gradient(circle, oklch(0.45 0.13 25 / 0.55) 0%, transparent 65%)",
+        }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/20" />
-      <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/30 to-transparent" />
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-2xl"
+        style={{
+          background:
+            "radial-gradient(circle, oklch(0.78 0.14 82 / 0.35) 0%, transparent 70%)",
+        }}
+      />
 
-      <div className="relative mx-auto flex min-h-[92vh] max-w-7xl flex-col justify-end px-4 pb-20 pt-32 md:px-8 md:pb-28 md:pt-40">
-        <div className="max-w-2xl animate-fade-in">
-          <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-background/40 px-3.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-gold backdrop-blur">
+      <div className="relative mx-auto flex min-h-[92vh] max-w-5xl flex-col items-center justify-center px-4 pb-20 pt-32 text-center md:px-8 md:pt-40">
+        <div className="animate-fade-in flex flex-col items-center">
+          <img
+            src={logoAsset.url}
+            alt="Book Team — Amor & Honra"
+            className="h-40 w-40 rounded-full shadow-2xl ring-1 ring-gold/40 md:h-56 md:w-56"
+          />
+
+          <span className="mt-8 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-background/40 px-3.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.18em] text-gold backdrop-blur">
             <Sparkles className="h-3 w-3" /> Ministério Book Team
           </span>
 
-          <h1 className="mt-6 font-serif text-4xl font-semibold leading-[1.05] text-foreground md:text-5xl lg:text-6xl">
+          <h1 className="mt-6 max-w-3xl font-serif text-4xl font-semibold leading-[1.05] text-foreground md:text-5xl lg:text-6xl">
             Uma cultura de{" "}
             <span className="text-gradient-gold italic">amor & honra</span>{" "}
             construída página por página.
@@ -220,7 +233,7 @@ function Hero() {
             que transforma livros em conversas — e conversas em jornada.
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button
               asChild
               size="lg"
@@ -242,7 +255,7 @@ function Hero() {
             </Button>
           </div>
 
-          <div className="mt-12 flex flex-wrap gap-x-10 gap-y-4 border-t border-white/10 pt-6 text-sm">
+          <div className="mt-12 flex flex-wrap justify-center gap-x-10 gap-y-4 border-t border-white/10 pt-6 text-sm">
             <Stat n="4" label="Trilhas guiadas" />
             <Stat n="+200" label="Participantes" />
             <Stat n="+30" label="Encontros por ano" />
