@@ -422,7 +422,7 @@ function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
           src={l.imagem_url}
           alt={l.titulo}
           loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
