@@ -16,6 +16,7 @@ import {
   Sparkles,
   BookOpen,
   Users,
+  Calendar,
   Award,
   ChevronLeft,
   ChevronRight,
@@ -609,7 +610,7 @@ function EventosEspeciais() {
                   <a href="#contato">Reservar um evento</a>
                 </Button>
                 <Button asChild variant="outline" className="border-foreground/30 bg-transparent text-foreground hover:bg-white/10">
-                  <a href="#eventos">Ver agenda</a>
+                  <a href="#contato">Falar com a gente</a>
                 </Button>
               </div>
             </div>
