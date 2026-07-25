@@ -22,6 +22,7 @@ import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCertificadosRouteImport } from './routes/_authenticated/certificados'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedInscricaoEventoIdRouteImport } from './routes/_authenticated/inscricao.$eventoId'
 import { Route as AuthenticatedAdminTrilhasRouteImport } from './routes/_authenticated/admin.trilhas'
 import { Route as AuthenticatedAdminRelatoriosRouteImport } from './routes/_authenticated/admin.relatorios'
 import { Route as AuthenticatedAdminPresencasRouteImport } from './routes/_authenticated/admin.presencas'
@@ -96,6 +97,12 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedInscricaoEventoIdRoute =
+  AuthenticatedInscricaoEventoIdRouteImport.update({
+    id: '/inscricao/$eventoId',
+    path: '/inscricao/$eventoId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminTrilhasRoute =
   AuthenticatedAdminTrilhasRouteImport.update({
     id: '/trilhas',
@@ -165,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/admin/presencas': typeof AuthenticatedAdminPresencasRoute
   '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
   '/admin/trilhas': typeof AuthenticatedAdminTrilhasRoute
+  '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -186,6 +194,7 @@ export interface FileRoutesByTo {
   '/admin/presencas': typeof AuthenticatedAdminPresencasRoute
   '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
   '/admin/trilhas': typeof AuthenticatedAdminTrilhasRoute
+  '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -210,6 +219,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/presencas': typeof AuthenticatedAdminPresencasRoute
   '/_authenticated/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
   '/_authenticated/admin/trilhas': typeof AuthenticatedAdminTrilhasRoute
+  '/_authenticated/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -234,6 +244,7 @@ export interface FileRouteTypes {
     | '/admin/presencas'
     | '/admin/relatorios'
     | '/admin/trilhas'
+    | '/inscricao/$eventoId'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/admin/presencas'
     | '/admin/relatorios'
     | '/admin/trilhas'
+    | '/inscricao/$eventoId'
     | '/admin'
   id:
     | '__root__'
@@ -278,6 +290,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/presencas'
     | '/_authenticated/admin/relatorios'
     | '/_authenticated/admin/trilhas'
+    | '/_authenticated/inscricao/$eventoId'
     | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -383,6 +396,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/inscricao/$eventoId': {
+      id: '/_authenticated/inscricao/$eventoId'
+      path: '/inscricao/$eventoId'
+      fullPath: '/inscricao/$eventoId'
+      preLoaderRoute: typeof AuthenticatedInscricaoEventoIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/trilhas': {
       id: '/_authenticated/admin/trilhas'
       path: '/trilhas'
@@ -476,6 +496,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
   AuthenticatedPagamentosRoute: typeof AuthenticatedPagamentosRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedInscricaoEventoIdRoute: typeof AuthenticatedInscricaoEventoIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -485,6 +506,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInicioRoute: AuthenticatedInicioRoute,
   AuthenticatedPagamentosRoute: AuthenticatedPagamentosRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedInscricaoEventoIdRoute: AuthenticatedInscricaoEventoIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
