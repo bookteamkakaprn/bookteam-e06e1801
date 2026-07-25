@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -349,6 +351,16 @@ function JornadaLivros() {
     { id: "a2", titulo: "Ative Seu Cérebro", autor: "Dra. Caroline Leaf", trilha: "Book Team Avançado", ordem: 2, total: 2, imagem_url: capaAtive.url, cor: "from-[oklch(0.36_0.09_40)] to-[oklch(0.2_0.04_40)]" },
   ];
 
+  const { data: trilhaMap } = useQuery({
+    queryKey: ["livros-trilha-map"],
+    queryFn: async () => {
+      const { data } = await supabase.from("livros").select("titulo, trilha_id");
+      const m = new Map<string, string>();
+      for (const l of data ?? []) m.set(l.titulo, l.trilha_id);
+      return m;
+    },
+  });
+
   const scrollerRef = useRef<HTMLDivElement>(null);
   const scrollBy = (dir: 1 | -1) => {
     const el = scrollerRef.current;
@@ -396,9 +408,22 @@ function JornadaLivros() {
         ref={scrollerRef}
         className="scrollbar-hidden mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 md:px-8"
       >
-        {livros.map((l) => (
-          <JornadaLivroCard key={l.id} l={l} />
-        ))}
+        {livros.map((l) => {
+          const trilhaId = trilhaMap?.get(l.titulo);
+          const card = <JornadaLivroCard l={l} />;
+          return trilhaId ? (
+            <Link
+              key={l.id}
+              to="/trilhas/$id"
+              params={{ id: trilhaId }}
+              className="shrink-0 snap-start"
+            >
+              {card}
+            </Link>
+          ) : (
+            <div key={l.id} className="shrink-0 snap-start">{card}</div>
+          );
+        })}
         <div className="shrink-0 pr-2 md:pr-4" />
       </div>
     </section>
