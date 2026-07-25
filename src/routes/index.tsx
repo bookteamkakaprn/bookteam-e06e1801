@@ -805,9 +805,8 @@ function Footer() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">Navegação</p>
             <ul className="mt-4 space-y-2.5 text-sm text-foreground/70">
               <li><a href="#quem-somos" className="hover:text-foreground">Quem somos</a></li>
-              <li><a href="#trilhas" className="hover:text-foreground">Trilhas</a></li>
-              <li><a href="#livros" className="hover:text-foreground">Livros</a></li>
-              <li><a href="#eventos" className="hover:text-foreground">Encontros</a></li>
+              <li><a href="#cronograma" className="hover:text-foreground">Livros</a></li>
+              <li><a href="#contato" className="hover:text-foreground">Contato</a></li>
               <li><a href="#faq" className="hover:text-foreground">FAQ</a></li>
             </ul>
           </div>
