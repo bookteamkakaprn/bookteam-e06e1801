@@ -496,7 +496,10 @@ function HowItWorks() {
       icon: Compass,
       title: "Escolha sua trilha",
       desc: "Selecione entre Básico, Avançado ou os próximos módulos que fazem sentido para você.",
+      href: "/auth",
+      cta: "Entrar na sua conta",
     },
+
     {
       icon: UserPlus,
       title: "Faça sua inscrição",
