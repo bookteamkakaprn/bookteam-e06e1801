@@ -611,12 +611,8 @@ function TrilhasNetflix() {
   return (
     <section id="trilhas" className="relative border-t border-border/40 py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="max-w-2xl">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
-              Nossas trilhas
-            </span>
-          </div>
+        <div className="flex flex-wrap items-end justify-end gap-4">
+
           <div className="hidden gap-2 md:flex">
             <button
               onClick={() => scrollBy(-1)}
