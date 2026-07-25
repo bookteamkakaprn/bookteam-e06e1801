@@ -63,11 +63,11 @@ function LandingPage() {
       <Header />
       <Hero />
       <QuemSomos />
-      <Cronograma />
       <HowItWorks />
       <TrilhasNetflix />
-      <LivrosSection />
+      <JornadaLivros />
       <EventosSection />
+
       <EventosEspeciais />
       <Testimonials />
       <ContatoEventos />
