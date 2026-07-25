@@ -37,6 +37,10 @@ import {
 } from "lucide-react";
 
 import logoAsset from "@/assets/book-team-logo.png.asset.json";
+import capaMantenha from "@/assets/mantenha.jpg.asset.json";
+import capaCultura from "@/assets/cultura.jpg.asset.json";
+import capaSeuPerfeito from "@/assets/seu-perfeito.jpg.asset.json";
+import capaAtive from "@/assets/ative.jpg.asset.json";
 
 
 
@@ -341,10 +345,10 @@ type JornadaLivro = {
 
 function JornadaLivros() {
   const livros: JornadaLivro[] = [
-    { id: "b1", titulo: "Mantenha Seu Amor Aceso", autor: "Danny Silk", trilha: "Book Team Básico", ordem: 1, total: 2, cor: "from-[oklch(0.4_0.12_25)] to-[oklch(0.22_0.06_25)]" },
-    { id: "b2", titulo: "Cultura da Honra", autor: "Danny Silk", trilha: "Book Team Básico", ordem: 2, total: 2, cor: "from-[oklch(0.38_0.11_20)] to-[oklch(0.2_0.05_20)]" },
-    { id: "a1", titulo: "Seu Perfeito Você", autor: "Dra. Caroline Leaf", trilha: "Book Team Avançado", ordem: 1, total: 2, cor: "from-[oklch(0.42_0.1_45)] to-[oklch(0.24_0.05_45)]" },
-    { id: "a2", titulo: "Ative Seu Cérebro", autor: "Dra. Caroline Leaf", trilha: "Book Team Avançado", ordem: 2, total: 2, cor: "from-[oklch(0.36_0.09_40)] to-[oklch(0.2_0.04_40)]" },
+    { id: "b1", titulo: "Mantenha Seu Amor Aceso", autor: "Danny Silk", trilha: "Book Team Básico", ordem: 1, total: 2, imagem_url: capaMantenha.url, cor: "from-[oklch(0.4_0.12_25)] to-[oklch(0.22_0.06_25)]" },
+    { id: "b2", titulo: "Cultura da Honra", autor: "Danny Silk", trilha: "Book Team Básico", ordem: 2, total: 2, imagem_url: capaCultura.url, cor: "from-[oklch(0.38_0.11_20)] to-[oklch(0.2_0.05_20)]" },
+    { id: "a1", titulo: "Seu Perfeito Você", autor: "Dra. Caroline Leaf", trilha: "Book Team Avançado", ordem: 1, total: 2, imagem_url: capaSeuPerfeito.url, cor: "from-[oklch(0.42_0.1_45)] to-[oklch(0.24_0.05_45)]" },
+    { id: "a2", titulo: "Ative Seu Cérebro", autor: "Dra. Caroline Leaf", trilha: "Book Team Avançado", ordem: 2, total: 2, imagem_url: capaAtive.url, cor: "from-[oklch(0.36_0.09_40)] to-[oklch(0.2_0.04_40)]" },
   ];
 
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -418,7 +422,7 @@ function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
           src={l.imagem_url}
           alt={l.titulo}
           loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
