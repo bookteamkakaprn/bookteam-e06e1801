@@ -30,7 +30,13 @@ import {
   Compass,
   Target,
   Eye,
+  BookMarked,
+  UserPlus,
+  Receipt,
+  Mail,
+  CheckCircle2,
 } from "lucide-react";
+
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logoAsset from "@/assets/book-team-logo.png.asset.json";
@@ -61,8 +67,8 @@ function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
-      <Hero />
-      <QuemSomos />
+      <HeroQuemSomos />
+
       <HowItWorks />
       <TrilhasNetflix />
       <JornadaLivros />
@@ -188,29 +194,51 @@ function Header() {
   );
 }
 
-/* ———————————————— HERO ———————————————— */
+/* ———————————————— HERO + QUEM SOMOS (merged) ———————————————— */
 
-function Hero() {
+function HeroQuemSomos() {
+  const pilares = [
+    {
+      icon: Eye,
+      title: "Visão",
+      text:
+        "Todas as pessoas precisam conhecer o amor de Deus, independente da placa de igreja ou título pessoal.",
+    },
+    {
+      icon: Target,
+      title: "Missão",
+      text:
+        "Mostrar a possibilidade de viver o amor de Deus na sua plenitude, sendo cada um seu Perfeito Eu.",
+    },
+    {
+      icon: Compass,
+      title: "Objetivo",
+      text:
+        "Ajudar homens e mulheres a encontrar sua real identidade em Cristo.",
+    },
+  ];
+
   return (
-    <section className="relative min-h-[92vh] overflow-hidden">
+    <section id="quem-somos" className="relative overflow-hidden">
       {/* Ambient glow behind the logo */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background" />
+      <div className="absolute inset-x-0 top-0 h-[100vh] bg-gradient-to-b from-background via-background to-background" />
       <div
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[680px] w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-70 blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-[38vh] h-[680px] w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl"
         style={{
           background:
             "radial-gradient(circle, oklch(0.45 0.13 25 / 0.55) 0%, transparent 65%)",
         }}
       />
       <div
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-2xl"
+        className="pointer-events-none absolute left-1/2 top-[38vh] h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50 blur-2xl"
         style={{
           background:
             "radial-gradient(circle, oklch(0.78 0.14 82 / 0.35) 0%, transparent 70%)",
         }}
       />
 
-      <div className="relative mx-auto flex min-h-[92vh] max-w-5xl flex-col items-center justify-center px-4 pb-20 pt-32 text-center md:px-8 md:pt-40">
+      {/* ———— HERO ———— */}
+      <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 pb-16 pt-32 text-center md:px-8 md:pt-40">
         <div className="animate-fade-in flex flex-col items-center">
           <img
             src={logoAsset.url}
@@ -263,47 +291,8 @@ function Hero() {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
-    </section>
-  );
-}
-
-function Stat({ n, label }: { n: string; label: string }) {
-  return (
-    <div>
-      <p className="font-serif text-2xl font-semibold text-gold">{n}</p>
-      <p className="text-xs uppercase tracking-wider text-foreground/60">{label}</p>
-    </div>
-  );
-}
-
-/* ———————————————— QUEM SOMOS ———————————————— */
-
-function QuemSomos() {
-  const pilares = [
-    {
-      icon: Eye,
-      title: "Visão",
-      text:
-        "Todas as pessoas precisam conhecer o amor de Deus, independente da placa de igreja ou título pessoal.",
-    },
-    {
-      icon: Target,
-      title: "Missão",
-      text:
-        "Mostrar a possibilidade de viver o amor de Deus na sua plenitude, sendo cada um seu Perfeito Eu.",
-    },
-    {
-      icon: Compass,
-      title: "Objetivo",
-      text:
-        "Ajudar homens e mulheres a encontrar sua real identidade em Cristo.",
-    },
-  ];
-
-  return (
-    <section id="quem-somos" className="relative py-24 md:py-32">
-      <div className="mx-auto grid max-w-7xl gap-12 px-4 md:px-8 lg:grid-cols-2 lg:items-center lg:gap-20">
+      {/* ———— QUEM SOMOS (integrado) ———— */}
+      <div className="relative mx-auto grid max-w-7xl gap-12 px-4 pb-24 pt-8 md:px-8 md:pb-32 lg:grid-cols-2 lg:items-center lg:gap-20">
         <div className="relative">
           <div className="absolute -inset-4 -z-10 rounded-3xl bg-gradient-to-br from-gold/20 via-transparent to-secondary/20 blur-2xl" />
           <div className="overflow-hidden rounded-3xl shadow-premium">
@@ -358,6 +347,16 @@ function QuemSomos() {
     </section>
   );
 }
+
+function Stat({ n, label }: { n: string; label: string }) {
+  return (
+    <div>
+      <p className="font-serif text-2xl font-semibold text-gold">{n}</p>
+      <p className="text-xs uppercase tracking-wider text-foreground/60">{label}</p>
+    </div>
+  );
+}
+
 
 /* ———————————————— CRONOGRAMA ———————————————— */
 
@@ -505,66 +504,91 @@ type JornadaLivroCardProps = JornadaLivro;
 
 function HowItWorks() {
   const steps = [
-    { icon: Compass, title: "Escolha sua trilha", desc: "Selecione o tema que faz sentido para você agora." },
-    { icon: BookOpen, title: "Leia o livro", desc: "No seu ritmo, com o material de apoio do ministério." },
-    { icon: Users, title: "Participe do encontro", desc: "Presencial, conversa aberta, comunidade que acolhe." },
-    { icon: Award, title: "Conclua com certificado", desc: "Presença registrada, jornada reconhecida." },
-    { icon: Heart, title: "Avance", desc: "Siga para o próximo livro da sua trilha." },
+    {
+      icon: BookMarked,
+      title: "Inicie pelo livro 1",
+      desc: "Toda jornada começa no primeiro livro da trilha — a ordem preserva o sentido da leitura.",
+    },
+    {
+      icon: Compass,
+      title: "Escolha sua trilha",
+      desc: "Selecione entre Básico, Avançado ou os próximos módulos que fazem sentido para você.",
+    },
+    {
+      icon: UserPlus,
+      title: "Faça sua inscrição",
+      desc: "Preencha seus dados e reserve sua vaga no próximo encontro presencial.",
+    },
+    {
+      icon: Receipt,
+      title: "Pague e envie o comprovante",
+      desc: "Faça o PIX e anexe o comprovante direto no seu painel — é rápido e seguro.",
+    },
+    {
+      icon: Mail,
+      title: "Aguarde a confirmação",
+      desc: "Você receberá no seu e-mail a confirmação e todos os dados da inscrição.",
+    },
   ];
 
   return (
-    <section id="como-funciona" className="relative py-24 md:py-32">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="mx-auto max-w-2xl text-center">
+    <section id="como-funciona" className="relative border-t border-border/40 py-24 md:py-32">
+      <div className="mx-auto max-w-5xl px-4 md:px-8">
+        <div className="max-w-2xl">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
             Como funciona
           </span>
           <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
             Cinco passos, uma jornada
           </h2>
+          <p className="mt-4 text-[15px] leading-relaxed text-foreground/70">
+            Do primeiro livro ao seu lugar no encontro — um caminho simples,
+            organizado e acompanhado por e-mail.
+          </p>
         </div>
 
-        <div className="relative mt-16">
-          {/* linha */}
-          <div className="absolute left-8 top-8 bottom-8 w-px bg-gradient-to-b from-transparent via-gold/40 to-transparent md:left-1/2 md:-translate-x-1/2" />
+        <div className="relative mt-16 pl-16 md:pl-20">
+          {/* Linha do tempo lateral */}
+          <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-gold/10 via-gold/50 to-gold/10 md:left-8" />
 
-          <ol className="space-y-8 md:space-y-14">
+          <ol className="space-y-8 md:space-y-10">
             {steps.map((s, i) => (
-              <li
-                key={s.title}
-                className={`relative flex gap-6 md:grid md:grid-cols-2 md:gap-14 ${
-                  i % 2 === 1 ? "md:flex-row-reverse" : ""
-                }`}
-              >
-                <div
-                  className={`md:col-start-${i % 2 === 0 ? 1 : 2} ${
-                    i % 2 === 1 ? "md:text-right" : ""
-                  }`}
-                >
-                  <div className={`inline-flex items-center gap-3 rounded-2xl border border-border/60 bg-card p-5 shadow-book md:p-6 ${i % 2 === 1 ? "md:flex-row-reverse" : ""}`}>
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-gold text-primary-foreground">
-                      <s.icon className="h-5 w-5" />
-                    </div>
-                    <div className={i % 2 === 1 ? "md:text-right" : ""}>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-gold">
-                        Passo {i + 1}
-                      </p>
-                      <p className="mt-0.5 font-serif text-lg font-semibold">{s.title}</p>
-                      <p className="mt-1 text-[13px] text-foreground/70">{s.desc}</p>
-                    </div>
-                  </div>
-                </div>
+              <li key={s.title} className="group relative">
+                {/* Nó da linha */}
+                <span className="absolute -left-[46px] top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 bg-background shadow-glow-gold md:-left-[54px]">
+                  <s.icon className="h-4.5 w-4.5 text-gold" />
+                </span>
+                {/* Ponto conector no eixo */}
+                <span className="absolute -left-[27px] top-[26px] hidden h-2 w-2 rounded-full bg-gold md:block" />
 
-                {/* ponto na linha */}
-                <span className="absolute left-[26px] top-8 z-10 h-3 w-3 rounded-full bg-gold ring-4 ring-background md:left-1/2 md:-translate-x-1/2" />
+                <div className="rounded-2xl border border-border/60 bg-card/70 p-5 shadow-book backdrop-blur transition-all group-hover:border-gold/40 md:p-6">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
+                    Passo {i + 1}
+                  </p>
+                  <p className="mt-1 font-serif text-lg font-semibold md:text-xl">
+                    {s.title}
+                  </p>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/70 md:text-sm">
+                    {s.desc}
+                  </p>
+                </div>
               </li>
             ))}
           </ol>
+
+          {/* Encerramento da linha */}
+          <div className="mt-8 flex items-center gap-3 pl-1 md:pl-2">
+            <CheckCircle2 className="h-5 w-5 text-gold" />
+            <p className="text-sm font-medium text-foreground/80">
+              Inscrição confirmada — pronto para viver o encontro.
+            </p>
+          </div>
         </div>
       </div>
     </section>
   );
 }
+
 
 /* ———————————————— TRILHAS NETFLIX ———————————————— */
 
