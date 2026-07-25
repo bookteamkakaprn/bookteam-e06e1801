@@ -250,10 +250,9 @@ function HeroQuemSomos() {
             <Sparkles className="h-3 w-3" /> Ministério Book Team
           </span>
 
-          <h1 className="mt-6 max-w-3xl font-serif text-4xl font-semibold leading-[1.05] text-foreground md:text-5xl lg:text-6xl">
-            Uma cultura de{" "}
-            <span className="text-gradient-gold italic">amor & honra</span>{" "}
-            construída página por página.
+          <h1 className="mt-6 max-w-4xl font-serif text-3xl font-semibold leading-[1.1] text-foreground md:text-4xl lg:text-5xl">
+            O Ministério Book Team estuda livros cristãos que ensinam Homens e Mulheres a viver uma cultura de{" "}
+            <span className="text-gradient-gold italic">amor & honra</span>!
           </h1>
 
           <p className="mt-6 max-w-xl text-base leading-relaxed text-foreground/75 md:text-[17px]">
