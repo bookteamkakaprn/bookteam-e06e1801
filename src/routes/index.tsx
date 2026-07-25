@@ -509,13 +509,6 @@ function HowItWorks() {
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
             Como funciona
           </span>
-          <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
-            Cinco passos, uma jornada
-          </h2>
-          <p className="mt-4 text-[15px] leading-relaxed text-foreground/70">
-            Do primeiro livro ao seu lugar no encontro — um caminho simples,
-            organizado e acompanhado por e-mail.
-          </p>
         </div>
 
         <div className="relative mt-16 pl-16 md:pl-20">
