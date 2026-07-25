@@ -188,29 +188,51 @@ function Header() {
   );
 }
 
-/* ———————————————— HERO ———————————————— */
+/* ———————————————— HERO + QUEM SOMOS (merged) ———————————————— */
 
-function Hero() {
+function HeroQuemSomos() {
+  const pilares = [
+    {
+      icon: Eye,
+      title: "Visão",
+      text:
+        "Todas as pessoas precisam conhecer o amor de Deus, independente da placa de igreja ou título pessoal.",
+    },
+    {
+      icon: Target,
+      title: "Missão",
+      text:
+        "Mostrar a possibilidade de viver o amor de Deus na sua plenitude, sendo cada um seu Perfeito Eu.",
+    },
+    {
+      icon: Compass,
+      title: "Objetivo",
+      text:
+        "Ajudar homens e mulheres a encontrar sua real identidade em Cristo.",
+    },
+  ];
+
   return (
-    <section className="relative min-h-[92vh] overflow-hidden">
+    <section id="quem-somos" className="relative overflow-hidden">
       {/* Ambient glow behind the logo */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-background" />
+      <div className="absolute inset-x-0 top-0 h-[100vh] bg-gradient-to-b from-background via-background to-background" />
       <div
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[680px] w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-70 blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-[38vh] h-[680px] w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl"
         style={{
           background:
             "radial-gradient(circle, oklch(0.45 0.13 25 / 0.55) 0%, transparent 65%)",
         }}
       />
       <div
-        className="pointer-events-none absolute left-1/2 top-1/2 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-2xl"
+        className="pointer-events-none absolute left-1/2 top-[38vh] h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50 blur-2xl"
         style={{
           background:
             "radial-gradient(circle, oklch(0.78 0.14 82 / 0.35) 0%, transparent 70%)",
         }}
       />
 
-      <div className="relative mx-auto flex min-h-[92vh] max-w-5xl flex-col items-center justify-center px-4 pb-20 pt-32 text-center md:px-8 md:pt-40">
+      {/* ———— HERO ———— */}
+      <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 pb-16 pt-32 text-center md:px-8 md:pt-40">
         <div className="animate-fade-in flex flex-col items-center">
           <img
             src={logoAsset.url}
@@ -263,47 +285,8 @@ function Hero() {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
-    </section>
-  );
-}
-
-function Stat({ n, label }: { n: string; label: string }) {
-  return (
-    <div>
-      <p className="font-serif text-2xl font-semibold text-gold">{n}</p>
-      <p className="text-xs uppercase tracking-wider text-foreground/60">{label}</p>
-    </div>
-  );
-}
-
-/* ———————————————— QUEM SOMOS ———————————————— */
-
-function QuemSomos() {
-  const pilares = [
-    {
-      icon: Eye,
-      title: "Visão",
-      text:
-        "Todas as pessoas precisam conhecer o amor de Deus, independente da placa de igreja ou título pessoal.",
-    },
-    {
-      icon: Target,
-      title: "Missão",
-      text:
-        "Mostrar a possibilidade de viver o amor de Deus na sua plenitude, sendo cada um seu Perfeito Eu.",
-    },
-    {
-      icon: Compass,
-      title: "Objetivo",
-      text:
-        "Ajudar homens e mulheres a encontrar sua real identidade em Cristo.",
-    },
-  ];
-
-  return (
-    <section id="quem-somos" className="relative py-24 md:py-32">
-      <div className="mx-auto grid max-w-7xl gap-12 px-4 md:px-8 lg:grid-cols-2 lg:items-center lg:gap-20">
+      {/* ———— QUEM SOMOS (integrado) ———— */}
+      <div className="relative mx-auto grid max-w-7xl gap-12 px-4 pb-24 pt-8 md:px-8 md:pb-32 lg:grid-cols-2 lg:items-center lg:gap-20">
         <div className="relative">
           <div className="absolute -inset-4 -z-10 rounded-3xl bg-gradient-to-br from-gold/20 via-transparent to-secondary/20 blur-2xl" />
           <div className="overflow-hidden rounded-3xl shadow-premium">
@@ -358,6 +341,16 @@ function QuemSomos() {
     </section>
   );
 }
+
+function Stat({ n, label }: { n: string; label: string }) {
+  return (
+    <div>
+      <p className="font-serif text-2xl font-semibold text-gold">{n}</p>
+      <p className="text-xs uppercase tracking-wider text-foreground/60">{label}</p>
+    </div>
+  );
+}
+
 
 /* ———————————————— CRONOGRAMA ———————————————— */
 
