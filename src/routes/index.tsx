@@ -1,7 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Accordion,
@@ -18,7 +16,6 @@ import {
   Sparkles,
   BookOpen,
   Users,
-  Calendar,
   Award,
   ChevronLeft,
   ChevronRight,
@@ -28,7 +25,6 @@ import {
   X,
   Play,
   Star,
-  MapPin,
   Compass,
   Target,
   Eye,
@@ -39,8 +35,6 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import logoAsset from "@/assets/book-team-logo.png.asset.json";
 
 
@@ -73,7 +67,6 @@ function LandingPage() {
 
       <HowItWorks />
       <JornadaLivros />
-      <EventosSection />
 
       <EventosEspeciais />
       <Testimonials />
@@ -100,7 +93,6 @@ function Header() {
   const links = [
     { href: "#quem-somos", label: "Quem somos" },
     { href: "#cronograma", label: "Livros" },
-    { href: "#eventos", label: "Encontros" },
     { href: "#contato", label: "Contato" },
   ];
 
@@ -588,91 +580,6 @@ function HowItWorks() {
 
 
 /* ———————————————— ENCONTROS ———————————————— */
-
-function EventosSection() {
-  const { data: eventos = [] } = useQuery({
-    queryKey: ["landing-eventos"],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("eventos")
-        .select("id, titulo, cidade, local, data, hora, vagas")
-        .eq("status", "aberto")
-        .gte("data", new Date().toISOString().slice(0, 10))
-        .order("data")
-        .limit(6);
-      return data ?? [];
-    },
-  });
-
-  return (
-    <section id="eventos" className="relative border-t border-border/40 py-24 md:py-32">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="max-w-2xl">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
-              Próximos encontros
-            </span>
-            <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
-              Reserve seu lugar
-            </h2>
-          </div>
-        </div>
-
-        {eventos.length === 0 ? (
-          <div className="mt-12 rounded-3xl border border-dashed border-border/60 bg-card/30 p-14 text-center">
-            <Calendar className="mx-auto h-8 w-8 text-gold/70" />
-            <p className="mt-4 text-[15px] text-foreground/70">
-              Nenhum encontro agendado no momento.
-            </p>
-            <Button asChild className="mt-6 bg-gold text-primary-foreground hover:bg-gold/90">
-              <Link to="/auth" search={{ mode: "signup" }}>
-                Quero ser avisado
-              </Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {eventos.map((e) => (
-              <article
-                key={e.id}
-                className="group overflow-hidden rounded-2xl border border-border/60 bg-card transition-all hover:border-gold/40 hover:shadow-premium"
-              >
-                <div className="relative flex h-40 items-center justify-center bg-gradient-wine">
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(217,164,65,0.2),transparent_60%)]" />
-                  <div className="relative text-center">
-                    <p className="font-serif text-4xl font-semibold text-foreground">
-                      {format(new Date(e.data + "T00:00:00"), "dd", { locale: ptBR })}
-                    </p>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-gold">
-                      {format(new Date(e.data + "T00:00:00"), "MMM", { locale: ptBR })}
-                    </p>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="font-serif text-lg font-semibold">{e.titulo}</h3>
-                  <div className="mt-2 flex items-center gap-1.5 text-[13px] text-foreground/70">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {[e.cidade, e.local].filter(Boolean).join(" · ")}
-                  </div>
-                  <div className="mt-5 flex items-center justify-between">
-                    <span className="rounded-full bg-gold/10 px-2.5 py-1 text-[11px] font-medium text-gold">
-                      {e.vagas > 0 ? `${e.vagas} vagas` : "Vagas limitadas"}
-                    </span>
-                    <Button asChild size="sm" className="bg-gold text-primary-foreground hover:bg-gold/90">
-                      <Link to="/auth" search={{ mode: "signup" }}>
-                        Participar
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
 
 /* ———————————————— EVENTOS ESPECIAIS ———————————————— */
 
