@@ -30,7 +30,13 @@ import {
   Compass,
   Target,
   Eye,
+  BookMarked,
+  UserPlus,
+  Receipt,
+  Mail,
+  CheckCircle2,
 } from "lucide-react";
+
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import logoAsset from "@/assets/book-team-logo.png.asset.json";
