@@ -357,7 +357,7 @@ function JornadaLivros() {
   return (
     <section
       id="cronograma"
-      className="relative border-t border-border/40 bg-gradient-to-b from-background via-card/30 to-background py-16 md:py-20"
+      className="relative border-t border-border/40 bg-gradient-to-b from-background via-card/30 to-background py-10 md:py-14"
     >
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -501,7 +501,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="como-funciona" className="relative border-t border-border/40 py-16 md:py-20">
+    <section id="como-funciona" className="relative border-t border-border/40 py-10 md:py-14">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="max-w-2xl">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
@@ -510,7 +510,7 @@ function HowItWorks() {
         </div>
 
         {/* ——— Timeline horizontal (md+) / vertical (mobile) ——— */}
-        <div className="relative mt-16">
+        <div className="relative mt-10">
           {/* Trilho horizontal */}
           <div className="pointer-events-none absolute left-0 right-0 top-10 hidden h-px bg-gradient-to-r from-gold/0 via-gold/50 to-gold/0 md:block" />
           {/* Trilho vertical (mobile) */}
@@ -571,7 +571,7 @@ function HowItWorks() {
 
 function EventosEspeciais() {
   return (
-    <section className="relative py-16 md:py-20">
+    <section className="relative py-10 md:py-14">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="relative overflow-hidden rounded-3xl border border-gold/20 gradient-wine p-8 shadow-premium md:p-14">
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
@@ -632,7 +632,7 @@ function Testimonials() {
     { q: "A cultura de honra mudou como eu conduzo meu casamento e meu trabalho.", a: "Camila F.", cidade: "Curitiba - PR", nota: 5 },
   ];
   return (
-    <section className="relative border-t border-border/40 bg-gradient-to-b from-card/40 to-background py-16 md:py-20">
+    <section className="relative border-t border-border/40 bg-gradient-to-b from-card/40 to-background py-10 md:py-14">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
@@ -680,7 +680,7 @@ function ContatoEventos() {
   const phone = "41 3082-5553";
   const whatsappHref = `https://wa.me/554130825553`;
   return (
-    <section id="contato" className="relative py-16 md:py-20">
+    <section id="contato" className="relative py-10 md:py-14">
       <div className="mx-auto max-w-4xl px-4 text-center md:px-8">
         <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
           Contato para eventos
@@ -729,7 +729,7 @@ function FaqSection() {
     { q: "Posso escolher qualquer livro?", a: "As leituras seguem a ordem da trilha escolhida — assim a comunidade caminha junta." },
   ];
   return (
-    <section id="faq" className="border-t border-border/40 py-16 md:py-20">
+    <section id="faq" className="border-t border-border/40 py-10 md:py-14">
       <div className="mx-auto max-w-3xl px-4 md:px-8">
         <div className="text-center">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
@@ -739,7 +739,7 @@ function FaqSection() {
             Dúvidas comuns
           </h2>
         </div>
-        <Accordion type="single" collapsible className="mt-12">
+        <Accordion type="single" collapsible className="mt-8">
           {items.map((i, idx) => (
             <AccordionItem
               key={idx}
@@ -828,7 +828,7 @@ function Footer() {
           </div>
         </div>
 
-        <div className="mt-16 flex flex-col items-center justify-between gap-3 border-t border-border/40 pt-6 text-[11px] text-foreground/50 md:flex-row">
+        <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-border/40 pt-6 text-[11px] text-foreground/50 md:flex-row">
           <p>© {new Date().getFullYear()} Ministério Book Team. Todos os direitos reservados.</p>
           <p>Feito com <Heart className="inline h-3 w-3 fill-gold text-gold" /> em Curitiba - PR</p>
         </div>
