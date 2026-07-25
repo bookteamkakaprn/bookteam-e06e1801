@@ -61,8 +61,8 @@ function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
-      <Hero />
-      <QuemSomos />
+      <HeroQuemSomos />
+
       <HowItWorks />
       <TrilhasNetflix />
       <JornadaLivros />
