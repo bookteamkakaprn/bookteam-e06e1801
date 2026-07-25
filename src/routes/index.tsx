@@ -519,35 +519,43 @@ function HowItWorks() {
 
   return (
     <section id="como-funciona" className="relative border-t border-border/40 py-24 md:py-32">
-      <div className="mx-auto max-w-5xl px-4 md:px-8">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="max-w-2xl">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
             Como funciona
           </span>
         </div>
 
-        <div className="relative mt-16 pl-16 md:pl-20">
-          {/* Linha do tempo lateral */}
-          <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-gold/10 via-gold/50 to-gold/10 md:left-8" />
+        {/* ——— Timeline horizontal (md+) / vertical (mobile) ——— */}
+        <div className="relative mt-16">
+          {/* Trilho horizontal */}
+          <div className="pointer-events-none absolute left-0 right-0 top-10 hidden h-px bg-gradient-to-r from-gold/0 via-gold/50 to-gold/0 md:block" />
+          {/* Trilho vertical (mobile) */}
+          <div className="pointer-events-none absolute left-10 top-2 bottom-2 w-px bg-gradient-to-b from-gold/10 via-gold/50 to-gold/10 md:hidden" />
 
-          <ol className="space-y-8 md:space-y-10">
+          <ol className="grid gap-8 md:grid-cols-5 md:gap-6">
             {steps.map((s, i) => (
-              <li key={s.title} className="group relative">
-                {/* Nó da linha */}
-                <span className="absolute -left-[46px] top-4 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 bg-background shadow-glow-gold md:-left-[54px]">
-                  <s.icon className="h-4.5 w-4.5 text-gold" />
+              <li key={s.title} className="group relative pl-24 md:pl-0">
+                {/* Nó com logo do Book Team */}
+                <span className="absolute left-0 top-0 z-10 flex h-20 w-20 items-center justify-center rounded-full border border-gold/50 bg-background shadow-glow-gold md:relative md:mx-auto md:mb-6">
+                  <img
+                    src={logoAsset.url}
+                    alt="Book Team"
+                    className="h-14 w-14 rounded-full object-cover"
+                  />
+                  <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border border-gold/50 bg-background text-[11px] font-bold text-gold">
+                    {i + 1}
+                  </span>
                 </span>
-                {/* Ponto conector no eixo */}
-                <span className="absolute -left-[27px] top-[26px] hidden h-2 w-2 rounded-full bg-gold md:block" />
 
-                <div className="rounded-2xl border border-border/60 bg-card/70 p-5 shadow-book backdrop-blur transition-all group-hover:border-gold/40 md:p-6">
+                <div className="rounded-2xl border border-border/60 bg-card/70 p-5 text-left shadow-book backdrop-blur transition-all group-hover:border-gold/40 md:text-center">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
                     Passo {i + 1}
                   </p>
-                  <p className="mt-1 font-serif text-lg font-semibold md:text-xl">
+                  <p className="mt-1 font-serif text-lg font-semibold md:text-[17px]">
                     {s.title}
                   </p>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/70 md:text-sm">
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/70">
                     {s.desc}
                   </p>
                   {"href" in s && s.href ? (
@@ -559,20 +567,20 @@ function HowItWorks() {
                       {(s as { cta?: string }).cta ?? "Acessar"} <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
                   ) : null}
-
                 </div>
               </li>
             ))}
           </ol>
 
-          {/* Encerramento da linha */}
-          <div className="mt-8 flex items-center gap-3 pl-1 md:pl-2">
+          {/* Encerramento */}
+          <div className="mt-10 flex items-center justify-center gap-3">
             <CheckCircle2 className="h-5 w-5 text-gold" />
             <p className="text-sm font-medium text-foreground/80">
               Inscrição confirmada — pronto para viver o encontro.
             </p>
           </div>
         </div>
+
       </div>
     </section>
   );
