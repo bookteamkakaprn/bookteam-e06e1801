@@ -72,7 +72,6 @@ function LandingPage() {
       <HeroQuemSomos />
 
       <HowItWorks />
-      <TrilhasNetflix />
       <JornadaLivros />
       <EventosSection />
 
@@ -100,8 +99,7 @@ function Header() {
 
   const links = [
     { href: "#quem-somos", label: "Quem somos" },
-    { href: "#trilhas", label: "Trilhas" },
-    { href: "#livros", label: "Livros" },
+    { href: "#cronograma", label: "Livros" },
     { href: "#eventos", label: "Encontros" },
     { href: "#contato", label: "Contato" },
   ];
@@ -279,8 +277,8 @@ function HeroQuemSomos() {
                 variant="outline"
                 className="h-12 border-foreground/20 bg-background/30 px-6 text-[15px] text-foreground backdrop-blur hover:bg-background/60"
               >
-                <a href="#trilhas">
-                  <Play className="mr-2 h-4 w-4" /> Conheça as trilhas
+                <a href="#cronograma">
+                  <Play className="mr-2 h-4 w-4" /> Conheça os livros
                 </a>
               </Button>
             </div>
@@ -583,130 +581,6 @@ function HowItWorks() {
 
       </div>
     </section>
-  );
-}
-
-
-/* ———————————————— TRILHAS NETFLIX ———————————————— */
-
-type TrilhaCard = {
-  id: string;
-  nome: string;
-  descricao: string;
-  livros: number;
-  progresso: number; // 0..livros
-  cor: string;
-};
-
-function TrilhasNetflix() {
-  // Trilhas de exibição na landing (visual). Regras de negócio permanecem intactas no backend.
-  const trilhas: TrilhaCard[] = [
-    { id: "identidade", nome: "Identidade", descricao: "Descubra quem Deus diz que você é.", livros: 4, progresso: 2, cor: "from-[oklch(0.4_0.12_25)] to-[oklch(0.25_0.08_25)]" },
-    { id: "relacionamentos", nome: "Relacionamentos", descricao: "Construa relações saudáveis e verdadeiras.", livros: 5, progresso: 0, cor: "from-[oklch(0.38_0.11_20)] to-[oklch(0.22_0.06_20)]" },
-    { id: "proposito", nome: "Propósito", descricao: "Viva com propósito e direção.", livros: 6, progresso: 1, cor: "from-[oklch(0.42_0.1_50)] to-[oklch(0.26_0.05_50)]" },
-    { id: "lideranca", nome: "Liderança", descricao: "Inspire, influencie e transforme.", livros: 6, progresso: 3, cor: "from-[oklch(0.36_0.09_40)] to-[oklch(0.22_0.04_40)]" },
-    { id: "familia", nome: "Família", descricao: "Fortaleça sua casa, sua base, seu legado.", livros: 4, progresso: 0, cor: "from-[oklch(0.42_0.11_30)] to-[oklch(0.25_0.07_30)]" },
-    { id: "fe-carater", nome: "Fé e Caráter", descricao: "Seja cada dia mais parecido com Cristo.", livros: 5, progresso: 4, cor: "from-[oklch(0.35_0.1_15)] to-[oklch(0.2_0.05_15)]" },
-  ];
-
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const scrollBy = (dir: 1 | -1) => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: "smooth" });
-  };
-
-  return (
-    <section id="trilhas" className="relative border-t border-border/40 py-24 md:py-32">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="flex flex-wrap items-end justify-end gap-4">
-
-          <div className="hidden gap-2 md:flex">
-            <button
-              onClick={() => scrollBy(-1)}
-              aria-label="Anterior"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-card/60 text-foreground/80 backdrop-blur transition-all hover:border-gold/40 hover:text-gold"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => scrollBy(1)}
-              aria-label="Próximo"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-card/60 text-foreground/80 backdrop-blur transition-all hover:border-gold/40 hover:text-gold"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div
-        ref={scrollerRef}
-        className="scrollbar-hidden mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 md:px-8"
-      >
-        {trilhas.map((t) => (
-          <TrilhaCardItem key={t.id} t={t} />
-        ))}
-        <div className="shrink-0 pr-2 md:pr-4" />
-      </div>
-    </section>
-  );
-}
-
-function TrilhaCardItem({ t }: { t: TrilhaCard }) {
-  return (
-    <Link
-      to="/auth"
-      search={{ mode: "signup" }}
-      className={`group poster-hover relative aspect-[2/3] w-[240px] shrink-0 snap-start overflow-hidden rounded-2xl bg-gradient-to-br ${t.cor} shadow-book md:w-[280px]`}
-    >
-      {/* padrão sutil */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_60%)]" />
-
-      {/* corações de progresso topo direito */}
-      <div className="absolute right-3 top-3 flex gap-0.5">
-        {Array.from({ length: t.livros }).map((_, i) => (
-          <Heart
-            key={i}
-            className={`h-3.5 w-3.5 ${
-              i < t.progresso ? "fill-gold text-gold" : "text-white/40"
-            }`}
-          />
-        ))}
-      </div>
-
-      {/* conteúdo */}
-      <div className="absolute inset-x-0 bottom-0 p-5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold/90">
-          Trilha
-        </p>
-        <p className="mt-1 font-serif text-2xl font-semibold italic leading-tight text-foreground drop-shadow-md">
-          {t.nome}
-        </p>
-        <p className="mt-2 line-clamp-2 text-[12px] text-foreground/80">
-          {t.descricao}
-        </p>
-        <div className="mt-3 flex items-center justify-between text-[11px]">
-          <span className="text-foreground/60">{t.livros} livros</span>
-          {t.progresso > 0 && (
-            <span className="text-gold">
-              {t.progresso}/{t.livros}
-            </span>
-          )}
-        </div>
-        {t.progresso > 0 && (
-          <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full bg-gradient-gold"
-              style={{ width: `${(t.progresso / t.livros) * 100}%` }}
-            />
-          </div>
-        )}
-      </div>
-
-      {/* overlay hover */}
-      <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/10" />
-    </Link>
   );
 }
 
