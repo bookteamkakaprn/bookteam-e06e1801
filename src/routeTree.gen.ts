@@ -14,6 +14,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TrilhasIdRouteImport } from './routes/trilhas.$id'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedPagamentosRouteImport } from './routes/_authenticated/pagamentos'
 import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
@@ -52,6 +53,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrilhasIdRoute = TrilhasIdRouteImport.update({
+  id: '/trilhas/$id',
+  path: '/trilhas/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/inicio': typeof AuthenticatedInicioRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AuthenticatedAdminCertificadosRoute
   '/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/admin/livros': typeof AuthenticatedAdminLivrosRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/inicio': typeof AuthenticatedInicioRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AuthenticatedAdminCertificadosRoute
   '/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/admin/livros': typeof AuthenticatedAdminLivrosRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/_authenticated/inicio': typeof AuthenticatedInicioRoute
   '/_authenticated/pagamentos': typeof AuthenticatedPagamentosRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/trilhas/$id': typeof TrilhasIdRoute
   '/_authenticated/admin/certificados': typeof AuthenticatedAdminCertificadosRoute
   '/_authenticated/admin/eventos': typeof AuthenticatedAdminEventosRoute
   '/_authenticated/admin/livros': typeof AuthenticatedAdminLivrosRoute
@@ -216,6 +225,7 @@ export interface FileRouteTypes {
     | '/inicio'
     | '/pagamentos'
     | '/perfil'
+    | '/trilhas/$id'
     | '/admin/certificados'
     | '/admin/eventos'
     | '/admin/livros'
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/inicio'
     | '/pagamentos'
     | '/perfil'
+    | '/trilhas/$id'
     | '/admin/certificados'
     | '/admin/eventos'
     | '/admin/livros'
@@ -258,6 +269,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inicio'
     | '/_authenticated/pagamentos'
     | '/_authenticated/perfil'
+    | '/trilhas/$id'
     | '/_authenticated/admin/certificados'
     | '/_authenticated/admin/eventos'
     | '/_authenticated/admin/livros'
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TrilhasIdRoute: typeof TrilhasIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -312,6 +325,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trilhas/$id': {
+      id: '/trilhas/$id'
+      path: '/trilhas/$id'
+      fullPath: '/trilhas/$id'
+      preLoaderRoute: typeof TrilhasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/perfil': {
@@ -476,6 +496,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TrilhasIdRoute: TrilhasIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
