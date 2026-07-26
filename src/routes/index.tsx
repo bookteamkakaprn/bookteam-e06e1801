@@ -458,7 +458,7 @@ function JornadaLivros() {
 function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
   return (
     <article
-      className={`group poster-hover relative aspect-[2/3] w-[160px] shrink-0 snap-start overflow-hidden rounded-r-2xl rounded-l-md bg-gradient-to-br ${l.cor} shadow-book md:w-[190px]`}
+      className={`group poster-hover relative aspect-[2/3] w-[180px] shrink-0 snap-start overflow-hidden rounded-r-2xl rounded-l-md bg-gradient-to-br ${l.cor} shadow-book md:w-[240px] lg:w-[260px]`}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_60%)]" />
 
