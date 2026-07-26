@@ -17,6 +17,7 @@ import { Route as AdminRouteRouteImport } from './routes/_admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrilhasIdRouteImport } from './routes/trilhas.$id'
 import { Route as LivrosIdRouteImport } from './routes/livros.$id'
+import { Route as CadastroTurmaIdRouteImport } from './routes/cadastro.$turmaId'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedPagamentosRouteImport } from './routes/_authenticated/pagamentos'
 import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
@@ -69,6 +70,11 @@ const TrilhasIdRoute = TrilhasIdRouteImport.update({
 const LivrosIdRoute = LivrosIdRouteImport.update({
   id: '/livros/$id',
   path: '/livros/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastroTurmaIdRoute = CadastroTurmaIdRouteImport.update({
+  id: '/cadastro/$turmaId',
+  path: '/cadastro/$turmaId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
@@ -159,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/inicio': typeof AuthenticatedInicioRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/cadastro/$turmaId': typeof CadastroTurmaIdRoute
   '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AdminAdminCertificadosRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/inicio': typeof AuthenticatedInicioRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/cadastro/$turmaId': typeof CadastroTurmaIdRoute
   '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AdminAdminCertificadosRoute
@@ -208,6 +216,7 @@ export interface FileRoutesById {
   '/_authenticated/inicio': typeof AuthenticatedInicioRoute
   '/_authenticated/pagamentos': typeof AuthenticatedPagamentosRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/cadastro/$turmaId': typeof CadastroTurmaIdRoute
   '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
   '/_admin/admin/certificados': typeof AdminAdminCertificadosRoute
@@ -233,6 +242,7 @@ export interface FileRouteTypes {
     | '/inicio'
     | '/pagamentos'
     | '/perfil'
+    | '/cadastro/$turmaId'
     | '/livros/$id'
     | '/trilhas/$id'
     | '/admin/certificados'
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/inicio'
     | '/pagamentos'
     | '/perfil'
+    | '/cadastro/$turmaId'
     | '/livros/$id'
     | '/trilhas/$id'
     | '/admin/certificados'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inicio'
     | '/_authenticated/pagamentos'
     | '/_authenticated/perfil'
+    | '/cadastro/$turmaId'
     | '/livros/$id'
     | '/trilhas/$id'
     | '/_admin/admin/certificados'
@@ -302,6 +314,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  CadastroTurmaIdRoute: typeof CadastroTurmaIdRoute
   LivrosIdRoute: typeof LivrosIdRoute
   TrilhasIdRoute: typeof TrilhasIdRoute
 }
@@ -362,6 +375,13 @@ declare module '@tanstack/react-router' {
       path: '/livros/$id'
       fullPath: '/livros/$id'
       preLoaderRoute: typeof LivrosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastro/$turmaId': {
+      id: '/cadastro/$turmaId'
+      path: '/cadastro/$turmaId'
+      fullPath: '/cadastro/$turmaId'
+      preLoaderRoute: typeof CadastroTurmaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/perfil': {
@@ -528,6 +548,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  CadastroTurmaIdRoute: CadastroTurmaIdRoute,
   LivrosIdRoute: LivrosIdRoute,
   TrilhasIdRoute: TrilhasIdRoute,
 }
