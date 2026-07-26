@@ -24,6 +24,7 @@ import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticated/eventos'
 import { Route as AuthenticatedCertificadosRouteImport } from './routes/_authenticated/certificados'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index'
+import { Route as AuthenticatedMatriculaInscricaoIdRouteImport } from './routes/_authenticated/matricula.$inscricaoId'
 import { Route as AuthenticatedInscricaoEventoIdRouteImport } from './routes/_authenticated/inscricao.$eventoId'
 import { Route as AdminAdminTurmasRouteImport } from './routes/_admin/admin.turmas'
 import { Route as AdminAdminRelatoriosRouteImport } from './routes/_admin/admin.relatorios'
@@ -108,6 +109,12 @@ const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AuthenticatedMatriculaInscricaoIdRoute =
+  AuthenticatedMatriculaInscricaoIdRouteImport.update({
+    id: '/matricula/$inscricaoId',
+    path: '/matricula/$inscricaoId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedInscricaoEventoIdRoute =
   AuthenticatedInscricaoEventoIdRouteImport.update({
     id: '/inscricao/$eventoId',
@@ -177,6 +184,7 @@ export interface FileRoutesByFullPath {
   '/admin/relatorios': typeof AdminAdminRelatoriosRoute
   '/admin/turmas': typeof AdminAdminTurmasRoute
   '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
+  '/matricula/$inscricaoId': typeof AuthenticatedMatriculaInscricaoIdRoute
   '/admin/': typeof AdminAdminIndexRoute
 }
 export interface FileRoutesByTo {
@@ -201,6 +209,7 @@ export interface FileRoutesByTo {
   '/admin/relatorios': typeof AdminAdminRelatoriosRoute
   '/admin/turmas': typeof AdminAdminTurmasRoute
   '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
+  '/matricula/$inscricaoId': typeof AuthenticatedMatriculaInscricaoIdRoute
   '/admin': typeof AdminAdminIndexRoute
 }
 export interface FileRoutesById {
@@ -228,6 +237,7 @@ export interface FileRoutesById {
   '/_admin/admin/relatorios': typeof AdminAdminRelatoriosRoute
   '/_admin/admin/turmas': typeof AdminAdminTurmasRoute
   '/_authenticated/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
+  '/_authenticated/matricula/$inscricaoId': typeof AuthenticatedMatriculaInscricaoIdRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
 }
 export interface FileRouteTypes {
@@ -254,6 +264,7 @@ export interface FileRouteTypes {
     | '/admin/relatorios'
     | '/admin/turmas'
     | '/inscricao/$eventoId'
+    | '/matricula/$inscricaoId'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -278,6 +289,7 @@ export interface FileRouteTypes {
     | '/admin/relatorios'
     | '/admin/turmas'
     | '/inscricao/$eventoId'
+    | '/matricula/$inscricaoId'
     | '/admin'
   id:
     | '__root__'
@@ -304,6 +316,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/relatorios'
     | '/_admin/admin/turmas'
     | '/_authenticated/inscricao/$eventoId'
+    | '/_authenticated/matricula/$inscricaoId'
     | '/_admin/admin/'
   fileRoutesById: FileRoutesById
 }
@@ -426,6 +439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/_authenticated/matricula/$inscricaoId': {
+      id: '/_authenticated/matricula/$inscricaoId'
+      path: '/matricula/$inscricaoId'
+      fullPath: '/matricula/$inscricaoId'
+      preLoaderRoute: typeof AuthenticatedMatriculaInscricaoIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/inscricao/$eventoId': {
       id: '/_authenticated/inscricao/$eventoId'
       path: '/inscricao/$eventoId'
@@ -527,6 +547,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPagamentosRoute: typeof AuthenticatedPagamentosRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
   AuthenticatedInscricaoEventoIdRoute: typeof AuthenticatedInscricaoEventoIdRoute
+  AuthenticatedMatriculaInscricaoIdRoute: typeof AuthenticatedMatriculaInscricaoIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -536,6 +557,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPagamentosRoute: AuthenticatedPagamentosRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
   AuthenticatedInscricaoEventoIdRoute: AuthenticatedInscricaoEventoIdRoute,
+  AuthenticatedMatriculaInscricaoIdRoute:
+    AuthenticatedMatriculaInscricaoIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -555,3 +578,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
