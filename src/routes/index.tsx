@@ -97,11 +97,11 @@ function Header() {
   }, []);
 
   const navItems = [
-    { href: "#quem-somos", label: "Quem somos" },
-    { href: "#cronograma", label: "Livros" },
-    { to: "/eventos", label: "Agenda" },
-    { to: "/inicio", label: "Área do aluno" },
-    { to: "/admin", label: "Adm" },
+    { type: "anchor" as const, href: "#quem-somos", label: "Quem somos" },
+    { type: "anchor" as const, href: "#cronograma", label: "Livros" },
+    { type: "route" as const, to: "/eventos", label: "Agenda" },
+    { type: "route" as const, to: "/inicio", label: "Área do aluno" },
+    { type: "route" as const, to: "/admin", label: "Adm" },
   ] as const;
 
   return (
