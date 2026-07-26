@@ -63,12 +63,15 @@ function AdminLivrosPage() {
   const salvar = useMutation({
     mutationFn: async () => {
       if (!selecionado) return;
-      const payload: Record<string, unknown> = {};
+      const payload: Record<string, string | number | null> = {};
       for (const [k, v] of Object.entries(form)) {
         if (k === "id" || k === "vagas_restantes" || k === "created_at" || k === "updated_at") continue;
-        payload[k] = v === "" ? null : v;
+        payload[k] = v === "" ? null : (v as string | number | null);
       }
-      const { error } = await supabase.from("livros").update(payload).eq("id", selecionado);
+      const { error } = await supabase
+        .from("livros")
+        .update(payload as never)
+        .eq("id", selecionado);
       if (error) throw error;
     },
     onSuccess: () => {
