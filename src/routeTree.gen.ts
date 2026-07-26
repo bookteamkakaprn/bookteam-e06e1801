@@ -24,12 +24,10 @@ import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCertificadosRouteImport } from './routes/_authenticated/certificados'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index'
 import { Route as AuthenticatedInscricaoEventoIdRouteImport } from './routes/_authenticated/inscricao.$eventoId'
-import { Route as AdminAdminTrilhasRouteImport } from './routes/_admin/admin.trilhas'
 import { Route as AdminAdminRelatoriosRouteImport } from './routes/_admin/admin.relatorios'
 import { Route as AdminAdminPresencasRouteImport } from './routes/_admin/admin.presencas'
 import { Route as AdminAdminParticipantesRouteImport } from './routes/_admin/admin.participantes'
 import { Route as AdminAdminPagamentosRouteImport } from './routes/_admin/admin.pagamentos'
-import { Route as AdminAdminLivrosRouteImport } from './routes/_admin/admin.livros'
 import { Route as AdminAdminEventosRouteImport } from './routes/_admin/admin.eventos'
 import { Route as AdminAdminCertificadosRouteImport } from './routes/_admin/admin.certificados'
 
@@ -108,11 +106,6 @@ const AuthenticatedInscricaoEventoIdRoute =
     path: '/inscricao/$eventoId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AdminAdminTrilhasRoute = AdminAdminTrilhasRouteImport.update({
-  id: '/admin/trilhas',
-  path: '/admin/trilhas',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
 const AdminAdminRelatoriosRoute = AdminAdminRelatoriosRouteImport.update({
   id: '/admin/relatorios',
   path: '/admin/relatorios',
@@ -131,11 +124,6 @@ const AdminAdminParticipantesRoute = AdminAdminParticipantesRouteImport.update({
 const AdminAdminPagamentosRoute = AdminAdminPagamentosRouteImport.update({
   id: '/admin/pagamentos',
   path: '/admin/pagamentos',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminAdminLivrosRoute = AdminAdminLivrosRouteImport.update({
-  id: '/admin/livros',
-  path: '/admin/livros',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminAdminEventosRoute = AdminAdminEventosRouteImport.update({
@@ -163,12 +151,10 @@ export interface FileRoutesByFullPath {
   '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AdminAdminCertificadosRoute
   '/admin/eventos': typeof AdminAdminEventosRoute
-  '/admin/livros': typeof AdminAdminLivrosRoute
   '/admin/pagamentos': typeof AdminAdminPagamentosRoute
   '/admin/participantes': typeof AdminAdminParticipantesRoute
   '/admin/presencas': typeof AdminAdminPresencasRoute
   '/admin/relatorios': typeof AdminAdminRelatoriosRoute
-  '/admin/trilhas': typeof AdminAdminTrilhasRoute
   '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/admin/': typeof AdminAdminIndexRoute
 }
@@ -186,12 +172,10 @@ export interface FileRoutesByTo {
   '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AdminAdminCertificadosRoute
   '/admin/eventos': typeof AdminAdminEventosRoute
-  '/admin/livros': typeof AdminAdminLivrosRoute
   '/admin/pagamentos': typeof AdminAdminPagamentosRoute
   '/admin/participantes': typeof AdminAdminParticipantesRoute
   '/admin/presencas': typeof AdminAdminPresencasRoute
   '/admin/relatorios': typeof AdminAdminRelatoriosRoute
-  '/admin/trilhas': typeof AdminAdminTrilhasRoute
   '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/admin': typeof AdminAdminIndexRoute
 }
@@ -212,12 +196,10 @@ export interface FileRoutesById {
   '/trilhas/$id': typeof TrilhasIdRoute
   '/_admin/admin/certificados': typeof AdminAdminCertificadosRoute
   '/_admin/admin/eventos': typeof AdminAdminEventosRoute
-  '/_admin/admin/livros': typeof AdminAdminLivrosRoute
   '/_admin/admin/pagamentos': typeof AdminAdminPagamentosRoute
   '/_admin/admin/participantes': typeof AdminAdminParticipantesRoute
   '/_admin/admin/presencas': typeof AdminAdminPresencasRoute
   '/_admin/admin/relatorios': typeof AdminAdminRelatoriosRoute
-  '/_admin/admin/trilhas': typeof AdminAdminTrilhasRoute
   '/_authenticated/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
 }
@@ -237,12 +219,10 @@ export interface FileRouteTypes {
     | '/trilhas/$id'
     | '/admin/certificados'
     | '/admin/eventos'
-    | '/admin/livros'
     | '/admin/pagamentos'
     | '/admin/participantes'
     | '/admin/presencas'
     | '/admin/relatorios'
-    | '/admin/trilhas'
     | '/inscricao/$eventoId'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -260,12 +240,10 @@ export interface FileRouteTypes {
     | '/trilhas/$id'
     | '/admin/certificados'
     | '/admin/eventos'
-    | '/admin/livros'
     | '/admin/pagamentos'
     | '/admin/participantes'
     | '/admin/presencas'
     | '/admin/relatorios'
-    | '/admin/trilhas'
     | '/inscricao/$eventoId'
     | '/admin'
   id:
@@ -285,12 +263,10 @@ export interface FileRouteTypes {
     | '/trilhas/$id'
     | '/_admin/admin/certificados'
     | '/_admin/admin/eventos'
-    | '/_admin/admin/livros'
     | '/_admin/admin/pagamentos'
     | '/_admin/admin/participantes'
     | '/_admin/admin/presencas'
     | '/_admin/admin/relatorios'
-    | '/_admin/admin/trilhas'
     | '/_authenticated/inscricao/$eventoId'
     | '/_admin/admin/'
   fileRoutesById: FileRoutesById
@@ -413,13 +389,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInscricaoEventoIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_admin/admin/trilhas': {
-      id: '/_admin/admin/trilhas'
-      path: '/admin/trilhas'
-      fullPath: '/admin/trilhas'
-      preLoaderRoute: typeof AdminAdminTrilhasRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
     '/_admin/admin/relatorios': {
       id: '/_admin/admin/relatorios'
       path: '/admin/relatorios'
@@ -448,13 +417,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminPagamentosRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/_admin/admin/livros': {
-      id: '/_admin/admin/livros'
-      path: '/admin/livros'
-      fullPath: '/admin/livros'
-      preLoaderRoute: typeof AdminAdminLivrosRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
     '/_admin/admin/eventos': {
       id: '/_admin/admin/eventos'
       path: '/admin/eventos'
@@ -475,24 +437,20 @@ declare module '@tanstack/react-router' {
 interface AdminRouteRouteChildren {
   AdminAdminCertificadosRoute: typeof AdminAdminCertificadosRoute
   AdminAdminEventosRoute: typeof AdminAdminEventosRoute
-  AdminAdminLivrosRoute: typeof AdminAdminLivrosRoute
   AdminAdminPagamentosRoute: typeof AdminAdminPagamentosRoute
   AdminAdminParticipantesRoute: typeof AdminAdminParticipantesRoute
   AdminAdminPresencasRoute: typeof AdminAdminPresencasRoute
   AdminAdminRelatoriosRoute: typeof AdminAdminRelatoriosRoute
-  AdminAdminTrilhasRoute: typeof AdminAdminTrilhasRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAdminCertificadosRoute: AdminAdminCertificadosRoute,
   AdminAdminEventosRoute: AdminAdminEventosRoute,
-  AdminAdminLivrosRoute: AdminAdminLivrosRoute,
   AdminAdminPagamentosRoute: AdminAdminPagamentosRoute,
   AdminAdminParticipantesRoute: AdminAdminParticipantesRoute,
   AdminAdminPresencasRoute: AdminAdminPresencasRoute,
   AdminAdminRelatoriosRoute: AdminAdminRelatoriosRoute,
-  AdminAdminTrilhasRoute: AdminAdminTrilhasRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
 }
 
