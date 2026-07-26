@@ -1,11 +1,11 @@
 {
-  "version": 1,
   "asset_id": "c2537257-364b-49e5-9215-2483791a8372",
-  "project_id": "4cc76cd9-0a34-4e67-991a-7833328c08cd",
-  "url": "/__l5e/assets-v1/c2537257-364b-49e5-9215-2483791a8372/ative.jpg",
-  "r2_key": "a/v1/4cc76cd9-0a34-4e67-991a-7833328c08cd/c2537257-364b-49e5-9215-2483791a8372/ative.jpg",
-  "original_filename": "ative.jpg",
-  "size": 11727,
   "content_type": "image/jpeg",
-  "created_at": "2026-07-25T15:00:42Z"
+  "created_at": "2026-07-25T15:00:42Z",
+  "original_filename": "ative.jpg",
+  "project_id": "cd8e1775-5dbb-4228-a2ef-0f98048323d0",
+  "r2_key": "a/v1/cd8e1775-5dbb-4228-a2ef-0f98048323d0/c2537257-364b-49e5-9215-2483791a8372/ative.jpg",
+  "size": 11727,
+  "url": "/__l5e/assets-v1/c2537257-364b-49e5-9215-2483791a8372/ative.jpg",
+  "version": 1
 }
