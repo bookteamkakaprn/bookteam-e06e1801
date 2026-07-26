@@ -147,6 +147,7 @@ export type Database = {
           id: string
           participante_id: string
           status: Database["public"]["Enums"]["inscricao_status"]
+          turma_id: string | null
           updated_at: string
         }
         Insert: {
@@ -155,6 +156,7 @@ export type Database = {
           id?: string
           participante_id: string
           status?: Database["public"]["Enums"]["inscricao_status"]
+          turma_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -163,6 +165,7 @@ export type Database = {
           id?: string
           participante_id?: string
           status?: Database["public"]["Enums"]["inscricao_status"]
+          turma_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -178,6 +181,13 @@ export type Database = {
             columns: ["participante_id"]
             isOneToOne: false
             referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inscricoes_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
             referencedColumns: ["id"]
           },
         ]
@@ -600,6 +610,80 @@ export type Database = {
         }
         Relationships: []
       }
+      turmas: {
+        Row: {
+          ano: number | null
+          coordenador: string | null
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          horario: string | null
+          id: string
+          inscritos: number
+          livro_id: string
+          nome: string
+          professor: string | null
+          sala: string | null
+          staff: string | null
+          status: string
+          temporada: string | null
+          updated_at: string
+          vagas_max: number
+          vagas_restantes: number | null
+          valor: number | null
+        }
+        Insert: {
+          ano?: number | null
+          coordenador?: string | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          horario?: string | null
+          id?: string
+          inscritos?: number
+          livro_id: string
+          nome: string
+          professor?: string | null
+          sala?: string | null
+          staff?: string | null
+          status?: string
+          temporada?: string | null
+          updated_at?: string
+          vagas_max?: number
+          vagas_restantes?: number | null
+          valor?: number | null
+        }
+        Update: {
+          ano?: number | null
+          coordenador?: string | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          horario?: string | null
+          id?: string
+          inscritos?: number
+          livro_id?: string
+          nome?: string
+          professor?: string | null
+          sala?: string | null
+          staff?: string | null
+          status?: string
+          temporada?: string | null
+          updated_at?: string
+          vagas_max?: number
+          vagas_restantes?: number | null
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "turmas_livro_id_fkey"
+            columns: ["livro_id"]
+            isOneToOne: false
+            referencedRelation: "livros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -631,7 +715,11 @@ export type Database = {
     Enums: {
       app_role: "admin" | "participante"
       evento_status: "aberto" | "fechado" | "cancelado" | "realizado"
-      inscricao_status: "aguardando_pagamento" | "confirmada" | "cancelada"
+      inscricao_status:
+        | "aguardando_pagamento"
+        | "confirmada"
+        | "cancelada"
+        | "lista_espera"
       livro_status: "ativo" | "arquivado"
       material_tipo: "pdf" | "video" | "link"
       pagamento_status: "aguardando" | "aprovado" | "rejeitado"
@@ -772,7 +860,12 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "participante"],
       evento_status: ["aberto", "fechado", "cancelado", "realizado"],
-      inscricao_status: ["aguardando_pagamento", "confirmada", "cancelada"],
+      inscricao_status: [
+        "aguardando_pagamento",
+        "confirmada",
+        "cancelada",
+        "lista_espera",
+      ],
       livro_status: ["ativo", "arquivado"],
       material_tipo: ["pdf", "video", "link"],
       pagamento_status: ["aguardando", "aprovado", "rejeitado"],
