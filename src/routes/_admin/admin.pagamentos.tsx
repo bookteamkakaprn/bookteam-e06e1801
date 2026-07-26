@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { CheckCircle2, XCircle, Clock, ExternalLink } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/pagamentos")({
+export const Route = createFileRoute("/_admin/admin/pagamentos")({
   head: () => ({ meta: [{ title: "Pagamentos — Admin — Book Team" }, { name: "robots", content: "noindex" }] }),
   component: AdminPag,
 });

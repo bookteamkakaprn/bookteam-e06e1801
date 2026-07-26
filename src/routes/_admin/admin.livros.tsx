@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_authenticated/admin/livros")({
+export const Route = createFileRoute("/_admin/admin/livros")({
   head: () => ({ meta: [{ title: "livros — Admin — Book Clube" }, { name: "robots", content: "noindex" }] }),
   component: () => (
     <div className="space-y-4">

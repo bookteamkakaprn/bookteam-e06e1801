@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Calendar, CreditCard, DollarSign, CheckCircle2, Clock } from "lucide-react";
 
-export const Route = createFileRoute("/_authenticated/admin/")({
+export const Route = createFileRoute("/_admin/admin/")({
   head: () => ({ meta: [{ title: "Dashboard — Admin — Book Clube" }, { name: "robots", content: "noindex" }] }),
   component: AdminDashboard,
 });
