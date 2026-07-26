@@ -41,6 +41,20 @@ function MatriculaPage() {
     },
   });
 
+  const { data: pix } = useQuery({
+    queryKey: ["config-pagamento"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("configuracoes_pagamento")
+        .select("*")
+        .order("created_at")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const enviar = useMutation({
     mutationFn: async () => {
       if (!user || !data) throw new Error("Matrícula não encontrada");
