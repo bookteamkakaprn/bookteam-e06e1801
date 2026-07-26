@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, BookOpen, Calendar, Lock, MapPin, Users } from "lucide-react";
+import { BlocoTexto, GradeInfo } from "@/components/livro/ficha-livro";
 
 export const Route = createFileRoute("/livros/$id")({
   head: () => ({
@@ -85,6 +86,10 @@ function LivroPage() {
 
   const { livro, trilha, eventos, prereq, prereqOk } = data;
   const bloqueado = !!prereq && !prereqOk;
+  const vagasRestantes = livro.vagas_restantes ?? 0;
+  const esgotado = (livro.vagas_total ?? 0) > 0 && vagasRestantes <= 0;
+  const proximoEvento = eventos[0];
+  const moeda = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -124,6 +129,34 @@ function LivroPage() {
               <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-foreground/75">{livro.descricao}</p>
             )}
 
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              {livro.valor != null && (
+                <Badge variant="secondary" className="text-sm">{moeda(Number(livro.valor))}</Badge>
+              )}
+              {(livro.vagas_total ?? 0) > 0 && (
+                <Badge variant="outline" className="text-sm">
+                  {esgotado ? "0 vagas" : `${vagasRestantes} de ${livro.vagas_total} vagas`}
+                </Badge>
+              )}
+              {esgotado ? (
+                <Button size="lg" disabled className="uppercase tracking-wide">
+                  Turma esgotada
+                </Button>
+              ) : bloqueado ? (
+                <Button size="lg" disabled className="gap-2 uppercase tracking-wide">
+                  <Lock className="h-4 w-4" /> Bloqueado
+                </Button>
+              ) : !user ? (
+                <Button asChild size="lg" className="bg-gold uppercase tracking-wide text-primary-foreground hover:bg-gold/90">
+                  <Link to="/auth">Quero participar</Link>
+                </Button>
+              ) : proximoEvento ? (
+                <Button asChild size="lg" className="bg-gold uppercase tracking-wide text-primary-foreground hover:bg-gold/90">
+                  <Link to="/inscricao/$eventoId" params={{ eventoId: proximoEvento.id }}>Quero participar</Link>
+                </Button>
+              ) : null}
+            </div>
+
             {bloqueado && (
               <div className="mt-6 flex items-start gap-3 rounded-md border border-gold/40 bg-gold/10 p-4 text-sm">
                 <Lock className="mt-0.5 h-4 w-4 text-gold" />
@@ -141,6 +174,35 @@ function LivroPage() {
       </section>
 
       <section className="mx-auto max-w-5xl px-4 pb-16">
+        <div className="mb-10 space-y-4">
+          <GradeInfo
+            itens={[
+              { label: "Categoria", value: livro.categoria },
+              { label: "Autor", value: livro.autor },
+              { label: "Ordem da trilha", value: livro.ordem },
+              { label: "Professor responsável", value: livro.professor },
+              { label: "Coordenador", value: livro.coordenador },
+              { label: "Ano", value: livro.ano },
+              { label: "Turma", value: livro.turma },
+              { label: "Datas do curso", value: livro.datas_curso },
+              { label: "Horário", value: livro.horario },
+              { label: "Sala", value: livro.sala },
+              { label: "Encontros", value: livro.qtd_encontros },
+              { label: "Duração", value: livro.duracao },
+              { label: "Valor", value: livro.valor != null ? moeda(Number(livro.valor)) : null },
+              { label: "Vagas", value: livro.vagas_total || null },
+              { label: "Inscritos", value: livro.inscritos },
+              { label: "Vagas restantes", value: esgotado ? "Turma esgotada" : vagasRestantes },
+              { label: "Status", value: livro.status },
+            ]}
+          />
+          <BlocoTexto titulo="Objetivo" texto={livro.objetivo} />
+          <BlocoTexto titulo="Público-alvo" texto={livro.publico_alvo} />
+          <BlocoTexto titulo="Conteúdo programático" texto={livro.conteudo_programatico} />
+          <BlocoTexto titulo="Competências desenvolvidas" texto={livro.competencias} />
+          <BlocoTexto titulo="Material necessário" texto={livro.material_necessario} />
+        </div>
+
         <h2 className="font-serif text-xl font-semibold">Próximos encontros</h2>
         <div className="mt-4 space-y-3">
           {eventos.map((e) => (

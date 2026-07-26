@@ -184,40 +184,97 @@ export type Database = {
       }
       livros: {
         Row: {
+          ano: number | null
           autor: string | null
+          categoria: string | null
+          competencias: string | null
+          conteudo_programatico: string | null
+          coordenador: string | null
           created_at: string
+          datas_curso: string | null
           descricao: string | null
+          duracao: string | null
+          horario: string | null
           id: string
           imagem_url: string | null
+          inscritos: number
+          material_necessario: string | null
+          objetivo: string | null
           ordem: number
+          professor: string | null
+          publico_alvo: string | null
+          qtd_encontros: number | null
+          sala: string | null
           status: Database["public"]["Enums"]["livro_status"]
           titulo: string
           trilha_id: string
+          turma: string | null
           updated_at: string
+          vagas_restantes: number | null
+          vagas_total: number
+          valor: number | null
         }
         Insert: {
+          ano?: number | null
           autor?: string | null
+          categoria?: string | null
+          competencias?: string | null
+          conteudo_programatico?: string | null
+          coordenador?: string | null
           created_at?: string
+          datas_curso?: string | null
           descricao?: string | null
+          duracao?: string | null
+          horario?: string | null
           id?: string
           imagem_url?: string | null
+          inscritos?: number
+          material_necessario?: string | null
+          objetivo?: string | null
           ordem?: number
+          professor?: string | null
+          publico_alvo?: string | null
+          qtd_encontros?: number | null
+          sala?: string | null
           status?: Database["public"]["Enums"]["livro_status"]
           titulo: string
           trilha_id: string
+          turma?: string | null
           updated_at?: string
+          vagas_restantes?: number | null
+          vagas_total?: number
+          valor?: number | null
         }
         Update: {
+          ano?: number | null
           autor?: string | null
+          categoria?: string | null
+          competencias?: string | null
+          conteudo_programatico?: string | null
+          coordenador?: string | null
           created_at?: string
+          datas_curso?: string | null
           descricao?: string | null
+          duracao?: string | null
+          horario?: string | null
           id?: string
           imagem_url?: string | null
+          inscritos?: number
+          material_necessario?: string | null
+          objetivo?: string | null
           ordem?: number
+          professor?: string | null
+          publico_alvo?: string | null
+          qtd_encontros?: number | null
+          sala?: string | null
           status?: Database["public"]["Enums"]["livro_status"]
           titulo?: string
           trilha_id?: string
+          turma?: string | null
           updated_at?: string
+          vagas_restantes?: number | null
+          vagas_total?: number
+          valor?: number | null
         }
         Relationships: [
           {

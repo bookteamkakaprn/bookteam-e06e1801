@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   LogOut,
   GraduationCap,
+  BookOpen,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_admin")({
@@ -38,6 +39,7 @@ type MenuItem = { to: string; label: string; icon: typeof LayoutDashboard; exact
 const menu: MenuItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/participantes", label: "Participantes / CRM", icon: Users },
+  { to: "/admin/livros", label: "Livros", icon: BookOpen },
   { to: "/admin/eventos", label: "Encontros", icon: Calendar },
   { to: "/admin/pagamentos", label: "Pagamentos", icon: CreditCard },
   { to: "/admin/presencas", label: "Presenças", icon: CheckSquare },

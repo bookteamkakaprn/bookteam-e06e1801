@@ -28,6 +28,7 @@ import { Route as AdminAdminRelatoriosRouteImport } from './routes/_admin/admin.
 import { Route as AdminAdminPresencasRouteImport } from './routes/_admin/admin.presencas'
 import { Route as AdminAdminParticipantesRouteImport } from './routes/_admin/admin.participantes'
 import { Route as AdminAdminPagamentosRouteImport } from './routes/_admin/admin.pagamentos'
+import { Route as AdminAdminLivrosRouteImport } from './routes/_admin/admin.livros'
 import { Route as AdminAdminEventosRouteImport } from './routes/_admin/admin.eventos'
 import { Route as AdminAdminCertificadosRouteImport } from './routes/_admin/admin.certificados'
 
@@ -126,6 +127,11 @@ const AdminAdminPagamentosRoute = AdminAdminPagamentosRouteImport.update({
   path: '/admin/pagamentos',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminAdminLivrosRoute = AdminAdminLivrosRouteImport.update({
+  id: '/admin/livros',
+  path: '/admin/livros',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminAdminEventosRoute = AdminAdminEventosRouteImport.update({
   id: '/admin/eventos',
   path: '/admin/eventos',
@@ -151,6 +157,7 @@ export interface FileRoutesByFullPath {
   '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AdminAdminCertificadosRoute
   '/admin/eventos': typeof AdminAdminEventosRoute
+  '/admin/livros': typeof AdminAdminLivrosRoute
   '/admin/pagamentos': typeof AdminAdminPagamentosRoute
   '/admin/participantes': typeof AdminAdminParticipantesRoute
   '/admin/presencas': typeof AdminAdminPresencasRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AdminAdminCertificadosRoute
   '/admin/eventos': typeof AdminAdminEventosRoute
+  '/admin/livros': typeof AdminAdminLivrosRoute
   '/admin/pagamentos': typeof AdminAdminPagamentosRoute
   '/admin/participantes': typeof AdminAdminParticipantesRoute
   '/admin/presencas': typeof AdminAdminPresencasRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/trilhas/$id': typeof TrilhasIdRoute
   '/_admin/admin/certificados': typeof AdminAdminCertificadosRoute
   '/_admin/admin/eventos': typeof AdminAdminEventosRoute
+  '/_admin/admin/livros': typeof AdminAdminLivrosRoute
   '/_admin/admin/pagamentos': typeof AdminAdminPagamentosRoute
   '/_admin/admin/participantes': typeof AdminAdminParticipantesRoute
   '/_admin/admin/presencas': typeof AdminAdminPresencasRoute
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/trilhas/$id'
     | '/admin/certificados'
     | '/admin/eventos'
+    | '/admin/livros'
     | '/admin/pagamentos'
     | '/admin/participantes'
     | '/admin/presencas'
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/trilhas/$id'
     | '/admin/certificados'
     | '/admin/eventos'
+    | '/admin/livros'
     | '/admin/pagamentos'
     | '/admin/participantes'
     | '/admin/presencas'
@@ -263,6 +274,7 @@ export interface FileRouteTypes {
     | '/trilhas/$id'
     | '/_admin/admin/certificados'
     | '/_admin/admin/eventos'
+    | '/_admin/admin/livros'
     | '/_admin/admin/pagamentos'
     | '/_admin/admin/participantes'
     | '/_admin/admin/presencas'
@@ -417,6 +429,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminPagamentosRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/_admin/admin/livros': {
+      id: '/_admin/admin/livros'
+      path: '/admin/livros'
+      fullPath: '/admin/livros'
+      preLoaderRoute: typeof AdminAdminLivrosRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/_admin/admin/eventos': {
       id: '/_admin/admin/eventos'
       path: '/admin/eventos'
@@ -437,6 +456,7 @@ declare module '@tanstack/react-router' {
 interface AdminRouteRouteChildren {
   AdminAdminCertificadosRoute: typeof AdminAdminCertificadosRoute
   AdminAdminEventosRoute: typeof AdminAdminEventosRoute
+  AdminAdminLivrosRoute: typeof AdminAdminLivrosRoute
   AdminAdminPagamentosRoute: typeof AdminAdminPagamentosRoute
   AdminAdminParticipantesRoute: typeof AdminAdminParticipantesRoute
   AdminAdminPresencasRoute: typeof AdminAdminPresencasRoute
@@ -447,6 +467,7 @@ interface AdminRouteRouteChildren {
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAdminCertificadosRoute: AdminAdminCertificadosRoute,
   AdminAdminEventosRoute: AdminAdminEventosRoute,
+  AdminAdminLivrosRoute: AdminAdminLivrosRoute,
   AdminAdminPagamentosRoute: AdminAdminPagamentosRoute,
   AdminAdminParticipantesRoute: AdminAdminParticipantesRoute,
   AdminAdminPresencasRoute: AdminAdminPresencasRoute,
