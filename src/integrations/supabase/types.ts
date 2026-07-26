@@ -142,6 +142,7 @@ export type Database = {
       }
       inscricoes: {
         Row: {
+          codigo: string | null
           created_at: string
           evento_id: string | null
           id: string
@@ -151,6 +152,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          codigo?: string | null
           created_at?: string
           evento_id?: string | null
           id?: string
@@ -160,6 +162,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          codigo?: string | null
           created_at?: string
           evento_id?: string | null
           id?: string
@@ -485,50 +488,62 @@ export type Database = {
         Row: {
           aceite_lgpd: boolean
           cidade: string | null
+          como_conheceu: string | null
           cpf: string | null
           created_at: string
           email: string
           estado: string | null
           foto_url: string | null
           id: string
+          igreja: string | null
+          nascimento: string | null
           nome: string
           observacoes_admin: string | null
           status: Database["public"]["Enums"]["participante_crm_status"]
           telefone: string | null
           ultimo_acesso: string | null
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
           aceite_lgpd?: boolean
           cidade?: string | null
+          como_conheceu?: string | null
           cpf?: string | null
           created_at?: string
           email: string
           estado?: string | null
           foto_url?: string | null
           id: string
+          igreja?: string | null
+          nascimento?: string | null
           nome: string
           observacoes_admin?: string | null
           status?: Database["public"]["Enums"]["participante_crm_status"]
           telefone?: string | null
           ultimo_acesso?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
           aceite_lgpd?: boolean
           cidade?: string | null
+          como_conheceu?: string | null
           cpf?: string | null
           created_at?: string
           email?: string
           estado?: string | null
           foto_url?: string | null
           id?: string
+          igreja?: string | null
+          nascimento?: string | null
           nome?: string
           observacoes_admin?: string | null
           status?: Database["public"]["Enums"]["participante_crm_status"]
           telefone?: string | null
           ultimo_acesso?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
