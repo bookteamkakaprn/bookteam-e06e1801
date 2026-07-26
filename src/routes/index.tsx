@@ -181,7 +181,7 @@ function Header() {
         <div className="border-t border-border/60 bg-background/95 backdrop-blur-xl lg:hidden">
           <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4">
             {navItems.map((item) =>
-              item.href ? (
+              item.type === "anchor" ? (
                 <a
                   key={item.href}
                   href={item.href}
