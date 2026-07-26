@@ -21,6 +21,7 @@ import { Route as CadastroTurmaIdRouteImport } from './routes/cadastro.$turmaId'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedPagamentosRouteImport } from './routes/_authenticated/pagamentos'
 import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
+import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
 import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticated/eventos'
 import { Route as AuthenticatedCertificadosRouteImport } from './routes/_authenticated/certificados'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index'
@@ -92,6 +93,11 @@ const AuthenticatedPagamentosRoute = AuthenticatedPagamentosRouteImport.update({
 const AuthenticatedInicioRoute = AuthenticatedInicioRouteImport.update({
   id: '/inicio',
   path: '/inicio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedEventosRoute = AuthenticatedEventosRouteImport.update({
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/certificados': typeof AuthenticatedCertificadosRoute
   '/eventos': typeof AuthenticatedEventosRoute
+  '/historico': typeof AuthenticatedHistoricoRoute
   '/inicio': typeof AuthenticatedInicioRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/certificados': typeof AuthenticatedCertificadosRoute
   '/eventos': typeof AuthenticatedEventosRoute
+  '/historico': typeof AuthenticatedHistoricoRoute
   '/inicio': typeof AuthenticatedInicioRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/certificados': typeof AuthenticatedCertificadosRoute
   '/_authenticated/eventos': typeof AuthenticatedEventosRoute
+  '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/inicio': typeof AuthenticatedInicioRoute
   '/_authenticated/pagamentos': typeof AuthenticatedPagamentosRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/certificados'
     | '/eventos'
+    | '/historico'
     | '/inicio'
     | '/pagamentos'
     | '/perfil'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/certificados'
     | '/eventos'
+    | '/historico'
     | '/inicio'
     | '/pagamentos'
     | '/perfil'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/certificados'
     | '/_authenticated/eventos'
+    | '/_authenticated/historico'
     | '/_authenticated/inicio'
     | '/_authenticated/pagamentos'
     | '/_authenticated/perfil'
@@ -428,6 +440,13 @@ declare module '@tanstack/react-router' {
       path: '/inicio'
       fullPath: '/inicio'
       preLoaderRoute: typeof AuthenticatedInicioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/historico': {
+      id: '/_authenticated/historico'
+      path: '/historico'
+      fullPath: '/historico'
+      preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/eventos': {
@@ -564,6 +583,7 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCertificadosRoute: typeof AuthenticatedCertificadosRoute
   AuthenticatedEventosRoute: typeof AuthenticatedEventosRoute
+  AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
   AuthenticatedPagamentosRoute: typeof AuthenticatedPagamentosRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
@@ -574,6 +594,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCertificadosRoute: AuthenticatedCertificadosRoute,
   AuthenticatedEventosRoute: AuthenticatedEventosRoute,
+  AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedInicioRoute: AuthenticatedInicioRoute,
   AuthenticatedPagamentosRoute: AuthenticatedPagamentosRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,

@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, BookOpen, Calendar, Lock, MapPin, Users } from "lucide-react";
 import { BlocoTexto, GradeInfo } from "@/components/livro/ficha-livro";
+import { conclusaoValida, dataLimiteConclusao, LIMITE_MESES } from "@/lib/prerequisito";
 
 export const Route = createFileRoute("/livros/$id")({
   head: () => ({
@@ -59,6 +60,7 @@ function LivroPage() {
         .order("created_at");
 
       let prereqOk = true;
+      let prereqManualVencido = false;
       const prereq = prereqRes.data ?? null;
       if (prereq && user) {
         const { count } = await supabase
@@ -68,6 +70,20 @@ function LivroPage() {
           .eq("presente", true)
           .eq("eventos.livro_id", prereq.id);
         prereqOk = (count ?? 0) > 0;
+        if (!prereqOk) {
+          // Conclusão registrada manualmente pelo aluno (data retroativa):
+          // só libera se ocorreu dentro do prazo de validade da trilha.
+          const { data: manual } = await supabase
+            .from("historico_livros")
+            .select("data_conclusao")
+            .eq("participante_id", user.id)
+            .eq("livro_id", prereq.id)
+            .maybeSingle();
+          if (manual?.data_conclusao) {
+            prereqOk = conclusaoValida(manual.data_conclusao);
+            prereqManualVencido = !prereqOk;
+          }
+        }
       } else if (prereq && !user) {
         prereqOk = false;
       }
@@ -79,6 +95,7 @@ function LivroPage() {
         turmas: turmasRes.data ?? [],
         prereq,
         prereqOk,
+        prereqManualVencido,
       };
     },
   });
@@ -97,7 +114,7 @@ function LivroPage() {
     );
   }
 
-  const { livro, trilha, eventos, turmas, prereq, prereqOk } = data;
+  const { livro, trilha, eventos, turmas, prereq, prereqOk, prereqManualVencido } = data;
   const bloqueado = !!prereq && !prereqOk;
   const vagasRestantes = livro.vagas_restantes ?? 0;
   const esgotado = (livro.vagas_total ?? 0) > 0 && vagasRestantes <= 0;
@@ -175,10 +192,20 @@ function LivroPage() {
                 <Lock className="mt-0.5 h-4 w-4 text-gold" />
                 <div>
                   <p className="font-semibold text-foreground">Pré-requisito pendente</p>
-                  <p className="text-foreground/75">
-                    Para se inscrever neste livro, é preciso ter concluído o livro anterior
-                    {prereq ? ` — "${prereq.titulo}"` : ""}. Seu histórico ainda não registra presença nesse livro.
-                  </p>
+                  {prereqManualVencido ? (
+                    <p className="text-foreground/75">
+                      Sua conclusão de {prereq ? `"${prereq.titulo}"` : "livro anterior"} é anterior a{" "}
+                      {new Date(dataLimiteConclusao() + "T00:00:00").toLocaleDateString("pt-BR")} — passou do prazo de{" "}
+                      {LIMITE_MESES / 12} ano. É necessário recomeçar a trilha.
+                    </p>
+                  ) : (
+                    <p className="text-foreground/75">
+                      Para se inscrever neste livro, é preciso ter concluído o livro anterior
+                      {prereq ? ` — "${prereq.titulo}"` : ""}. Se você já fez esse livro, registre a conclusão com a data
+                      retroativa em <span className="font-medium text-foreground">Área do aluno → Meu histórico</span> (válido
+                      por até {LIMITE_MESES / 12} ano).
+                    </p>
+                  )}
                 </div>
               </div>
             )}
