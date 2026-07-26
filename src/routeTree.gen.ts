@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AdminRouteRouteImport } from './routes/_admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrilhasIdRouteImport } from './routes/trilhas.$id'
 import { Route as LivrosIdRouteImport } from './routes/livros.$id'
@@ -49,6 +50,10 @@ const AuthRoute = AuthRouteImport.update({
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/_admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -93,9 +98,9 @@ const AuthenticatedCertificadosRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
-  id: '/_admin/admin/',
+  id: '/admin/',
   path: '/admin/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AuthenticatedInscricaoEventoIdRoute =
   AuthenticatedInscricaoEventoIdRouteImport.update({
@@ -104,44 +109,44 @@ const AuthenticatedInscricaoEventoIdRoute =
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AdminAdminTrilhasRoute = AdminAdminTrilhasRouteImport.update({
-  id: '/_admin/admin/trilhas',
+  id: '/admin/trilhas',
   path: '/admin/trilhas',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminAdminRelatoriosRoute = AdminAdminRelatoriosRouteImport.update({
-  id: '/_admin/admin/relatorios',
+  id: '/admin/relatorios',
   path: '/admin/relatorios',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminAdminPresencasRoute = AdminAdminPresencasRouteImport.update({
-  id: '/_admin/admin/presencas',
+  id: '/admin/presencas',
   path: '/admin/presencas',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminAdminParticipantesRoute = AdminAdminParticipantesRouteImport.update({
-  id: '/_admin/admin/participantes',
+  id: '/admin/participantes',
   path: '/admin/participantes',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminAdminPagamentosRoute = AdminAdminPagamentosRouteImport.update({
-  id: '/_admin/admin/pagamentos',
+  id: '/admin/pagamentos',
   path: '/admin/pagamentos',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminAdminLivrosRoute = AdminAdminLivrosRouteImport.update({
-  id: '/_admin/admin/livros',
+  id: '/admin/livros',
   path: '/admin/livros',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminAdminEventosRoute = AdminAdminEventosRouteImport.update({
-  id: '/_admin/admin/eventos',
+  id: '/admin/eventos',
   path: '/admin/eventos',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminAdminCertificadosRoute = AdminAdminCertificadosRouteImport.update({
-  id: '/_admin/admin/certificados',
+  id: '/admin/certificados',
   path: '/admin/certificados',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -193,6 +198,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_admin': typeof AdminRouteRouteWithChildren
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -265,6 +271,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_admin'
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
@@ -290,21 +297,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   LivrosIdRoute: typeof LivrosIdRoute
   TrilhasIdRoute: typeof TrilhasIdRoute
-  AdminAdminCertificadosRoute: typeof AdminAdminCertificadosRoute
-  AdminAdminEventosRoute: typeof AdminAdminEventosRoute
-  AdminAdminLivrosRoute: typeof AdminAdminLivrosRoute
-  AdminAdminPagamentosRoute: typeof AdminAdminPagamentosRoute
-  AdminAdminParticipantesRoute: typeof AdminAdminParticipantesRoute
-  AdminAdminPresencasRoute: typeof AdminAdminPresencasRoute
-  AdminAdminRelatoriosRoute: typeof AdminAdminRelatoriosRoute
-  AdminAdminTrilhasRoute: typeof AdminAdminTrilhasRoute
-  AdminAdminIndexRoute: typeof AdminAdminIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -335,6 +334,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_admin': {
+      id: '/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -398,7 +404,7 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminAdminIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/_authenticated/inscricao/$eventoId': {
       id: '/_authenticated/inscricao/$eventoId'
@@ -412,59 +418,87 @@ declare module '@tanstack/react-router' {
       path: '/admin/trilhas'
       fullPath: '/admin/trilhas'
       preLoaderRoute: typeof AdminAdminTrilhasRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/_admin/admin/relatorios': {
       id: '/_admin/admin/relatorios'
       path: '/admin/relatorios'
       fullPath: '/admin/relatorios'
       preLoaderRoute: typeof AdminAdminRelatoriosRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/_admin/admin/presencas': {
       id: '/_admin/admin/presencas'
       path: '/admin/presencas'
       fullPath: '/admin/presencas'
       preLoaderRoute: typeof AdminAdminPresencasRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/_admin/admin/participantes': {
       id: '/_admin/admin/participantes'
       path: '/admin/participantes'
       fullPath: '/admin/participantes'
       preLoaderRoute: typeof AdminAdminParticipantesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/_admin/admin/pagamentos': {
       id: '/_admin/admin/pagamentos'
       path: '/admin/pagamentos'
       fullPath: '/admin/pagamentos'
       preLoaderRoute: typeof AdminAdminPagamentosRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/_admin/admin/livros': {
       id: '/_admin/admin/livros'
       path: '/admin/livros'
       fullPath: '/admin/livros'
       preLoaderRoute: typeof AdminAdminLivrosRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/_admin/admin/eventos': {
       id: '/_admin/admin/eventos'
       path: '/admin/eventos'
       fullPath: '/admin/eventos'
       preLoaderRoute: typeof AdminAdminEventosRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/_admin/admin/certificados': {
       id: '/_admin/admin/certificados'
       path: '/admin/certificados'
       fullPath: '/admin/certificados'
       preLoaderRoute: typeof AdminAdminCertificadosRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
   }
 }
+
+interface AdminRouteRouteChildren {
+  AdminAdminCertificadosRoute: typeof AdminAdminCertificadosRoute
+  AdminAdminEventosRoute: typeof AdminAdminEventosRoute
+  AdminAdminLivrosRoute: typeof AdminAdminLivrosRoute
+  AdminAdminPagamentosRoute: typeof AdminAdminPagamentosRoute
+  AdminAdminParticipantesRoute: typeof AdminAdminParticipantesRoute
+  AdminAdminPresencasRoute: typeof AdminAdminPresencasRoute
+  AdminAdminRelatoriosRoute: typeof AdminAdminRelatoriosRoute
+  AdminAdminTrilhasRoute: typeof AdminAdminTrilhasRoute
+  AdminAdminIndexRoute: typeof AdminAdminIndexRoute
+}
+
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAdminCertificadosRoute: AdminAdminCertificadosRoute,
+  AdminAdminEventosRoute: AdminAdminEventosRoute,
+  AdminAdminLivrosRoute: AdminAdminLivrosRoute,
+  AdminAdminPagamentosRoute: AdminAdminPagamentosRoute,
+  AdminAdminParticipantesRoute: AdminAdminParticipantesRoute,
+  AdminAdminPresencasRoute: AdminAdminPresencasRoute,
+  AdminAdminRelatoriosRoute: AdminAdminRelatoriosRoute,
+  AdminAdminTrilhasRoute: AdminAdminTrilhasRoute,
+  AdminAdminIndexRoute: AdminAdminIndexRoute,
+}
+
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCertificadosRoute: typeof AuthenticatedCertificadosRoute
@@ -489,22 +523,24 @@ const AuthenticatedRouteRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   LivrosIdRoute: LivrosIdRoute,
   TrilhasIdRoute: TrilhasIdRoute,
-  AdminAdminCertificadosRoute: AdminAdminCertificadosRoute,
-  AdminAdminEventosRoute: AdminAdminEventosRoute,
-  AdminAdminLivrosRoute: AdminAdminLivrosRoute,
-  AdminAdminPagamentosRoute: AdminAdminPagamentosRoute,
-  AdminAdminParticipantesRoute: AdminAdminParticipantesRoute,
-  AdminAdminPresencasRoute: AdminAdminPresencasRoute,
-  AdminAdminRelatoriosRoute: AdminAdminRelatoriosRoute,
-  AdminAdminTrilhasRoute: AdminAdminTrilhasRoute,
-  AdminAdminIndexRoute: AdminAdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
