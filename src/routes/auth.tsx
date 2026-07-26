@@ -44,10 +44,10 @@ function AuthPage() {
           </Link>
           <div>
             <h2 className="font-serif text-4xl font-bold leading-tight">
-              Suas trilhas, encontros e certificados em um só lugar.
+              Área administrativa
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Simples de usar. Feito para quem ama ler.
+              Acompanhe e gerencie os alunos do Book Team Amor.
             </p>
           </div>
           <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Book Clube</p>
