@@ -127,7 +127,7 @@ function Header() {
 
         <nav className="hidden items-center gap-6 lg:flex">
           {navItems.map((item) =>
-            item.href ? (
+            item.type === "anchor" ? (
               <a
                 key={item.href}
                 href={item.href}
