@@ -96,10 +96,13 @@ function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const links = [
+  const navItems = [
     { href: "#quem-somos", label: "Quem somos" },
     { href: "#cronograma", label: "Livros" },
-  ];
+    { to: "/eventos", label: "Agenda" },
+    { to: "/inicio", label: "Área do aluno" },
+    { to: "/admin", label: "Adm" },
+  ] as const;
 
   return (
     <header
@@ -109,30 +112,41 @@ function Header() {
           : "bg-transparent"
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
-        <Link to="/" className="flex items-center gap-2.5">
+      <div className="mx-auto grid h-16 max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 md:px-8 lg:flex lg:justify-between">
+        <Link to="/" className="flex min-w-0 items-center gap-2.5">
           <img
             src={logoAsset.url}
             alt="Book Team"
-            className="h-9 w-9 rounded-full ring-1 ring-gold/40"
+            className="h-9 w-9 shrink-0 rounded-full ring-1 ring-gold/40"
           />
-          <div className="leading-none">
-            <p className="font-serif text-[15px] font-semibold tracking-wide">BOOK TEAM</p>
+          <div className="min-w-0 leading-none">
+            <p className="truncate font-serif text-[15px] font-semibold tracking-wide">BOOK TEAM</p>
             <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold">amor & honra</p>
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-7 lg:flex">
-          {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="group relative text-[15px] font-medium text-foreground/80 transition-colors hover:text-foreground"
-            >
-              {l.label}
-              <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" />
-            </a>
-          ))}
+        <nav className="hidden items-center gap-6 lg:flex">
+          {navItems.map((item) =>
+            item.href ? (
+              <a
+                key={item.href}
+                href={item.href}
+                className="group relative text-[15px] font-medium text-foreground/80 transition-colors hover:text-foreground"
+              >
+                {item.label}
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" />
+              </a>
+            ) : (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="group relative text-[15px] font-medium text-foreground/80 transition-colors hover:text-foreground"
+              >
+                {item.label}
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" />
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -154,7 +168,7 @@ function Header() {
             </Link>
           </Button>
           <button
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-foreground lg:hidden"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-foreground lg:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-label="Menu"
           >
@@ -166,16 +180,27 @@ function Header() {
       {open && (
         <div className="border-t border-border/60 bg-background/95 backdrop-blur-xl lg:hidden">
           <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4">
-            {links.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-3 text-base font-medium text-foreground/80 hover:bg-white/5 hover:text-foreground"
-              >
-                {l.label}
-              </a>
-            ))}
+            {navItems.map((item) =>
+              item.href ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-3 text-base font-medium text-foreground/80 hover:bg-white/5 hover:text-foreground"
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-3 text-base font-medium text-foreground/80 hover:bg-white/5 hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
             <div className="mt-2 flex gap-2 border-t border-border/60 pt-3">
               <Button asChild variant="outline" className="flex-1">
                 <Link to="/auth">Entrar</Link>
