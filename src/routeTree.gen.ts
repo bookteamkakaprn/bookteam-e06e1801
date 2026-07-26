@@ -24,6 +24,7 @@ import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedCertificadosRouteImport } from './routes/_authenticated/certificados'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index'
 import { Route as AuthenticatedInscricaoEventoIdRouteImport } from './routes/_authenticated/inscricao.$eventoId'
+import { Route as AdminAdminTurmasRouteImport } from './routes/_admin/admin.turmas'
 import { Route as AdminAdminRelatoriosRouteImport } from './routes/_admin/admin.relatorios'
 import { Route as AdminAdminPresencasRouteImport } from './routes/_admin/admin.presencas'
 import { Route as AdminAdminParticipantesRouteImport } from './routes/_admin/admin.participantes'
@@ -107,6 +108,11 @@ const AuthenticatedInscricaoEventoIdRoute =
     path: '/inscricao/$eventoId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AdminAdminTurmasRoute = AdminAdminTurmasRouteImport.update({
+  id: '/admin/turmas',
+  path: '/admin/turmas',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminAdminRelatoriosRoute = AdminAdminRelatoriosRouteImport.update({
   id: '/admin/relatorios',
   path: '/admin/relatorios',
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/admin/participantes': typeof AdminAdminParticipantesRoute
   '/admin/presencas': typeof AdminAdminPresencasRoute
   '/admin/relatorios': typeof AdminAdminRelatoriosRoute
+  '/admin/turmas': typeof AdminAdminTurmasRoute
   '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/admin/': typeof AdminAdminIndexRoute
 }
@@ -184,6 +191,7 @@ export interface FileRoutesByTo {
   '/admin/participantes': typeof AdminAdminParticipantesRoute
   '/admin/presencas': typeof AdminAdminPresencasRoute
   '/admin/relatorios': typeof AdminAdminRelatoriosRoute
+  '/admin/turmas': typeof AdminAdminTurmasRoute
   '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/admin': typeof AdminAdminIndexRoute
 }
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/_admin/admin/participantes': typeof AdminAdminParticipantesRoute
   '/_admin/admin/presencas': typeof AdminAdminPresencasRoute
   '/_admin/admin/relatorios': typeof AdminAdminRelatoriosRoute
+  '/_admin/admin/turmas': typeof AdminAdminTurmasRoute
   '/_authenticated/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
 }
@@ -233,6 +242,7 @@ export interface FileRouteTypes {
     | '/admin/participantes'
     | '/admin/presencas'
     | '/admin/relatorios'
+    | '/admin/turmas'
     | '/inscricao/$eventoId'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -255,6 +265,7 @@ export interface FileRouteTypes {
     | '/admin/participantes'
     | '/admin/presencas'
     | '/admin/relatorios'
+    | '/admin/turmas'
     | '/inscricao/$eventoId'
     | '/admin'
   id:
@@ -279,6 +290,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/participantes'
     | '/_admin/admin/presencas'
     | '/_admin/admin/relatorios'
+    | '/_admin/admin/turmas'
     | '/_authenticated/inscricao/$eventoId'
     | '/_admin/admin/'
   fileRoutesById: FileRoutesById
@@ -401,6 +413,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInscricaoEventoIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_admin/admin/turmas': {
+      id: '/_admin/admin/turmas'
+      path: '/admin/turmas'
+      fullPath: '/admin/turmas'
+      preLoaderRoute: typeof AdminAdminTurmasRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/_admin/admin/relatorios': {
       id: '/_admin/admin/relatorios'
       path: '/admin/relatorios'
@@ -461,6 +480,7 @@ interface AdminRouteRouteChildren {
   AdminAdminParticipantesRoute: typeof AdminAdminParticipantesRoute
   AdminAdminPresencasRoute: typeof AdminAdminPresencasRoute
   AdminAdminRelatoriosRoute: typeof AdminAdminRelatoriosRoute
+  AdminAdminTurmasRoute: typeof AdminAdminTurmasRoute
   AdminAdminIndexRoute: typeof AdminAdminIndexRoute
 }
 
@@ -472,6 +492,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAdminParticipantesRoute: AdminAdminParticipantesRoute,
   AdminAdminPresencasRoute: AdminAdminPresencasRoute,
   AdminAdminRelatoriosRoute: AdminAdminRelatoriosRoute,
+  AdminAdminTurmasRoute: AdminAdminTurmasRoute,
   AdminAdminIndexRoute: AdminAdminIndexRoute,
 }
 

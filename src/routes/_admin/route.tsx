@@ -40,6 +40,7 @@ const menu: MenuItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/participantes", label: "Participantes / CRM", icon: Users },
   { to: "/admin/livros", label: "Livros", icon: BookOpen },
+  { to: "/admin/turmas", label: "Turmas", icon: GraduationCap },
   { to: "/admin/eventos", label: "Encontros", icon: Calendar },
   { to: "/admin/pagamentos", label: "Pagamentos", icon: CreditCard },
   { to: "/admin/presencas", label: "Presenças", icon: CheckSquare },
