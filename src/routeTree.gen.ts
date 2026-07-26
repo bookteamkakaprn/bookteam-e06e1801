@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AdminRouteRouteImport } from './routes/_admin/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrilhasIdRouteImport } from './routes/trilhas.$id'
 import { Route as LivrosIdRouteImport } from './routes/livros.$id'
@@ -21,17 +22,16 @@ import { Route as AuthenticatedPagamentosRouteImport } from './routes/_authentic
 import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
 import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticated/eventos'
 import { Route as AuthenticatedCertificadosRouteImport } from './routes/_authenticated/certificados'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index'
 import { Route as AuthenticatedInscricaoEventoIdRouteImport } from './routes/_authenticated/inscricao.$eventoId'
-import { Route as AuthenticatedAdminTrilhasRouteImport } from './routes/_authenticated/admin.trilhas'
-import { Route as AuthenticatedAdminRelatoriosRouteImport } from './routes/_authenticated/admin.relatorios'
-import { Route as AuthenticatedAdminPresencasRouteImport } from './routes/_authenticated/admin.presencas'
-import { Route as AuthenticatedAdminParticipantesRouteImport } from './routes/_authenticated/admin.participantes'
-import { Route as AuthenticatedAdminPagamentosRouteImport } from './routes/_authenticated/admin.pagamentos'
-import { Route as AuthenticatedAdminLivrosRouteImport } from './routes/_authenticated/admin.livros'
-import { Route as AuthenticatedAdminEventosRouteImport } from './routes/_authenticated/admin.eventos'
-import { Route as AuthenticatedAdminCertificadosRouteImport } from './routes/_authenticated/admin.certificados'
+import { Route as AdminAdminTrilhasRouteImport } from './routes/_admin/admin.trilhas'
+import { Route as AdminAdminRelatoriosRouteImport } from './routes/_admin/admin.relatorios'
+import { Route as AdminAdminPresencasRouteImport } from './routes/_admin/admin.presencas'
+import { Route as AdminAdminParticipantesRouteImport } from './routes/_admin/admin.participantes'
+import { Route as AdminAdminPagamentosRouteImport } from './routes/_admin/admin.pagamentos'
+import { Route as AdminAdminLivrosRouteImport } from './routes/_admin/admin.livros'
+import { Route as AdminAdminEventosRouteImport } from './routes/_admin/admin.eventos'
+import { Route as AdminAdminCertificadosRouteImport } from './routes/_admin/admin.certificados'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -50,6 +50,10 @@ const AuthRoute = AuthRouteImport.update({
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/_admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -93,15 +97,10 @@ const AuthenticatedCertificadosRoute =
     path: '/certificados',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedAdminRoute,
+const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AuthenticatedInscricaoEventoIdRoute =
   AuthenticatedInscricaoEventoIdRouteImport.update({
@@ -109,61 +108,52 @@ const AuthenticatedInscricaoEventoIdRoute =
     path: '/inscricao/$eventoId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminTrilhasRoute =
-  AuthenticatedAdminTrilhasRouteImport.update({
-    id: '/trilhas',
-    path: '/trilhas',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminRelatoriosRoute =
-  AuthenticatedAdminRelatoriosRouteImport.update({
-    id: '/relatorios',
-    path: '/relatorios',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminPresencasRoute =
-  AuthenticatedAdminPresencasRouteImport.update({
-    id: '/presencas',
-    path: '/presencas',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminParticipantesRoute =
-  AuthenticatedAdminParticipantesRouteImport.update({
-    id: '/participantes',
-    path: '/participantes',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminPagamentosRoute =
-  AuthenticatedAdminPagamentosRouteImport.update({
-    id: '/pagamentos',
-    path: '/pagamentos',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminLivrosRoute =
-  AuthenticatedAdminLivrosRouteImport.update({
-    id: '/livros',
-    path: '/livros',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminEventosRoute =
-  AuthenticatedAdminEventosRouteImport.update({
-    id: '/eventos',
-    path: '/eventos',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminCertificadosRoute =
-  AuthenticatedAdminCertificadosRouteImport.update({
-    id: '/certificados',
-    path: '/certificados',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
+const AdminAdminTrilhasRoute = AdminAdminTrilhasRouteImport.update({
+  id: '/admin/trilhas',
+  path: '/admin/trilhas',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminRelatoriosRoute = AdminAdminRelatoriosRouteImport.update({
+  id: '/admin/relatorios',
+  path: '/admin/relatorios',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminPresencasRoute = AdminAdminPresencasRouteImport.update({
+  id: '/admin/presencas',
+  path: '/admin/presencas',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminParticipantesRoute = AdminAdminParticipantesRouteImport.update({
+  id: '/admin/participantes',
+  path: '/admin/participantes',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminPagamentosRoute = AdminAdminPagamentosRouteImport.update({
+  id: '/admin/pagamentos',
+  path: '/admin/pagamentos',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminLivrosRoute = AdminAdminLivrosRouteImport.update({
+  id: '/admin/livros',
+  path: '/admin/livros',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminEventosRoute = AdminAdminEventosRouteImport.update({
+  id: '/admin/eventos',
+  path: '/admin/eventos',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminCertificadosRoute = AdminAdminCertificadosRouteImport.update({
+  id: '/admin/certificados',
+  path: '/admin/certificados',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/certificados': typeof AuthenticatedCertificadosRoute
   '/eventos': typeof AuthenticatedEventosRoute
   '/inicio': typeof AuthenticatedInicioRoute
@@ -171,16 +161,16 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof AuthenticatedPerfilRoute
   '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
-  '/admin/certificados': typeof AuthenticatedAdminCertificadosRoute
-  '/admin/eventos': typeof AuthenticatedAdminEventosRoute
-  '/admin/livros': typeof AuthenticatedAdminLivrosRoute
-  '/admin/pagamentos': typeof AuthenticatedAdminPagamentosRoute
-  '/admin/participantes': typeof AuthenticatedAdminParticipantesRoute
-  '/admin/presencas': typeof AuthenticatedAdminPresencasRoute
-  '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
-  '/admin/trilhas': typeof AuthenticatedAdminTrilhasRoute
+  '/admin/certificados': typeof AdminAdminCertificadosRoute
+  '/admin/eventos': typeof AdminAdminEventosRoute
+  '/admin/livros': typeof AdminAdminLivrosRoute
+  '/admin/pagamentos': typeof AdminAdminPagamentosRoute
+  '/admin/participantes': typeof AdminAdminParticipantesRoute
+  '/admin/presencas': typeof AdminAdminPresencasRoute
+  '/admin/relatorios': typeof AdminAdminRelatoriosRoute
+  '/admin/trilhas': typeof AdminAdminTrilhasRoute
   '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
-  '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/': typeof AdminAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -194,25 +184,25 @@ export interface FileRoutesByTo {
   '/perfil': typeof AuthenticatedPerfilRoute
   '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
-  '/admin/certificados': typeof AuthenticatedAdminCertificadosRoute
-  '/admin/eventos': typeof AuthenticatedAdminEventosRoute
-  '/admin/livros': typeof AuthenticatedAdminLivrosRoute
-  '/admin/pagamentos': typeof AuthenticatedAdminPagamentosRoute
-  '/admin/participantes': typeof AuthenticatedAdminParticipantesRoute
-  '/admin/presencas': typeof AuthenticatedAdminPresencasRoute
-  '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
-  '/admin/trilhas': typeof AuthenticatedAdminTrilhasRoute
+  '/admin/certificados': typeof AdminAdminCertificadosRoute
+  '/admin/eventos': typeof AdminAdminEventosRoute
+  '/admin/livros': typeof AdminAdminLivrosRoute
+  '/admin/pagamentos': typeof AdminAdminPagamentosRoute
+  '/admin/participantes': typeof AdminAdminParticipantesRoute
+  '/admin/presencas': typeof AdminAdminPresencasRoute
+  '/admin/relatorios': typeof AdminAdminRelatoriosRoute
+  '/admin/trilhas': typeof AdminAdminTrilhasRoute
   '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
-  '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin': typeof AdminAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_admin': typeof AdminRouteRouteWithChildren
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/certificados': typeof AuthenticatedCertificadosRoute
   '/_authenticated/eventos': typeof AuthenticatedEventosRoute
   '/_authenticated/inicio': typeof AuthenticatedInicioRoute
@@ -220,16 +210,16 @@ export interface FileRoutesById {
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
-  '/_authenticated/admin/certificados': typeof AuthenticatedAdminCertificadosRoute
-  '/_authenticated/admin/eventos': typeof AuthenticatedAdminEventosRoute
-  '/_authenticated/admin/livros': typeof AuthenticatedAdminLivrosRoute
-  '/_authenticated/admin/pagamentos': typeof AuthenticatedAdminPagamentosRoute
-  '/_authenticated/admin/participantes': typeof AuthenticatedAdminParticipantesRoute
-  '/_authenticated/admin/presencas': typeof AuthenticatedAdminPresencasRoute
-  '/_authenticated/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
-  '/_authenticated/admin/trilhas': typeof AuthenticatedAdminTrilhasRoute
+  '/_admin/admin/certificados': typeof AdminAdminCertificadosRoute
+  '/_admin/admin/eventos': typeof AdminAdminEventosRoute
+  '/_admin/admin/livros': typeof AdminAdminLivrosRoute
+  '/_admin/admin/pagamentos': typeof AdminAdminPagamentosRoute
+  '/_admin/admin/participantes': typeof AdminAdminParticipantesRoute
+  '/_admin/admin/presencas': typeof AdminAdminPresencasRoute
+  '/_admin/admin/relatorios': typeof AdminAdminRelatoriosRoute
+  '/_admin/admin/trilhas': typeof AdminAdminTrilhasRoute
   '/_authenticated/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
-  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_admin/admin/': typeof AdminAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -238,7 +228,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/sitemap.xml'
-    | '/admin'
     | '/certificados'
     | '/eventos'
     | '/inicio'
@@ -282,11 +271,11 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_admin'
     | '/_authenticated'
     | '/auth'
     | '/reset-password'
     | '/sitemap.xml'
-    | '/_authenticated/admin'
     | '/_authenticated/certificados'
     | '/_authenticated/eventos'
     | '/_authenticated/inicio'
@@ -294,20 +283,21 @@ export interface FileRouteTypes {
     | '/_authenticated/perfil'
     | '/livros/$id'
     | '/trilhas/$id'
-    | '/_authenticated/admin/certificados'
-    | '/_authenticated/admin/eventos'
-    | '/_authenticated/admin/livros'
-    | '/_authenticated/admin/pagamentos'
-    | '/_authenticated/admin/participantes'
-    | '/_authenticated/admin/presencas'
-    | '/_authenticated/admin/relatorios'
-    | '/_authenticated/admin/trilhas'
+    | '/_admin/admin/certificados'
+    | '/_admin/admin/eventos'
+    | '/_admin/admin/livros'
+    | '/_admin/admin/pagamentos'
+    | '/_admin/admin/participantes'
+    | '/_admin/admin/presencas'
+    | '/_admin/admin/relatorios'
+    | '/_admin/admin/trilhas'
     | '/_authenticated/inscricao/$eventoId'
-    | '/_authenticated/admin/'
+    | '/_admin/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -344,6 +334,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_admin': {
+      id: '/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -402,19 +399,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCertificadosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
+    '/_admin/admin/': {
+      id: '/_admin/admin/'
       path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/admin/': {
-      id: '/_authenticated/admin/'
-      path: '/'
       fullPath: '/admin/'
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      preLoaderRoute: typeof AdminAdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/_authenticated/inscricao/$eventoId': {
       id: '/_authenticated/inscricao/$eventoId'
@@ -423,94 +413,94 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInscricaoEventoIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/trilhas': {
-      id: '/_authenticated/admin/trilhas'
-      path: '/trilhas'
+    '/_admin/admin/trilhas': {
+      id: '/_admin/admin/trilhas'
+      path: '/admin/trilhas'
       fullPath: '/admin/trilhas'
-      preLoaderRoute: typeof AuthenticatedAdminTrilhasRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      preLoaderRoute: typeof AdminAdminTrilhasRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/_authenticated/admin/relatorios': {
-      id: '/_authenticated/admin/relatorios'
-      path: '/relatorios'
+    '/_admin/admin/relatorios': {
+      id: '/_admin/admin/relatorios'
+      path: '/admin/relatorios'
       fullPath: '/admin/relatorios'
-      preLoaderRoute: typeof AuthenticatedAdminRelatoriosRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      preLoaderRoute: typeof AdminAdminRelatoriosRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/_authenticated/admin/presencas': {
-      id: '/_authenticated/admin/presencas'
-      path: '/presencas'
+    '/_admin/admin/presencas': {
+      id: '/_admin/admin/presencas'
+      path: '/admin/presencas'
       fullPath: '/admin/presencas'
-      preLoaderRoute: typeof AuthenticatedAdminPresencasRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      preLoaderRoute: typeof AdminAdminPresencasRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/_authenticated/admin/participantes': {
-      id: '/_authenticated/admin/participantes'
-      path: '/participantes'
+    '/_admin/admin/participantes': {
+      id: '/_admin/admin/participantes'
+      path: '/admin/participantes'
       fullPath: '/admin/participantes'
-      preLoaderRoute: typeof AuthenticatedAdminParticipantesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      preLoaderRoute: typeof AdminAdminParticipantesRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/_authenticated/admin/pagamentos': {
-      id: '/_authenticated/admin/pagamentos'
-      path: '/pagamentos'
+    '/_admin/admin/pagamentos': {
+      id: '/_admin/admin/pagamentos'
+      path: '/admin/pagamentos'
       fullPath: '/admin/pagamentos'
-      preLoaderRoute: typeof AuthenticatedAdminPagamentosRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      preLoaderRoute: typeof AdminAdminPagamentosRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/_authenticated/admin/livros': {
-      id: '/_authenticated/admin/livros'
-      path: '/livros'
+    '/_admin/admin/livros': {
+      id: '/_admin/admin/livros'
+      path: '/admin/livros'
       fullPath: '/admin/livros'
-      preLoaderRoute: typeof AuthenticatedAdminLivrosRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      preLoaderRoute: typeof AdminAdminLivrosRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/_authenticated/admin/eventos': {
-      id: '/_authenticated/admin/eventos'
-      path: '/eventos'
+    '/_admin/admin/eventos': {
+      id: '/_admin/admin/eventos'
+      path: '/admin/eventos'
       fullPath: '/admin/eventos'
-      preLoaderRoute: typeof AuthenticatedAdminEventosRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      preLoaderRoute: typeof AdminAdminEventosRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
-    '/_authenticated/admin/certificados': {
-      id: '/_authenticated/admin/certificados'
-      path: '/certificados'
+    '/_admin/admin/certificados': {
+      id: '/_admin/admin/certificados'
+      path: '/admin/certificados'
       fullPath: '/admin/certificados'
-      preLoaderRoute: typeof AuthenticatedAdminCertificadosRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      preLoaderRoute: typeof AdminAdminCertificadosRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
   }
 }
 
-interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminCertificadosRoute: typeof AuthenticatedAdminCertificadosRoute
-  AuthenticatedAdminEventosRoute: typeof AuthenticatedAdminEventosRoute
-  AuthenticatedAdminLivrosRoute: typeof AuthenticatedAdminLivrosRoute
-  AuthenticatedAdminPagamentosRoute: typeof AuthenticatedAdminPagamentosRoute
-  AuthenticatedAdminParticipantesRoute: typeof AuthenticatedAdminParticipantesRoute
-  AuthenticatedAdminPresencasRoute: typeof AuthenticatedAdminPresencasRoute
-  AuthenticatedAdminRelatoriosRoute: typeof AuthenticatedAdminRelatoriosRoute
-  AuthenticatedAdminTrilhasRoute: typeof AuthenticatedAdminTrilhasRoute
-  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+interface AdminRouteRouteChildren {
+  AdminAdminCertificadosRoute: typeof AdminAdminCertificadosRoute
+  AdminAdminEventosRoute: typeof AdminAdminEventosRoute
+  AdminAdminLivrosRoute: typeof AdminAdminLivrosRoute
+  AdminAdminPagamentosRoute: typeof AdminAdminPagamentosRoute
+  AdminAdminParticipantesRoute: typeof AdminAdminParticipantesRoute
+  AdminAdminPresencasRoute: typeof AdminAdminPresencasRoute
+  AdminAdminRelatoriosRoute: typeof AdminAdminRelatoriosRoute
+  AdminAdminTrilhasRoute: typeof AdminAdminTrilhasRoute
+  AdminAdminIndexRoute: typeof AdminAdminIndexRoute
 }
 
-const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminCertificadosRoute: AuthenticatedAdminCertificadosRoute,
-  AuthenticatedAdminEventosRoute: AuthenticatedAdminEventosRoute,
-  AuthenticatedAdminLivrosRoute: AuthenticatedAdminLivrosRoute,
-  AuthenticatedAdminPagamentosRoute: AuthenticatedAdminPagamentosRoute,
-  AuthenticatedAdminParticipantesRoute: AuthenticatedAdminParticipantesRoute,
-  AuthenticatedAdminPresencasRoute: AuthenticatedAdminPresencasRoute,
-  AuthenticatedAdminRelatoriosRoute: AuthenticatedAdminRelatoriosRoute,
-  AuthenticatedAdminTrilhasRoute: AuthenticatedAdminTrilhasRoute,
-  AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAdminCertificadosRoute: AdminAdminCertificadosRoute,
+  AdminAdminEventosRoute: AdminAdminEventosRoute,
+  AdminAdminLivrosRoute: AdminAdminLivrosRoute,
+  AdminAdminPagamentosRoute: AdminAdminPagamentosRoute,
+  AdminAdminParticipantesRoute: AdminAdminParticipantesRoute,
+  AdminAdminPresencasRoute: AdminAdminPresencasRoute,
+  AdminAdminRelatoriosRoute: AdminAdminRelatoriosRoute,
+  AdminAdminTrilhasRoute: AdminAdminTrilhasRoute,
+  AdminAdminIndexRoute: AdminAdminIndexRoute,
 }
 
-const AuthenticatedAdminRouteWithChildren =
-  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
+  AdminRouteRouteChildren,
+)
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedCertificadosRoute: typeof AuthenticatedCertificadosRoute
   AuthenticatedEventosRoute: typeof AuthenticatedEventosRoute
   AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
@@ -520,7 +510,6 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedCertificadosRoute: AuthenticatedCertificadosRoute,
   AuthenticatedEventosRoute: AuthenticatedEventosRoute,
   AuthenticatedInicioRoute: AuthenticatedInicioRoute,
@@ -534,6 +523,7 @@ const AuthenticatedRouteRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRouteRoute: AdminRouteRouteWithChildren,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ResetPasswordRoute: ResetPasswordRoute,
@@ -544,13 +534,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
