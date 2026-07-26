@@ -6,13 +6,11 @@ import { toast } from "sonner";
 import {
   LayoutDashboard,
   Users,
-  BookOpen,
   Calendar,
   CreditCard,
   CheckSquare,
   Award,
   FileText,
-  BookMarked,
   ShieldCheck,
   LogOut,
   GraduationCap,
@@ -40,8 +38,6 @@ type MenuItem = { to: string; label: string; icon: typeof LayoutDashboard; exact
 const menu: MenuItem[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/participantes", label: "Participantes / CRM", icon: Users },
-  { to: "/admin/trilhas", label: "Trilhas", icon: BookMarked },
-  { to: "/admin/livros", label: "Livros", icon: BookOpen },
   { to: "/admin/eventos", label: "Encontros", icon: Calendar },
   { to: "/admin/pagamentos", label: "Pagamentos", icon: CreditCard },
   { to: "/admin/presencas", label: "Presenças", icon: CheckSquare },
