@@ -96,10 +96,13 @@ function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const links = [
-    { href: "#quem-somos", label: "Quem somos" },
-    { href: "#cronograma", label: "Livros" },
-  ];
+  const navItems = [
+    { type: "anchor" as const, href: "#quem-somos", label: "Quem somos" },
+    { type: "anchor" as const, href: "#cronograma", label: "Livros" },
+    { type: "route" as const, to: "/eventos", label: "Agenda" },
+    { type: "route" as const, to: "/inicio", label: "Área do aluno" },
+    { type: "route" as const, to: "/admin", label: "Adm" },
+  ] as const;
 
   return (
     <header
@@ -109,30 +112,41 @@ function Header() {
           : "bg-transparent"
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
-        <Link to="/" className="flex items-center gap-2.5">
+      <div className="mx-auto grid h-16 max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 md:px-8 lg:flex lg:justify-between">
+        <Link to="/" className="flex min-w-0 items-center gap-2.5">
           <img
             src={logoAsset.url}
             alt="Book Team"
-            className="h-9 w-9 rounded-full ring-1 ring-gold/40"
+            className="h-9 w-9 shrink-0 rounded-full ring-1 ring-gold/40"
           />
-          <div className="leading-none">
-            <p className="font-serif text-[15px] font-semibold tracking-wide">BOOK TEAM</p>
+          <div className="min-w-0 leading-none">
+            <p className="truncate font-serif text-[15px] font-semibold tracking-wide">BOOK TEAM</p>
             <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold">amor & honra</p>
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-7 lg:flex">
-          {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="group relative text-[15px] font-medium text-foreground/80 transition-colors hover:text-foreground"
-            >
-              {l.label}
-              <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" />
-            </a>
-          ))}
+        <nav className="hidden items-center gap-6 lg:flex">
+          {navItems.map((item) =>
+            item.type === "anchor" ? (
+              <a
+                key={item.href}
+                href={item.href}
+                className="group relative text-[15px] font-medium text-foreground/80 transition-colors hover:text-foreground"
+              >
+                {item.label}
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" />
+              </a>
+            ) : (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="group relative text-[15px] font-medium text-foreground/80 transition-colors hover:text-foreground"
+              >
+                {item.label}
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" />
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -154,7 +168,7 @@ function Header() {
             </Link>
           </Button>
           <button
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full text-foreground lg:hidden"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-foreground lg:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-label="Menu"
           >
@@ -166,16 +180,27 @@ function Header() {
       {open && (
         <div className="border-t border-border/60 bg-background/95 backdrop-blur-xl lg:hidden">
           <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-4">
-            {links.map((l) => (
-              <a
-                key={l.href}
-                href={l.href}
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-3 text-base font-medium text-foreground/80 hover:bg-white/5 hover:text-foreground"
-              >
-                {l.label}
-              </a>
-            ))}
+            {navItems.map((item) =>
+              item.type === "anchor" ? (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-3 text-base font-medium text-foreground/80 hover:bg-white/5 hover:text-foreground"
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-3 py-3 text-base font-medium text-foreground/80 hover:bg-white/5 hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
             <div className="mt-2 flex gap-2 border-t border-border/60 pt-3">
               <Button asChild variant="outline" className="flex-1">
                 <Link to="/auth">Entrar</Link>
@@ -371,7 +396,7 @@ function JornadaLivros() {
   return (
     <section
       id="cronograma"
-      className="relative border-t border-border/40 bg-gradient-to-b from-background via-card/30 to-background py-10 md:py-14"
+      className="relative border-t border-border/40 bg-gradient-to-b from-background via-card/30 to-background py-16 md:py-20"
     >
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -406,7 +431,7 @@ function JornadaLivros() {
 
       <div
         ref={scrollerRef}
-        className="scrollbar-hidden mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 md:px-8"
+        className="scrollbar-hidden mt-8 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 md:gap-8 md:px-8"
       >
         {livros.map((l) => {
           const livroId = trilhaMap?.get(l.titulo);
@@ -424,7 +449,7 @@ function JornadaLivros() {
             <div key={l.id} className="shrink-0 snap-start">{card}</div>
           );
         })}
-        <div className="shrink-0 pr-2 md:pr-4" />
+        <div className="shrink-0 pr-4 md:pr-8" />
       </div>
     </section>
   );
@@ -433,7 +458,7 @@ function JornadaLivros() {
 function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
   return (
     <article
-      className={`group poster-hover relative aspect-[2/3] w-[160px] shrink-0 snap-start overflow-hidden rounded-r-2xl rounded-l-md bg-gradient-to-br ${l.cor} shadow-book md:w-[190px]`}
+      className={`group poster-hover relative aspect-[2/3] w-[180px] shrink-0 snap-start overflow-hidden rounded-r-2xl rounded-l-md bg-gradient-to-br ${l.cor} shadow-book md:w-[240px] lg:w-[260px]`}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_60%)]" />
 
