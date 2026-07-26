@@ -143,7 +143,7 @@ export type Database = {
       inscricoes: {
         Row: {
           created_at: string
-          evento_id: string
+          evento_id: string | null
           id: string
           participante_id: string
           status: Database["public"]["Enums"]["inscricao_status"]
@@ -152,7 +152,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          evento_id: string
+          evento_id?: string | null
           id?: string
           participante_id: string
           status?: Database["public"]["Enums"]["inscricao_status"]
@@ -161,7 +161,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          evento_id?: string
+          evento_id?: string | null
           id?: string
           participante_id?: string
           status?: Database["public"]["Enums"]["inscricao_status"]
@@ -410,12 +410,13 @@ export type Database = {
           aprovado_por: string | null
           comprovante_url: string | null
           created_at: string
-          evento_id: string
+          evento_id: string | null
           id: string
           inscricao_id: string
           observacao: string | null
           participante_id: string
           status: Database["public"]["Enums"]["pagamento_status"]
+          turma_id: string | null
           updated_at: string
           valor: number
         }
@@ -424,12 +425,13 @@ export type Database = {
           aprovado_por?: string | null
           comprovante_url?: string | null
           created_at?: string
-          evento_id: string
+          evento_id?: string | null
           id?: string
           inscricao_id: string
           observacao?: string | null
           participante_id: string
           status?: Database["public"]["Enums"]["pagamento_status"]
+          turma_id?: string | null
           updated_at?: string
           valor: number
         }
@@ -438,12 +440,13 @@ export type Database = {
           aprovado_por?: string | null
           comprovante_url?: string | null
           created_at?: string
-          evento_id?: string
+          evento_id?: string | null
           id?: string
           inscricao_id?: string
           observacao?: string | null
           participante_id?: string
           status?: Database["public"]["Enums"]["pagamento_status"]
+          turma_id?: string | null
           updated_at?: string
           valor?: number
         }
@@ -467,6 +470,13 @@ export type Database = {
             columns: ["participante_id"]
             isOneToOne: false
             referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
             referencedColumns: ["id"]
           },
         ]
