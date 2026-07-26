@@ -52,6 +52,12 @@ function LivroPage() {
           : Promise.resolve({ data: null, error: null }),
       ]);
 
+      const turmasRes = await supabase
+        .from("turmas")
+        .select("*")
+        .eq("livro_id", id)
+        .order("created_at");
+
       let prereqOk = true;
       const prereq = prereqRes.data ?? null;
       if (prereq && user) {
@@ -66,7 +72,14 @@ function LivroPage() {
         prereqOk = false;
       }
 
-      return { livro, trilha: trilhaRes.data, eventos: eventosRes.data ?? [], prereq, prereqOk };
+      return {
+        livro,
+        trilha: trilhaRes.data,
+        eventos: eventosRes.data ?? [],
+        turmas: turmasRes.data ?? [],
+        prereq,
+        prereqOk,
+      };
     },
   });
 
@@ -84,7 +97,7 @@ function LivroPage() {
     );
   }
 
-  const { livro, trilha, eventos, prereq, prereqOk } = data;
+  const { livro, trilha, eventos, turmas, prereq, prereqOk } = data;
   const bloqueado = !!prereq && !prereqOk;
   const vagasRestantes = livro.vagas_restantes ?? 0;
   const esgotado = (livro.vagas_total ?? 0) > 0 && vagasRestantes <= 0;
@@ -174,6 +187,75 @@ function LivroPage() {
       </section>
 
       <section className="mx-auto max-w-5xl px-4 pb-16">
+        {turmas.length > 0 && (
+          <div className="mb-10">
+            <h2 className="font-serif text-xl font-semibold">Turmas</h2>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {turmas.map((t) => {
+                const esgotada = t.vagas_max > 0 && (t.vagas_restantes ?? 0) <= 0;
+                return (
+                  <Card key={t.id}>
+                    <CardContent className="space-y-3 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-serif text-lg font-semibold">{t.nome}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {[t.temporada, t.ano].filter(Boolean).join(" · ")}
+                          </p>
+                        </div>
+                        {esgotada ? (
+                          <Badge variant="destructive">ESGOTADO</Badge>
+                        ) : (
+                          <Badge variant="secondary">{t.vagas_restantes} vagas</Badge>
+                        )}
+                      </div>
+                      <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        {[
+                          { label: "Início", value: t.data_inicio ? new Date(t.data_inicio + "T00:00:00").toLocaleDateString("pt-BR") : null },
+                          { label: "Término", value: t.data_fim ? new Date(t.data_fim + "T00:00:00").toLocaleDateString("pt-BR") : null },
+                          { label: "Horário", value: t.horario },
+                          { label: "Professor", value: t.professor },
+                          { label: "Coordenador", value: t.coordenador },
+                          { label: "Staff", value: t.staff },
+                          { label: "Sala", value: t.sala },
+                          { label: "Valor", value: t.valor != null ? moeda(Number(t.valor)) : null },
+                          { label: "Vagas", value: t.vagas_max || null },
+                          { label: "Inscritos", value: t.inscritos },
+                        ]
+                          .filter((i) => i.value !== null && i.value !== undefined && String(i.value) !== "")
+                          .map((i) => (
+                            <div key={i.label} className="min-w-0">
+                              <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{i.label}</dt>
+                              <dd className="truncate text-foreground">{String(i.value)}</dd>
+                            </div>
+                          ))}
+                      </dl>
+                      <Button
+                        asChild={!bloqueado}
+                        disabled={bloqueado}
+                        className={
+                          esgotada
+                            ? "w-full"
+                            : "w-full bg-gold text-primary-foreground hover:bg-gold/90"
+                        }
+                        variant={esgotada ? "outline" : "default"}
+                      >
+                        {bloqueado ? (
+                          <span className="inline-flex items-center gap-2"><Lock className="h-4 w-4" /> Bloqueado</span>
+                        ) : (
+                          <Link to="/cadastro/$turmaId" params={{ turmaId: t.id }}>
+                            {esgotada ? "Entrar na lista de espera" : "Quero participar"}
+                          </Link>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="mb-10 space-y-4">
           <GradeInfo
             itens={[

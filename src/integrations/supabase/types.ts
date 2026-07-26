@@ -142,27 +142,33 @@ export type Database = {
       }
       inscricoes: {
         Row: {
+          codigo: string | null
           created_at: string
-          evento_id: string
+          evento_id: string | null
           id: string
           participante_id: string
           status: Database["public"]["Enums"]["inscricao_status"]
+          turma_id: string | null
           updated_at: string
         }
         Insert: {
+          codigo?: string | null
           created_at?: string
-          evento_id: string
+          evento_id?: string | null
           id?: string
           participante_id: string
           status?: Database["public"]["Enums"]["inscricao_status"]
+          turma_id?: string | null
           updated_at?: string
         }
         Update: {
+          codigo?: string | null
           created_at?: string
-          evento_id?: string
+          evento_id?: string | null
           id?: string
           participante_id?: string
           status?: Database["public"]["Enums"]["inscricao_status"]
+          turma_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -178,6 +184,13 @@ export type Database = {
             columns: ["participante_id"]
             isOneToOne: false
             referencedRelation: "participantes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inscricoes_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
             referencedColumns: ["id"]
           },
         ]
@@ -400,12 +413,13 @@ export type Database = {
           aprovado_por: string | null
           comprovante_url: string | null
           created_at: string
-          evento_id: string
+          evento_id: string | null
           id: string
           inscricao_id: string
           observacao: string | null
           participante_id: string
           status: Database["public"]["Enums"]["pagamento_status"]
+          turma_id: string | null
           updated_at: string
           valor: number
         }
@@ -414,12 +428,13 @@ export type Database = {
           aprovado_por?: string | null
           comprovante_url?: string | null
           created_at?: string
-          evento_id: string
+          evento_id?: string | null
           id?: string
           inscricao_id: string
           observacao?: string | null
           participante_id: string
           status?: Database["public"]["Enums"]["pagamento_status"]
+          turma_id?: string | null
           updated_at?: string
           valor: number
         }
@@ -428,12 +443,13 @@ export type Database = {
           aprovado_por?: string | null
           comprovante_url?: string | null
           created_at?: string
-          evento_id?: string
+          evento_id?: string | null
           id?: string
           inscricao_id?: string
           observacao?: string | null
           participante_id?: string
           status?: Database["public"]["Enums"]["pagamento_status"]
+          turma_id?: string | null
           updated_at?: string
           valor?: number
         }
@@ -459,56 +475,75 @@ export type Database = {
             referencedRelation: "participantes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "pagamentos_turma_id_fkey"
+            columns: ["turma_id"]
+            isOneToOne: false
+            referencedRelation: "turmas"
+            referencedColumns: ["id"]
+          },
         ]
       }
       participantes: {
         Row: {
           aceite_lgpd: boolean
           cidade: string | null
+          como_conheceu: string | null
           cpf: string | null
           created_at: string
           email: string
           estado: string | null
           foto_url: string | null
           id: string
+          igreja: string | null
+          nascimento: string | null
           nome: string
           observacoes_admin: string | null
           status: Database["public"]["Enums"]["participante_crm_status"]
           telefone: string | null
           ultimo_acesso: string | null
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
           aceite_lgpd?: boolean
           cidade?: string | null
+          como_conheceu?: string | null
           cpf?: string | null
           created_at?: string
           email: string
           estado?: string | null
           foto_url?: string | null
           id: string
+          igreja?: string | null
+          nascimento?: string | null
           nome: string
           observacoes_admin?: string | null
           status?: Database["public"]["Enums"]["participante_crm_status"]
           telefone?: string | null
           ultimo_acesso?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
           aceite_lgpd?: boolean
           cidade?: string | null
+          como_conheceu?: string | null
           cpf?: string | null
           created_at?: string
           email?: string
           estado?: string | null
           foto_url?: string | null
           id?: string
+          igreja?: string | null
+          nascimento?: string | null
           nome?: string
           observacoes_admin?: string | null
           status?: Database["public"]["Enums"]["participante_crm_status"]
           telefone?: string | null
           ultimo_acesso?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
@@ -600,6 +635,80 @@ export type Database = {
         }
         Relationships: []
       }
+      turmas: {
+        Row: {
+          ano: number | null
+          coordenador: string | null
+          created_at: string
+          data_fim: string | null
+          data_inicio: string | null
+          horario: string | null
+          id: string
+          inscritos: number
+          livro_id: string
+          nome: string
+          professor: string | null
+          sala: string | null
+          staff: string | null
+          status: string
+          temporada: string | null
+          updated_at: string
+          vagas_max: number
+          vagas_restantes: number | null
+          valor: number | null
+        }
+        Insert: {
+          ano?: number | null
+          coordenador?: string | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          horario?: string | null
+          id?: string
+          inscritos?: number
+          livro_id: string
+          nome: string
+          professor?: string | null
+          sala?: string | null
+          staff?: string | null
+          status?: string
+          temporada?: string | null
+          updated_at?: string
+          vagas_max?: number
+          vagas_restantes?: number | null
+          valor?: number | null
+        }
+        Update: {
+          ano?: number | null
+          coordenador?: string | null
+          created_at?: string
+          data_fim?: string | null
+          data_inicio?: string | null
+          horario?: string | null
+          id?: string
+          inscritos?: number
+          livro_id?: string
+          nome?: string
+          professor?: string | null
+          sala?: string | null
+          staff?: string | null
+          status?: string
+          temporada?: string | null
+          updated_at?: string
+          vagas_max?: number
+          vagas_restantes?: number | null
+          valor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "turmas_livro_id_fkey"
+            columns: ["livro_id"]
+            isOneToOne: false
+            referencedRelation: "livros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -631,7 +740,11 @@ export type Database = {
     Enums: {
       app_role: "admin" | "participante"
       evento_status: "aberto" | "fechado" | "cancelado" | "realizado"
-      inscricao_status: "aguardando_pagamento" | "confirmada" | "cancelada"
+      inscricao_status:
+        | "aguardando_pagamento"
+        | "confirmada"
+        | "cancelada"
+        | "lista_espera"
       livro_status: "ativo" | "arquivado"
       material_tipo: "pdf" | "video" | "link"
       pagamento_status: "aguardando" | "aprovado" | "rejeitado"
@@ -772,7 +885,12 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "participante"],
       evento_status: ["aberto", "fechado", "cancelado", "realizado"],
-      inscricao_status: ["aguardando_pagamento", "confirmada", "cancelada"],
+      inscricao_status: [
+        "aguardando_pagamento",
+        "confirmada",
+        "cancelada",
+        "lista_espera",
+      ],
       livro_status: ["ativo", "arquivado"],
       material_tipo: ["pdf", "video", "link"],
       pagamento_status: ["aguardando", "aprovado", "rejeitado"],
