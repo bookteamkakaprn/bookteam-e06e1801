@@ -431,7 +431,7 @@ function JornadaLivros() {
 
       <div
         ref={scrollerRef}
-        className="scrollbar-hidden mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 md:px-8"
+        className="scrollbar-hidden mt-8 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 md:gap-8 md:px-8"
       >
         {livros.map((l) => {
           const livroId = trilhaMap?.get(l.titulo);
@@ -449,7 +449,7 @@ function JornadaLivros() {
             <div key={l.id} className="shrink-0 snap-start">{card}</div>
           );
         })}
-        <div className="shrink-0 pr-2 md:pr-4" />
+        <div className="shrink-0 pr-4 md:pr-8" />
       </div>
     </section>
   );
