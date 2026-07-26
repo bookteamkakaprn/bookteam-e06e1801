@@ -179,6 +179,41 @@ export type Database = {
           },
         ]
       }
+      historico_livros: {
+        Row: {
+          created_at: string
+          data_conclusao: string
+          id: string
+          livro_id: string
+          observacao: string | null
+          participante_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_conclusao: string
+          id?: string
+          livro_id: string
+          observacao?: string | null
+          participante_id: string
+        }
+        Update: {
+          created_at?: string
+          data_conclusao?: string
+          id?: string
+          livro_id?: string
+          observacao?: string | null
+          participante_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_livros_livro_id_fkey"
+            columns: ["livro_id"]
+            isOneToOne: false
+            referencedRelation: "livros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inscricoes: {
         Row: {
           codigo: string | null
