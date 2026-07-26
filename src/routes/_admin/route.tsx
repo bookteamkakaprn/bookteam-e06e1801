@@ -15,6 +15,7 @@ import {
   LogOut,
   GraduationCap,
   BookOpen,
+  Wallet,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_admin")({
@@ -43,6 +44,7 @@ const menu: MenuItem[] = [
   { to: "/admin/turmas", label: "Turmas", icon: GraduationCap },
   { to: "/admin/eventos", label: "Encontros", icon: Calendar },
   { to: "/admin/pagamentos", label: "Pagamentos", icon: CreditCard },
+  { to: "/admin/conta", label: "Conta PIX", icon: Wallet },
   { to: "/admin/presencas", label: "Presenças", icon: CheckSquare },
   { to: "/admin/certificados", label: "Certificados", icon: Award },
   { to: "/admin/relatorios", label: "Relatórios", icon: FileText },

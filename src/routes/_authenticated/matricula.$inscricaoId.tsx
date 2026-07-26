@@ -41,6 +41,20 @@ function MatriculaPage() {
     },
   });
 
+  const { data: pix } = useQuery({
+    queryKey: ["config-pagamento"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("configuracoes_pagamento")
+        .select("*")
+        .order("created_at")
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const enviar = useMutation({
     mutationFn: async () => {
       if (!user || !data) throw new Error("Matrícula não encontrada");
@@ -115,6 +129,44 @@ function MatriculaPage() {
               <Clock className="h-3.5 w-3.5" />
               {pagamento.status === "aprovado" ? "Pago" : pagamento.status === "rejeitado" ? "Recusado" : "Pendente"}
             </Badge>
+          </CardContent>
+        </Card>
+      )}
+
+      {pix && (pix.pix_chave || pix.pix_copia_cola || pix.pix_qrcode_url) && (
+        <Card>
+          <CardHeader><CardTitle className="text-base">Dados para PIX</CardTitle></CardHeader>
+          <CardContent className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-start">
+            {pix.pix_qrcode_url && (
+              <img
+                src={pix.pix_qrcode_url}
+                alt="QR Code do PIX para pagamento"
+                loading="lazy"
+                className="h-40 w-40 rounded-md border border-border object-contain"
+              />
+            )}
+            <div className="space-y-1 text-sm">
+              {pix.beneficiario && <p><span className="text-muted-foreground">Beneficiário:</span> {pix.beneficiario}</p>}
+              {pix.banco && <p><span className="text-muted-foreground">Banco:</span> {pix.banco}</p>}
+              {pix.tipo_chave && <p><span className="text-muted-foreground">Tipo da chave:</span> {pix.tipo_chave}</p>}
+              {pix.pix_chave && <p className="break-all"><span className="text-muted-foreground">Chave:</span> {pix.pix_chave}</p>}
+              {pix.pix_copia_cola && (
+                <div className="space-y-1.5 pt-2">
+                  <p className="break-all rounded-md bg-muted p-2 text-xs">{pix.pix_copia_cola}</p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(pix.pix_copia_cola!);
+                      toast.success("Código PIX copiado");
+                    }}
+                  >
+                    Copiar código PIX
+                  </Button>
+                </div>
+              )}
+              {pix.instrucoes && <p className="pt-2 text-muted-foreground">{pix.instrucoes}</p>}
+            </div>
           </CardContent>
         </Card>
       )}

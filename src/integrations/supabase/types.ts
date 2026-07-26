@@ -72,6 +72,45 @@ export type Database = {
           },
         ]
       }
+      configuracoes_pagamento: {
+        Row: {
+          banco: string | null
+          beneficiario: string | null
+          created_at: string
+          id: string
+          instrucoes: string | null
+          pix_chave: string | null
+          pix_copia_cola: string | null
+          pix_qrcode_url: string | null
+          tipo_chave: string | null
+          updated_at: string
+        }
+        Insert: {
+          banco?: string | null
+          beneficiario?: string | null
+          created_at?: string
+          id?: string
+          instrucoes?: string | null
+          pix_chave?: string | null
+          pix_copia_cola?: string | null
+          pix_qrcode_url?: string | null
+          tipo_chave?: string | null
+          updated_at?: string
+        }
+        Update: {
+          banco?: string | null
+          beneficiario?: string | null
+          created_at?: string
+          id?: string
+          instrucoes?: string | null
+          pix_chave?: string | null
+          pix_copia_cola?: string | null
+          pix_qrcode_url?: string | null
+          tipo_chave?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       eventos: {
         Row: {
           cidade: string | null
