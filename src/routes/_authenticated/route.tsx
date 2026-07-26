@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect, Link, useRouterState, useNavigate } 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Home, User, Calendar, CreditCard, Award, LogOut, LayoutDashboard, History } from "lucide-react";
+import { BookOpen, Home, User, Calendar, CalendarDays, CreditCard, Award, LogOut, LayoutDashboard, History } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -33,6 +33,7 @@ function AuthenticatedLayout() {
   const navItems = [
     { to: "/inicio", label: "Início", icon: Home },
     { to: "/eventos", label: "Encontros", icon: Calendar },
+    { to: "/calendario", label: "Calendário", icon: CalendarDays },
     { to: "/historico", label: "Meu histórico", icon: History },
     { to: "/pagamentos", label: "Pagamentos", icon: CreditCard },
     { to: "/certificados", label: "Certificados", icon: Award },
