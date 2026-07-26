@@ -136,6 +136,9 @@ function MatriculaPage() {
       <Card>
         <CardHeader><CardTitle className="text-base">Enviar comprovante</CardTitle></CardHeader>
         <CardContent className="space-y-4">
+          <div />
+        </CardContent>
+        <CardContent className="space-y-4">
           {turma?.valor != null && (
             <p className="text-sm text-muted-foreground">
               Valor:{" "}
