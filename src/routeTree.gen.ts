@@ -33,6 +33,7 @@ import { Route as AdminAdminParticipantesRouteImport } from './routes/_admin/adm
 import { Route as AdminAdminPagamentosRouteImport } from './routes/_admin/admin.pagamentos'
 import { Route as AdminAdminLivrosRouteImport } from './routes/_admin/admin.livros'
 import { Route as AdminAdminEventosRouteImport } from './routes/_admin/admin.eventos'
+import { Route as AdminAdminContaRouteImport } from './routes/_admin/admin.conta'
 import { Route as AdminAdminCertificadosRouteImport } from './routes/_admin/admin.certificados'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -156,6 +157,11 @@ const AdminAdminEventosRoute = AdminAdminEventosRouteImport.update({
   path: '/admin/eventos',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminAdminContaRoute = AdminAdminContaRouteImport.update({
+  id: '/admin/conta',
+  path: '/admin/conta',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminAdminCertificadosRoute = AdminAdminCertificadosRouteImport.update({
   id: '/admin/certificados',
   path: '/admin/certificados',
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AdminAdminCertificadosRoute
+  '/admin/conta': typeof AdminAdminContaRoute
   '/admin/eventos': typeof AdminAdminEventosRoute
   '/admin/livros': typeof AdminAdminLivrosRoute
   '/admin/pagamentos': typeof AdminAdminPagamentosRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
   '/admin/certificados': typeof AdminAdminCertificadosRoute
+  '/admin/conta': typeof AdminAdminContaRoute
   '/admin/eventos': typeof AdminAdminEventosRoute
   '/admin/livros': typeof AdminAdminLivrosRoute
   '/admin/pagamentos': typeof AdminAdminPagamentosRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
   '/_admin/admin/certificados': typeof AdminAdminCertificadosRoute
+  '/_admin/admin/conta': typeof AdminAdminContaRoute
   '/_admin/admin/eventos': typeof AdminAdminEventosRoute
   '/_admin/admin/livros': typeof AdminAdminLivrosRoute
   '/_admin/admin/pagamentos': typeof AdminAdminPagamentosRoute
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
     | '/livros/$id'
     | '/trilhas/$id'
     | '/admin/certificados'
+    | '/admin/conta'
     | '/admin/eventos'
     | '/admin/livros'
     | '/admin/pagamentos'
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/livros/$id'
     | '/trilhas/$id'
     | '/admin/certificados'
+    | '/admin/conta'
     | '/admin/eventos'
     | '/admin/livros'
     | '/admin/pagamentos'
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/livros/$id'
     | '/trilhas/$id'
     | '/_admin/admin/certificados'
+    | '/_admin/admin/conta'
     | '/_admin/admin/eventos'
     | '/_admin/admin/livros'
     | '/_admin/admin/pagamentos'
@@ -502,6 +514,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminEventosRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/_admin/admin/conta': {
+      id: '/_admin/admin/conta'
+      path: '/admin/conta'
+      fullPath: '/admin/conta'
+      preLoaderRoute: typeof AdminAdminContaRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/_admin/admin/certificados': {
       id: '/_admin/admin/certificados'
       path: '/admin/certificados'
@@ -514,6 +533,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteRouteChildren {
   AdminAdminCertificadosRoute: typeof AdminAdminCertificadosRoute
+  AdminAdminContaRoute: typeof AdminAdminContaRoute
   AdminAdminEventosRoute: typeof AdminAdminEventosRoute
   AdminAdminLivrosRoute: typeof AdminAdminLivrosRoute
   AdminAdminPagamentosRoute: typeof AdminAdminPagamentosRoute
@@ -526,6 +546,7 @@ interface AdminRouteRouteChildren {
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAdminCertificadosRoute: AdminAdminCertificadosRoute,
+  AdminAdminContaRoute: AdminAdminContaRoute,
   AdminAdminEventosRoute: AdminAdminEventosRoute,
   AdminAdminLivrosRoute: AdminAdminLivrosRoute,
   AdminAdminPagamentosRoute: AdminAdminPagamentosRoute,
