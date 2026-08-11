@@ -595,6 +595,7 @@ function HowItWorks() {
 function EventosEspeciais() {
   return (
     <section className="relative py-10 md:py-14">
+      <div id="eventos" className="absolute -top-24" />
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="relative overflow-hidden rounded-3xl border border-gold/20 gradient-wine p-8 shadow-premium md:p-14">
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
