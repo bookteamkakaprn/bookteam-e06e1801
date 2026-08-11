@@ -517,14 +517,6 @@ function HowItWorks() {
       desc: "Toda jornada começa no primeiro livro da trilha — a ordem preserva o sentido da leitura.",
     },
     {
-      icon: Compass,
-      title: "Escolha sua trilha",
-      desc: "Selecione entre Básico, Avançado ou os próximos módulos que fazem sentido para você.",
-      href: "/auth",
-      cta: "Entrar na sua conta",
-    },
-
-    {
       icon: UserPlus,
       title: "Faça sua inscrição",
       desc: "Preencha seus dados e reserve sua vaga no próximo encontro presencial.",
@@ -557,7 +549,7 @@ function HowItWorks() {
           {/* Trilho vertical (mobile) */}
           <div className="pointer-events-none absolute left-10 top-2 bottom-2 w-px bg-gradient-to-b from-gold/10 via-gold/50 to-gold/10 md:hidden" />
 
-          <ol className="grid gap-8 md:grid-cols-5 md:gap-6">
+          <ol className="grid gap-8 md:grid-cols-4 md:gap-6">
             {steps.map((s, i) => (
               <li key={s.title} className="group relative pl-24 md:pl-0">
                 {/* Nó com logo do Book Team */}
@@ -582,15 +574,6 @@ function HowItWorks() {
                   <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/70">
                     {s.desc}
                   </p>
-                  {"href" in s && s.href ? (
-                    <Link
-                      to={s.href}
-                      search={{ mode: "signup" }}
-                      className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-gold hover:text-gold/80"
-                    >
-                      {(s as { cta?: string }).cta ?? "Acessar"} <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                  ) : null}
                 </div>
               </li>
             ))}
