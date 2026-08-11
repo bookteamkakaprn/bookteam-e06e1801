@@ -490,8 +490,7 @@ function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
         </p>
         <p className="mt-1 text-[12px] text-foreground/75">{l.autor}</p>
         <div className="mt-3 flex items-center justify-between text-[11px]">
-          <span className="text-foreground/60">Livro {l.ordem} de {l.total}</span>
-          <span className="text-gold">{l.ordem}/{l.total}</span>
+          <span className="text-foreground/60">Livro {l.ordem}</span>
         </div>
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
           <div
