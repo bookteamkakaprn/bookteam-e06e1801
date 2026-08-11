@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { BookOpen, Loader2, Save } from "lucide-react";
+import { BookOpen, Loader2, Save, Upload } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Livro = Tables<"livros">;
@@ -23,7 +23,6 @@ const textFields: { key: keyof Livro; label: string; type?: "number" }[] = [
   { key: "ordem", label: "Ordem da trilha", type: "number" },
   { key: "categoria", label: "Categoria" },
   { key: "autor", label: "Autor" },
-  { key: "imagem_url", label: "Imagem da capa (URL)" },
   { key: "qtd_encontros", label: "Quantidade de encontros", type: "number" },
   { key: "duracao", label: "Duração" },
   { key: "professor", label: "Professor responsável" },
@@ -50,6 +49,7 @@ function AdminLivrosPage() {
   const qc = useQueryClient();
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [form, setForm] = useState<Partial<Livro>>({});
+  const [enviandoCapa, setEnviandoCapa] = useState(false);
 
   const { data: livros = [], isLoading } = useQuery({
     queryKey: ["admin-livros"],
@@ -88,6 +88,44 @@ function AdminLivrosPage() {
 
   function set(key: keyof Livro, value: string, numeric?: boolean) {
     setForm((f) => ({ ...f, [key]: numeric ? (value === "" ? null : Number(value)) : value }));
+  }
+
+  async function enviarCapa(file: File) {
+    if (!selecionado) return;
+    const tiposOk = ["image/jpeg", "image/png", "image/webp"];
+    if (!tiposOk.includes(file.type)) {
+      toast.error("Envie um arquivo JPEG, PNG ou WebP.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5 MB.");
+      return;
+    }
+    setEnviandoCapa(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
+      const path = `${selecionado}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("capas")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+      const { data: signed, error: signErr } = await supabase.storage
+        .from("capas")
+        .createSignedUrl(path, 60 * 60 * 24 * 3650);
+      if (signErr || !signed) throw signErr ?? new Error("Não foi possível gerar o link da imagem.");
+      setForm((f) => ({ ...f, imagem_url: signed.signedUrl }));
+      const { error: updErr } = await supabase
+        .from("livros")
+        .update({ imagem_url: signed.signedUrl })
+        .eq("id", selecionado);
+      if (updErr) throw updErr;
+      qc.invalidateQueries({ queryKey: ["admin-livros"] });
+      toast.success("Capa atualizada");
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Erro ao enviar a imagem");
+    } finally {
+      setEnviandoCapa(false);
+    }
   }
 
   return (
@@ -154,6 +192,47 @@ function AdminLivrosPage() {
                   <div className="space-y-1.5">
                     <Label>Vagas restantes (automático)</Label>
                     <Input value={form.vagas_restantes ?? 0} readOnly disabled />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="capa-upload">Imagem da capa (JPEG ou PNG)</Label>
+                  <div className="flex flex-wrap items-center gap-4">
+                    {form.imagem_url ? (
+                      <img
+                        src={form.imagem_url}
+                        alt={`Capa do livro ${form.titulo ?? ""}`}
+                        className="h-32 w-24 rounded-md border border-border object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-32 w-24 items-center justify-center rounded-md border border-dashed border-border text-xs text-muted-foreground">
+                        Sem capa
+                      </div>
+                    )}
+                    <div className="space-y-1.5">
+                      <input
+                        id="capa-upload"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          e.target.value = "";
+                          if (file) void enviarCapa(file);
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={enviandoCapa}
+                        onClick={() => document.getElementById("capa-upload")?.click()}
+                        className="gap-2"
+                      >
+                        {enviandoCapa ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        Enviar imagem
+                      </Button>
+                      <p className="text-xs text-muted-foreground">JPEG, PNG ou WebP, até 5 MB.</p>
+                    </div>
                   </div>
                 </div>
 
