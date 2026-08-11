@@ -99,9 +99,9 @@ function Header() {
   const navItems = [
     { type: "anchor" as const, href: "#quem-somos", label: "Quem somos" },
     { type: "anchor" as const, href: "#cronograma", label: "Livros" },
-    { type: "route" as const, to: "/eventos", label: "Agenda" },
+    { type: "anchor" as const, href: "#eventos", label: "Encontros" },
     { type: "route" as const, to: "/inicio", label: "Área do aluno" },
-    { type: "route" as const, to: "/admin", label: "Adm" },
+    { type: "route" as const, to: "/admin", label: "Área administrativa" },
   ] as const;
 
   return (
