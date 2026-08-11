@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_admin")({
   ssr: false,
   beforeLoad: async () => {
     const { data: userData, error } = await supabase.auth.getUser();
-    if (error || !userData.user) throw redirect({ to: "/auth" });
+    if (error || !userData.user) throw redirect({ to: "/auth", search: { area: "admin" as const } });
     const { data: role } = await supabase
       .from("user_roles")
       .select("role")
