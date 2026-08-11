@@ -447,7 +447,7 @@ function JornadaLivros() {
 function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
   return (
     <article
-      className={`group poster-hover relative aspect-[2/3] w-[180px] shrink-0 snap-start overflow-hidden rounded-r-2xl rounded-l-md bg-gradient-to-br ${l.cor} shadow-book md:w-[240px] lg:w-[260px]`}
+      className={`group poster-hover relative aspect-[2/3] w-[180px] shrink-0 snap-start overflow-hidden rounded-r-2xl rounded-l-md bg-gradient-to-br ${l.cor} shadow-book md:w-[240px] lg:w-[280px]`}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_60%)]" />
 
@@ -486,10 +486,10 @@ function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold/90">
           {l.trilha}
         </p>
-        <p className="mt-1 font-serif text-xl font-semibold italic leading-tight text-foreground drop-shadow-md">
+        <p className="mt-1 font-serif text-lg font-semibold italic leading-tight text-foreground drop-shadow-md md:text-xl line-clamp-2 h-[2.5em] flex items-end">
           {l.titulo}
         </p>
-        <p className="mt-1 text-[12px] text-foreground/75">{l.autor}</p>
+        <p className="mt-1 text-[12px] text-foreground/75 truncate">{l.autor}</p>
         <div className="mt-3 flex items-center justify-between text-[11px]">
           <span className="text-foreground/60">Livro {l.ordem}</span>
         </div>
