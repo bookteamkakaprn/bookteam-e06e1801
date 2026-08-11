@@ -398,18 +398,18 @@ function JornadaLivros() {
               caminho percorrido.
             </p>
           </div>
-          <div className="hidden gap-2 md:flex">
+          <div className="flex gap-2">
             <button
               onClick={() => scrollBy(-1)}
               aria-label="Anterior"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-card/60 text-foreground/80 backdrop-blur transition-all hover:border-gold/40 hover:text-gold"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border/60 bg-card/60 text-foreground/80 backdrop-blur transition-all hover:border-gold/40 hover:text-gold"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
             <button
               onClick={() => scrollBy(1)}
               aria-label="Próximo"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-card/60 text-foreground/80 backdrop-blur transition-all hover:border-gold/40 hover:text-gold"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border/60 bg-card/60 text-foreground/80 backdrop-blur transition-all hover:border-gold/40 hover:text-gold"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
@@ -419,7 +419,7 @@ function JornadaLivros() {
 
       <div
         ref={scrollerRef}
-        className="scrollbar-hidden mt-8 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-4 md:gap-8 md:px-8"
+        className="scrollbar-hidden mt-8 flex touch-pan-x snap-x snap-proximity gap-5 overflow-x-auto overscroll-x-contain px-4 pb-4 [-webkit-overflow-scrolling:touch] md:gap-8 md:px-8"
       >
         {livros.map((l) => {
           const livroId = trilhaMap?.get(l.titulo);
