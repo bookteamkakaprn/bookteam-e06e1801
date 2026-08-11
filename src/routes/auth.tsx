@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, useEffect } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s) => searchSchema.parse(s),
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Entrar ou criar conta — Book Clube" },
@@ -23,7 +24,6 @@ export const Route = createFileRoute("/auth")({
     ],
   }),
   beforeLoad: async () => {
-    if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: "/inicio" });
   },
@@ -33,6 +33,11 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { mode } = Route.useSearch();
   const tab = mode ?? "signin";
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,7 +55,7 @@ function AuthPage() {
               Acompanhe e gerencie os alunos do Book Team Amor.
             </p>
           </div>
-          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Book Clube</p>
+          <p className="text-xs text-muted-foreground">© {year ?? "2026"} Book Clube</p>
         </aside>
 
         <main className="flex items-center justify-center p-6 md:p-12">
