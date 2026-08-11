@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 const searchSchema = z.object({
   mode: z.enum(["signin", "signup", "forgot"]).optional(),
+  area: z.enum(["aluno", "admin"]).optional(),
 });
 
 export const Route = createFileRoute("/auth")({
@@ -31,8 +32,9 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { mode } = Route.useSearch();
+  const { mode, area } = Route.useSearch();
   const tab = mode ?? "signin";
+  const isAdmin = area === "admin";
   const [year, setYear] = useState<number | null>(null);
 
   useEffect(() => {
@@ -57,10 +59,12 @@ function AuthPage() {
           </div>
           <div>
             <h2 className="font-serif text-4xl font-bold leading-tight">
-              Área do aluno
+              {isAdmin ? "Área administrativa" : "Área do aluno"}
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Acompanhe suas trilhas, encontros, pagamentos e certificados do Book Team Amor.
+              {isAdmin
+                ? "Acompanhe e gerencie alunos, turmas e pagamentos do Book Team Amor."
+                : "Acompanhe suas trilhas, encontros, pagamentos e certificados do Book Team Amor."}
             </p>
           </div>
           <p className="text-xs text-muted-foreground">© {year ?? "2026"} Book Clube</p>
