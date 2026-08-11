@@ -306,11 +306,7 @@ function HeroQuemSomos() {
             </Button>
           </div>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-x-10 gap-y-4 border-t border-white/10 pt-5 text-sm md:justify-start">
-            <Stat n="4" label="Trilhas guiadas" />
-            <Stat n="+200" label="Participantes" />
-            <Stat n="+30" label="Encontros por ano" />
-          </div>
+          {/* Stats removed per user request */}
         </div>
       </div>
 
