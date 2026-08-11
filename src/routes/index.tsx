@@ -306,11 +306,7 @@ function HeroQuemSomos() {
             </Button>
           </div>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-x-10 gap-y-4 border-t border-white/10 pt-5 text-sm md:justify-start">
-            <Stat n="4" label="Trilhas guiadas" />
-            <Stat n="+200" label="Participantes" />
-            <Stat n="+30" label="Encontros por ano" />
-          </div>
+          {/* Stats removed per user request */}
         </div>
       </div>
 
@@ -343,14 +339,6 @@ function HeroQuemSomos() {
   );
 }
 
-function Stat({ n, label }: { n: string; label: string }) {
-  return (
-    <div>
-      <p className="font-serif text-2xl font-semibold text-gold">{n}</p>
-      <p className="text-xs uppercase tracking-wider text-foreground/60">{label}</p>
-    </div>
-  );
-}
 
 
 /* ———————————————— CRONOGRAMA ———————————————— */
