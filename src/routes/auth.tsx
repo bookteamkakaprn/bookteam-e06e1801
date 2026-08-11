@@ -33,6 +33,11 @@ export const Route = createFileRoute("/auth")({
 function AuthPage() {
   const { mode } = Route.useSearch();
   const tab = mode ?? "signin";
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,7 +55,7 @@ function AuthPage() {
               Acompanhe e gerencie os alunos do Book Team Amor.
             </p>
           </div>
-          <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Book Clube</p>
+          <p className="text-xs text-muted-foreground">© {year ?? "2026"} Book Clube</p>
         </aside>
 
         <main className="flex items-center justify-center p-6 md:p-12">
