@@ -386,7 +386,6 @@ function JornadaLivros() {
       id="cronograma"
       className="relative border-t border-border/40 bg-gradient-to-b from-background via-card/30 to-background py-16 md:py-20"
     >
-      <div id="eventos" className="absolute -top-20" />
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-2xl">
