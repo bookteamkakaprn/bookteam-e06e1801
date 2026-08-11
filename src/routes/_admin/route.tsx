@@ -65,11 +65,14 @@ function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-30 border-b border-border bg-card">
+      <header className="sticky top-0 z-30 border-b-2 border-primary bg-primary/10 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Link to="/admin" className="flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-primary" />
-            <span className="font-serif text-xl font-semibold">Book Team — Administração</span>
+            <span className="font-serif text-xl font-semibold">Book Team</span>
+            <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-bold uppercase tracking-widest text-primary-foreground">
+              Admin
+            </span>
           </Link>
           <div className="flex items-center gap-2">
             <Link
@@ -85,10 +88,10 @@ function AdminLayout() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[220px_1fr]">
-        <aside className="lg:sticky lg:top-24 lg:self-start">
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[240px_1fr]">
+        <aside className="rounded-xl border border-border bg-card p-2 lg:sticky lg:top-24 lg:self-start">
           <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Administração
+            Gestão
           </p>
           <nav className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
             {menu.map(({ to, label, icon: Icon, exact }) => {
