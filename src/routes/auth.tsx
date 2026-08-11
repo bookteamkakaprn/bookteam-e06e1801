@@ -43,16 +43,24 @@ function AuthPage() {
     <div className="min-h-screen bg-background">
       <div className="mx-auto grid min-h-screen max-w-6xl grid-cols-1 lg:grid-cols-2">
         <aside className="hidden gradient-hero flex-col justify-between p-12 lg:flex">
-          <Link to="/" className="flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-primary" />
-            <span className="font-serif text-xl font-semibold">Book Clube</span>
-          </Link>
+          <div className="flex flex-col gap-2">
+            <Link to="/" className="flex items-center gap-2">
+              <BookOpen className="h-6 w-6 text-primary" />
+              <span className="font-serif text-xl font-semibold">Book Clube</span>
+            </Link>
+            <Link
+              to="/"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Início
+            </Link>
+          </div>
           <div>
             <h2 className="font-serif text-4xl font-bold leading-tight">
-              Área administrativa
+              Área do aluno
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Acompanhe e gerencie os alunos do Book Team Amor.
+              Acompanhe suas trilhas, encontros, pagamentos e certificados do Book Team Amor.
             </p>
           </div>
           <p className="text-xs text-muted-foreground">© {year ?? "2026"} Book Clube</p>
