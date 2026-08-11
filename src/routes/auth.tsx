@@ -16,6 +16,7 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s) => searchSchema.parse(s),
+  ssr: false,
   head: () => ({
     meta: [
       { title: "Entrar ou criar conta — Book Clube" },
@@ -23,7 +24,6 @@ export const Route = createFileRoute("/auth")({
     ],
   }),
   beforeLoad: async () => {
-    if (typeof window === "undefined") return;
     const { data } = await supabase.auth.getSession();
     if (data.session) throw redirect({ to: "/inicio" });
   },
