@@ -517,14 +517,6 @@ function HowItWorks() {
       desc: "Toda jornada começa no primeiro livro da trilha — a ordem preserva o sentido da leitura.",
     },
     {
-      icon: Compass,
-      title: "Escolha sua trilha",
-      desc: "Selecione entre Básico, Avançado ou os próximos módulos que fazem sentido para você.",
-      href: "/auth",
-      cta: "Entrar na sua conta",
-    },
-
-    {
       icon: UserPlus,
       title: "Faça sua inscrição",
       desc: "Preencha seus dados e reserve sua vaga no próximo encontro presencial.",
