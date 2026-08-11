@@ -339,14 +339,6 @@ function HeroQuemSomos() {
   );
 }
 
-function Stat({ n, label }: { n: string; label: string }) {
-  return (
-    <div>
-      <p className="font-serif text-2xl font-semibold text-gold">{n}</p>
-      <p className="text-xs uppercase tracking-wider text-foreground/60">{label}</p>
-    </div>
-  );
-}
 
 
 /* ———————————————— CRONOGRAMA ———————————————— */
