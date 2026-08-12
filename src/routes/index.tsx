@@ -41,8 +41,8 @@ import {
 import logoAsset from "@/assets/book-team-logo.png.asset.json";
 import capaMantenha from "@/assets/mantenha.jpg.asset.json";
 import capaCultura from "@/assets/cultura.jpg.asset.json";
-import capaSeuPerfeito from "@/assets/seu-perfeito.jpg.asset.json";
 import capaAtive from "@/assets/ative.jpg.asset.json";
+
 
 
 
@@ -357,12 +357,30 @@ type JornadaLivro = {
 };
 
 function JornadaLivros() {
-  const livros: JornadaLivro[] = [
-    { id: "b1", titulo: "Mantenha Seu Amor Aceso", autor: "Danny Silk", trilha: "Book Team Básico", ordem: 1, total: 2, imagem_url: capaMantenha.url, cor: "from-[oklch(0.4_0.12_25)] to-[oklch(0.22_0.06_25)]" },
-    { id: "b2", titulo: "Cultura da Honra", autor: "Danny Silk", trilha: "Book Team Básico", ordem: 2, total: 2, imagem_url: capaCultura.url, cor: "from-[oklch(0.38_0.11_20)] to-[oklch(0.2_0.05_20)]" },
-    { id: "a1", titulo: "Seu Perfeito Você", autor: "Dra. Caroline Leaf", trilha: "Book Team Avançado", ordem: 1, total: 2, imagem_url: capaSeuPerfeito.url, cor: "from-[oklch(0.42_0.1_45)] to-[oklch(0.24_0.05_45)]" },
-    { id: "a2", titulo: "Ative Seu Cérebro", autor: "Dra. Caroline Leaf", trilha: "Book Team Avançado", ordem: 2, total: 2, imagem_url: capaAtive.url, cor: "from-[oklch(0.36_0.09_40)] to-[oklch(0.2_0.04_40)]" },
-  ];
+    const { data: livrosDb } = useQuery({
+    queryKey: ["livros-jornada-home"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("livros")
+        .select("*")
+        .order("ordem", { ascending: true });
+      return data || [];
+    },
+  });
+
+  const livros: JornadaLivro[] = (livrosDb || []).map((l, idx) => ({
+    id: l.id,
+    titulo: l.titulo,
+    autor: l.autor || "",
+    trilha: l.categoria || "Jornada",
+    ordem: l.ordem || idx + 1,
+    total: 10,
+    imagem_url: l.imagem_url,
+    cor: idx % 2 === 0 
+      ? "from-[oklch(0.4_0.12_25)] to-[oklch(0.22_0.06_25)]" 
+      : "from-[oklch(0.38_0.11_20)] to-[oklch(0.2_0.05_20)]",
+  }));
+
 
   const { data: trilhaMap } = useQuery({
     queryKey: ["livros-trilha-map"],
@@ -422,20 +440,18 @@ function JornadaLivros() {
         className="scrollbar-hidden mt-8 flex touch-pan-x snap-x snap-proximity gap-4 scroll-pl-4 overflow-x-auto overscroll-x-contain px-4 pb-4 [-webkit-overflow-scrolling:touch] md:scroll-pl-8 md:gap-8 md:px-8"
       >
         {livros.map((l) => {
-          const livroId = trilhaMap?.get(l.titulo);
           const card = <JornadaLivroCard l={l} />;
-          return livroId ? (
+          return (
             <Link
               key={l.id}
               to="/livros/$id"
-              params={{ id: livroId }}
+              params={{ id: l.id }}
               className="shrink-0 snap-start"
             >
               {card}
             </Link>
-          ) : (
-            <div key={l.id} className="shrink-0 snap-start">{card}</div>
           );
+
         })}
         <div className="shrink-0 pr-4 md:pr-8" />
       </div>
@@ -604,11 +620,12 @@ function EventosEspeciais() {
           <div className="relative grid gap-10 md:grid-cols-[1.2fr_1fr] md:items-center">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-black/20 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-gold backdrop-blur">
-                <Sparkles className="h-3 w-3" /> Encontros especiais
+                <Sparkles className="h-3 w-3" /> Momentos para todos
               </span>
               <h2 className="mt-4 font-serif text-3xl font-semibold text-foreground md:text-4xl">
-                Momentos abertos para todos
+                Aba momentos aberto para todos
               </h2>
+
               <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-foreground/80">
                 Além das trilhas dos livros, promovemos retiros, conferências e
                 celebrações abertos ao público — um convite para viver a
@@ -626,11 +643,14 @@ function EventosEspeciais() {
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "Retiros", icon: Heart },
-                { label: "Conferências", icon: Users },
-                { label: "Celebrações", icon: Sparkles },
-                { label: "Temáticos", icon: Calendar },
+                { label: "Open House", icon: Heart },
+                { label: "Bazar", icon: Users },
+                { label: "Café Colonial", icon: Sparkles },
+                { label: "Mulheres de Valor", icon: Star },
+                { label: "Cantar", icon: Calendar },
+                { label: "Encontro de Casais", icon: Users },
               ].map((tag) => (
+
                 <div
                   key={tag.label}
                   className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-gold/20 bg-black/25 backdrop-blur transition-all hover:border-gold/60"
