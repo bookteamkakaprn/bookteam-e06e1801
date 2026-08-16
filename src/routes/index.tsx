@@ -38,7 +38,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-import logoAsset from "@/assets/book-team-logo.png.asset.json";
+import logoAsset from "@/assets/book-team-logo.png";
 import capaMantenha from "@/assets/mantenha.jpg.asset.json";
 import capaCultura from "@/assets/cultura.jpg.asset.json";
 import capaAtive from "@/assets/ative.jpg.asset.json";
@@ -115,7 +115,7 @@ function Header() {
       <div className="mx-auto grid h-16 max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 md:px-8 lg:flex lg:justify-between">
         <Link to="/" className="flex min-w-0 items-center gap-2.5">
           <img
-            src={logoAsset.url}
+            src={logoAsset}
             alt="Book Team"
             className="h-9 w-9 shrink-0 rounded-full ring-1 ring-gold/40"
           />
@@ -263,7 +263,7 @@ function HeroQuemSomos() {
       <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-4 pb-12 pt-28 md:grid-cols-2 md:gap-14 md:px-8 md:pt-32 md:pb-16">
         <div className="animate-fade-in flex justify-center md:justify-start">
           <img
-            src={logoAsset.url}
+            src={logoAsset}
             alt="Book Team — Amor & Honra"
             className="h-56 w-56 rounded-full shadow-2xl ring-1 ring-gold/40 md:h-80 md:w-80 lg:h-[22rem] lg:w-[22rem]"
           />
@@ -570,7 +570,7 @@ function HowItWorks() {
                 {/* Nó com logo do Book Team */}
                 <span className="absolute left-0 top-0 z-10 flex h-20 w-20 items-center justify-center rounded-full border border-gold/50 bg-background shadow-glow-gold md:relative md:mx-auto md:mb-6">
                   <img
-                    src={logoAsset.url}
+                    src={logoAsset}
                     alt="Book Team"
                     className="h-14 w-14 rounded-full object-cover"
                   />
@@ -770,7 +770,7 @@ function Footer() {
         <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-3">
-              <img src={logoAsset.url} alt="Book Team" className="h-10 w-10 rounded-full ring-1 ring-gold/40" />
+              <img src={logoAsset} alt="Book Team" className="h-10 w-10 rounded-full ring-1 ring-gold/40" />
               <div>
                 <p className="font-serif text-base font-semibold">BOOK TEAM</p>
                 <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold">amor & honra</p>
