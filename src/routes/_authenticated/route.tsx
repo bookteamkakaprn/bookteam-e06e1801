@@ -2,9 +2,10 @@ import { createFileRoute, Outlet, redirect, Link, useRouterState, useNavigate } 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Home, User, Calendar, CalendarDays, CreditCard, Award, LogOut, LayoutDashboard, History } from "lucide-react";
+import { Home, User, Calendar, CalendarDays, CreditCard, Award, LogOut, LayoutDashboard, History } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import logo from "@/assets/book-team-logo.png";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -45,7 +46,7 @@ function AuthenticatedLayout() {
       <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Link to="/inicio" className="flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-primary" />
+            <img src={logo} alt="Book Team" className="h-8 w-auto" />
             <span className="font-serif text-xl font-semibold">Book Clube</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">

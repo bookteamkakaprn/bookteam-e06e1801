@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Calendar, CheckCircle2, Clock, BookOpen, GraduationCap, CreditCard, Award, History } from "lucide-react";
+import { AlertCircle, Calendar, CheckCircle2, Clock, BookOpen, GraduationCap } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/inicio")({
   head: () => ({ meta: [{ title: "Meu painel — Book Team" }, { name: "robots", content: "noindex" }] }),
@@ -49,13 +49,7 @@ function InicioPage() {
 
   const inscricoes = data ?? [];
 
-  const quickLinks = [
-    { to: "/eventos", label: "Encontros", icon: Calendar, desc: "Ver próximos encontros disponíveis" },
-    { to: "/calendario", label: "Calendário", icon: Calendar, desc: "Agenda de encontros confirmados" },
-    { to: "/historico", label: "Meu histórico", icon: History, desc: "Registrar livros feitos anteriormente" },
-    { to: "/pagamentos", label: "Pagamentos", icon: CreditCard, desc: "Comprovantes e situação financeira" },
-    { to: "/certificados", label: "Certificados", icon: Award, desc: "Certificados emitidos" },
-  ];
+  /* quickLinks removido conforme solicitado */
 
   return (
     <div className="space-y-8">
@@ -133,27 +127,6 @@ function InicioPage() {
               </Card>
             );
           })}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="font-serif text-xl font-semibold">Atalhos rápidos</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {quickLinks.map(({ to, label, icon: Icon, desc }) => (
-            <Card key={to} className="transition-colors hover:border-primary/50">
-              <CardContent className="p-4">
-                <Link to={to} className="flex items-start gap-3">
-                  <div className="rounded-md bg-secondary p-2">
-                    <Icon className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">{label}</p>
-                    <p className="text-xs text-muted-foreground">{desc}</p>
-                  </div>
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
         </div>
       </section>
     </div>
