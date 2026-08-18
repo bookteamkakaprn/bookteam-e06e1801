@@ -22,8 +22,6 @@ import {
   Award,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
-
   Menu,
   X,
   Play,
@@ -35,16 +33,12 @@ import {
   UserPlus,
   Receipt,
   Mail,
-  CheckCircle2,
 } from "lucide-react";
 
 import logoAsset from "@/assets/book-team-logo.png.asset.json";
 import capaMantenha from "@/assets/mantenha.jpg.asset.json";
 import capaCultura from "@/assets/cultura.jpg.asset.json";
 import capaAtive from "@/assets/ative.jpg.asset.json";
-
-
-
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -71,10 +65,8 @@ function LandingPage() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <HeroQuemSomos />
-
       <HowItWorks />
       <JornadaLivros />
-
       <EventosEspeciais />
       <Testimonials />
       <FaqSection />
@@ -120,8 +112,12 @@ function Header() {
             className="h-9 w-9 shrink-0 rounded-full ring-1 ring-gold/40"
           />
           <div className="min-w-0 leading-none">
-            <p className="truncate font-serif text-[15px] font-semibold tracking-wide">BOOK TEAM</p>
-            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold">amor & honra</p>
+            <p className="truncate font-serif text-[15px] font-semibold tracking-wide">
+              BOOK TEAM
+            </p>
+            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold">
+              amor & honra
+            </p>
           </div>
         </Link>
 
@@ -145,7 +141,7 @@ function Header() {
                 {item.label}
                 <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" />
               </Link>
-            )
+            ),
           )}
         </nav>
 
@@ -158,6 +154,7 @@ function Header() {
           >
             <Link to="/auth">Entrar</Link>
           </Button>
+
           <Button
             asChild
             size="sm"
@@ -167,12 +164,17 @@ function Header() {
               Quero participar
             </Link>
           </Button>
+
           <button
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-foreground lg:hidden"
             onClick={() => setOpen((v) => !v)}
             aria-label="Menu"
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {open ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>
@@ -199,14 +201,21 @@ function Header() {
                 >
                   {item.label}
                 </Link>
-              )
+              ),
             )}
+
             <div className="mt-2 flex gap-2 border-t border-border/60 pt-3">
               <Button asChild variant="outline" className="flex-1">
                 <Link to="/auth">Entrar</Link>
               </Button>
-              <Button asChild className="flex-1 bg-gold text-primary-foreground hover:bg-gold/90">
-                <Link to="/auth" search={{ mode: "signup" }}>Participar</Link>
+
+              <Button
+                asChild
+                className="flex-1 bg-gold text-primary-foreground hover:bg-gold/90"
+              >
+                <Link to="/auth" search={{ mode: "signup" }}>
+                  Participar
+                </Link>
               </Button>
             </div>
           </div>
@@ -216,7 +225,7 @@ function Header() {
   );
 }
 
-/* ———————————————— HERO + QUEM SOMOS (merged) ———————————————— */
+/* ———————————————— HERO + QUEM SOMOS ———————————————— */
 
 function HeroQuemSomos() {
   const pilares = [
@@ -242,8 +251,8 @@ function HeroQuemSomos() {
 
   return (
     <section id="quem-somos" className="relative overflow-hidden">
-      {/* Ambient glow behind the logo */}
       <div className="absolute inset-x-0 top-0 h-[100vh] bg-gradient-to-b from-background via-background to-background" />
+
       <div
         className="pointer-events-none absolute left-1/2 top-[38vh] h-[680px] w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-60 blur-3xl"
         style={{
@@ -251,6 +260,7 @@ function HeroQuemSomos() {
             "radial-gradient(circle, oklch(0.45 0.13 25 / 0.55) 0%, transparent 65%)",
         }}
       />
+
       <div
         className="pointer-events-none absolute left-1/2 top-[38vh] h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50 blur-2xl"
         style={{
@@ -259,7 +269,6 @@ function HeroQuemSomos() {
         }}
       />
 
-      {/* ———— HERO (split: logo à esquerda, texto à direita) ———— */}
       <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-4 pb-12 pt-28 md:grid-cols-2 md:gap-14 md:px-8 md:pt-32 md:pb-16">
         <div className="animate-fade-in flex justify-center md:justify-start">
           <img
@@ -275,7 +284,8 @@ function HeroQuemSomos() {
           </span>
 
           <h1 className="mt-5 font-serif text-2xl font-semibold leading-[1.15] text-foreground md:text-3xl lg:text-4xl">
-            O Ministério Book Team estuda livros cristãos que ensinam Homens e Mulheres a viver uma cultura de{" "}
+            O Ministério Book Team estuda livros cristãos que ensinam Homens e
+            Mulheres a viver uma cultura de{" "}
             <span className="text-gradient-gold italic">amor & honra</span>!
           </h1>
 
@@ -294,6 +304,7 @@ function HeroQuemSomos() {
                 Quero participar <ArrowRight className="ml-2 h-4 w-4" />
               </a>
             </Button>
+
             <Button
               asChild
               size="lg"
@@ -305,18 +316,19 @@ function HeroQuemSomos() {
               </a>
             </Button>
           </div>
-
-          {/* Stats removed per user request */}
         </div>
       </div>
 
-      {/* ———— PILARES: Visão / Missão / Objetivo ———— */}
-      <div id="quem-somos" className="relative mx-auto max-w-7xl px-4 pb-16 pt-4 md:px-8 md:pb-20">
+      <div
+        id="quem-somos"
+        className="relative mx-auto max-w-7xl px-4 pb-16 pt-4 md:px-8 md:pb-20"
+      >
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
             Quem somos
           </span>
         </div>
+
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           {pilares.map((p) => (
             <div
@@ -326,7 +338,11 @@ function HeroQuemSomos() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/10 text-gold transition-colors group-hover:bg-gold group-hover:text-primary-foreground">
                 <p.icon className="h-5 w-5" />
               </div>
-              <p className="mt-4 font-serif text-lg font-semibold">{p.title}</p>
+
+              <p className="mt-4 font-serif text-lg font-semibold">
+                {p.title}
+              </p>
+
               <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/70">
                 {p.text}
               </p>
@@ -334,16 +350,11 @@ function HeroQuemSomos() {
           ))}
         </div>
       </div>
-
     </section>
   );
 }
 
-
-
-/* ———————————————— CRONOGRAMA ———————————————— */
-
-/* ———————————————— JORNADA EM LIVROS (Cronograma + Biblioteca — carrossel) ———————————————— */
+/* ———————————————— JORNADA EM LIVROS ———————————————— */
 
 type JornadaLivro = {
   id: string;
@@ -357,7 +368,11 @@ type JornadaLivro = {
 };
 
 function JornadaLivros() {
-  const { data: livrosDb = [], isLoading, isError } = useQuery({
+  const {
+    data: livrosDb = [],
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["livros-jornada-home"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -366,34 +381,89 @@ function JornadaLivros() {
         .order("ordem", { ascending: true });
 
       if (error) throw error;
+
       return data || [];
     },
   });
 
-  /*
-   * A jornada precisa aparecer mesmo antes de todos os livros/capas
-   * serem cadastrados no Supabase. Por isso usamos uma estrutura-base
-   * de 10 posições e mesclamos os dados cadastrados no banco.
-   *
-   * Quando o ADM cadastrar o livro ou enviar a capa, o conteúdo do
-   * Supabase passa a ocupar automaticamente a posição correspondente.
-   */
   const jornadaBase = [
-    { ordem: 1, titulo: "Mantenha Seu Amor Aceso", autor: "", categoria: "Jornada", imagem_url: null },
-    { ordem: 2, titulo: "Cultura da Honra", autor: "", categoria: "Jornada", imagem_url: null },
-    { ordem: 3, titulo: "Livro 3", autor: "", categoria: "Jornada", imagem_url: null },
-    { ordem: 4, titulo: "Livro 4", autor: "", categoria: "Jornada", imagem_url: null },
-    { ordem: 5, titulo: "Organize a Sua Desordem Mental", autor: "", categoria: "Jornada", imagem_url: null },
-    { ordem: 6, titulo: "O Despertar da Leoa", autor: "", categoria: "Jornada", imagem_url: null },
-    { ordem: 7, titulo: "Livro 7", autor: "", categoria: "Jornada", imagem_url: null },
-    { ordem: 8, titulo: "Os Caminhos Sobrenaturais da Realeza", autor: "", categoria: "Jornada", imagem_url: null },
-    { ordem: 9, titulo: "O Poder Sobrenatural de uma Mente Transformada", autor: "", categoria: "Jornada", imagem_url: null },
-    { ordem: 10, titulo: "Impunível", autor: "Danny Silk", categoria: "Jornada", imagem_url: null },
+    {
+      ordem: 1,
+      titulo: "Mantenha Seu Amor Aceso",
+      autor: "",
+      categoria: "Jornada",
+      imagem_url: null,
+    },
+    {
+      ordem: 2,
+      titulo: "Cultura da Honra",
+      autor: "",
+      categoria: "Jornada",
+      imagem_url: null,
+    },
+    {
+      ordem: 3,
+      titulo: "Livro 3",
+      autor: "",
+      categoria: "Jornada",
+      imagem_url: null,
+    },
+    {
+      ordem: 4,
+      titulo: "Livro 4",
+      autor: "",
+      categoria: "Jornada",
+      imagem_url: null,
+    },
+    {
+      ordem: 5,
+      titulo: "Organize a Sua Desordem Mental",
+      autor: "",
+      categoria: "Jornada",
+      imagem_url: null,
+    },
+    {
+      ordem: 6,
+      titulo: "O Despertar da Leoa",
+      autor: "",
+      categoria: "Jornada",
+      imagem_url: null,
+    },
+    {
+      ordem: 7,
+      titulo: "Livro 7",
+      autor: "",
+      categoria: "Jornada",
+      imagem_url: null,
+    },
+    {
+      ordem: 8,
+      titulo: "Os Caminhos Sobrenaturais da Realeza",
+      autor: "",
+      categoria: "Jornada",
+      imagem_url: null,
+    },
+    {
+      ordem: 9,
+      titulo: "O Poder Sobrenatural de uma Mente Transformada",
+      autor: "",
+      categoria: "Jornada",
+      imagem_url: null,
+    },
+    {
+      ordem: 10,
+      titulo: "Impunível",
+      autor: "Danny Silk",
+      categoria: "Jornada",
+      imagem_url: null,
+    },
   ];
 
   const livrosPorOrdem = new Map<number, any>();
+
   for (const livro of livrosDb) {
     const ordem = Number(livro.ordem);
+
     if (Number.isFinite(ordem) && ordem >= 1 && ordem <= 10) {
       livrosPorOrdem.set(ordem, livro);
     }
@@ -421,8 +491,13 @@ function JornadaLivros() {
 
   const scrollBy = (dir: 1 | -1) => {
     const el = scrollerRef.current;
+
     if (!el) return;
-    el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: "smooth" });
+
+    el.scrollBy({
+      left: dir * el.clientWidth * 0.8,
+      behavior: "smooth",
+    });
   };
 
   return (
@@ -436,6 +511,7 @@ function JornadaLivros() {
             <h2 className="font-serif text-2xl font-semibold md:text-3xl">
               Uma jornada em livros
             </h2>
+
             <p className="mt-4 text-[15px] leading-relaxed text-foreground/70">
               Cada trilha segue uma ordem — para começar o próximo livro, é
               preciso concluir o anterior. Seu histórico registra todo o
@@ -451,6 +527,7 @@ function JornadaLivros() {
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
+
             <button
               onClick={() => scrollBy(1)}
               aria-label="Próximo"
@@ -486,33 +563,28 @@ function JornadaLivros() {
       >
         {!isLoading &&
           livros.map((l) => {
-            const cadastradoNoBanco = !l.id.startsWith("placeholder-");
-
             const card = <JornadaLivroCard l={l} />;
 
-            if (cadastradoNoBanco) {
-              return (
-                <Link
-                  key={l.id}
-                  to="/livros/$id"
-                  params={{ id: l.id }}
-                  className="shrink-0 snap-start rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold/70"
-                  aria-label={`Abrir ${l.titulo}`}
-                >
-                  {card}
-                </Link>
-              );
-            }
-
+            /*
+             * TODOS os livros agora são clicáveis.
+             *
+             * Mesmo que o livro ainda seja um placeholder e o ADM
+             * ainda não tenha colocado a capa/dados no banco, o usuário
+             * consegue acessar a rota do livro.
+             *
+             * Isso evita o comportamento anterior:
+             * livro placeholder -> /auth -> /inicio.
+             */
             return (
-              <a
+              <Link
                 key={l.id}
-                href="/auth?mode=signup&area=aluno"
+                to="/livros/$id"
+                params={{ id: l.id }}
                 className="shrink-0 snap-start rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold/70"
-                aria-label={`Iniciar inscrição para ${l.titulo}`}
+                aria-label={`Abrir ${l.titulo}`}
               >
                 {card}
-              </a>
+              </Link>
             );
           })}
 
@@ -543,9 +615,11 @@ function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
           <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-gold/30 bg-black/20 shadow-inner">
             <BookOpen className="h-9 w-9 text-gold/80" />
           </div>
+
           <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold/80">
             Capa em breve
           </p>
+
           <p className="mt-1 text-[11px] text-foreground/50">
             Clique para continuar
           </p>
@@ -555,6 +629,7 @@ function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
 
       <div className="pointer-events-none absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+
       <div className="pointer-events-none absolute inset-y-0 left-3 w-px bg-white/10" />
 
       <div className="absolute right-3 top-3 flex gap-0.5">
@@ -562,7 +637,9 @@ function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
           <Heart
             key={i}
             className={`h-3.5 w-3.5 ${
-              i < l.ordem ? "fill-gold text-gold" : "text-white/40"
+              i < l.ordem
+                ? "fill-gold text-gold"
+                : "text-white/40"
             }`}
           />
         ))}
@@ -576,24 +653,33 @@ function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold/90">
           {l.trilha}
         </p>
+
         <p className="mt-1 flex h-[2.5em] items-end line-clamp-2 font-serif text-lg font-semibold italic leading-tight text-foreground drop-shadow-md md:text-xl">
           {l.titulo}
         </p>
+
         {l.autor && (
-          <p className="mt-1 truncate text-[12px] text-foreground/75">{l.autor}</p>
+          <p className="mt-1 truncate text-[12px] text-foreground/75">
+            {l.autor}
+          </p>
         )}
 
         <div className="mt-3 flex items-center justify-between text-[11px]">
           <span className="text-foreground/70">
-            {isPlaceholder ? "Disponível para inscrição" : "Ver detalhes e inscrição"}
+            {isPlaceholder
+              ? "Disponível para inscrição"
+              : "Ver detalhes e inscrição"}
           </span>
+
           <ArrowRight className="h-4 w-4 text-gold transition-transform group-hover:translate-x-1" />
         </div>
 
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full bg-gradient-gold"
-            style={{ width: `${(l.ordem / l.total) * 100}%` }}
+            style={{
+              width: `${(l.ordem / l.total) * 100}%`,
+            }}
           />
         </div>
       </div>
@@ -603,35 +689,41 @@ function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
 
 type JornadaLivroCardProps = JornadaLivro;
 
-
-/* ———————————————— HOW IT WORKS (TIMELINE) ———————————————— */
+/* ———————————————— HOW IT WORKS ———————————————— */
 
 function HowItWorks() {
   const steps = [
     {
       icon: BookMarked,
       title: "Inicie pelo livro 1",
-      desc: "Toda jornada começa no primeiro livro da trilha — a ordem preserva o sentido da leitura.",
+      desc:
+        "Toda jornada começa no primeiro livro da trilha — a ordem preserva o sentido da leitura.",
     },
     {
       icon: UserPlus,
       title: "Faça sua inscrição",
-      desc: "Preencha seus dados e reserve sua vaga no próximo encontro presencial.",
+      desc:
+        "Preencha seus dados e reserve sua vaga no próximo encontro presencial.",
     },
     {
       icon: Receipt,
       title: "Pague e envie o comprovante",
-      desc: "Faça o PIX e anexe o comprovante direto no seu painel — é rápido e seguro.",
+      desc:
+        "Faça o PIX e anexe o comprovante direto no seu painel — é rápido e seguro.",
     },
     {
       icon: Mail,
       title: "Aguarde a confirmação",
-      desc: "Você receberá no seu e-mail a confirmação e todos os dados da inscrição.",
+      desc:
+        "Você receberá no seu e-mail a confirmação e todos os dados da inscrição.",
     },
   ];
 
   return (
-    <section id="como-funciona" className="relative border-t border-border/40 py-10 md:py-14">
+    <section
+      id="como-funciona"
+      className="relative border-t border-border/40 py-10 md:py-14"
+    >
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="max-w-2xl">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
@@ -639,23 +731,24 @@ function HowItWorks() {
           </span>
         </div>
 
-        {/* ——— Timeline horizontal (md+) / vertical (mobile) ——— */}
         <div className="relative mt-10">
-          {/* Trilho horizontal */}
           <div className="pointer-events-none absolute left-0 right-0 top-10 hidden h-px bg-gradient-to-r from-gold/0 via-gold/50 to-gold/0 md:block" />
-          {/* Trilho vertical (mobile) */}
+
           <div className="pointer-events-none absolute left-10 top-2 bottom-2 w-px bg-gradient-to-b from-gold/10 via-gold/50 to-gold/10 md:hidden" />
 
           <ol className="grid gap-8 md:grid-cols-4 md:gap-6">
             {steps.map((s, i) => (
-              <li key={s.title} className="group relative pl-24 md:pl-0">
-                {/* Nó com logo do Book Team */}
+              <li
+                key={s.title}
+                className="group relative pl-24 md:pl-0"
+              >
                 <span className="absolute left-0 top-0 z-10 flex h-20 w-20 items-center justify-center rounded-full border border-gold/50 bg-background shadow-glow-gold md:relative md:mx-auto md:mb-6">
                   <img
                     src={logoAsset.url}
                     alt="Book Team"
                     className="h-14 w-14 rounded-full object-cover"
                   />
+
                   <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border border-gold/50 bg-background text-[11px] font-bold text-gold">
                     {i + 1}
                   </span>
@@ -665,9 +758,11 @@ function HowItWorks() {
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
                     Passo {i + 1}
                   </p>
+
                   <p className="mt-1 font-serif text-lg font-semibold md:text-[17px]">
                     {s.title}
                   </p>
+
                   <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/70">
                     {s.desc}
                   </p>
@@ -675,18 +770,11 @@ function HowItWorks() {
               </li>
             ))}
           </ol>
-
         </div>
-
       </div>
     </section>
   );
 }
-
-/* ———————————————— LIVROS (POSTERS) ———————————————— */
-
-
-/* ———————————————— ENCONTROS ———————————————— */
 
 /* ———————————————— EVENTOS ESPECIAIS ———————————————— */
 
@@ -694,9 +782,11 @@ function EventosEspeciais() {
   return (
     <section className="relative py-10 md:py-14">
       <div id="eventos" className="absolute -top-24" />
+
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="relative overflow-hidden rounded-3xl border border-gold/20 gradient-wine p-8 shadow-premium md:p-14">
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
+
           <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-black/40 blur-3xl" />
 
           <div className="relative grid gap-10 md:grid-cols-[1.2fr_1fr] md:items-center">
@@ -704,6 +794,7 @@ function EventosEspeciais() {
               <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-black/20 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-gold backdrop-blur">
                 <Sparkles className="h-3 w-3" /> Momentos para todos
               </span>
+
               <h2 className="mt-4 font-serif text-3xl font-semibold text-foreground md:text-4xl">
                 Aba momentos aberto para todos
               </h2>
@@ -713,11 +804,20 @@ function EventosEspeciais() {
                 celebrações abertos ao público — um convite para viver a
                 cultura de amor e honra.
               </p>
+
               <div className="mt-7 flex flex-wrap gap-3">
-                <Button asChild className="bg-gold text-primary-foreground hover:bg-gold/90">
+                <Button
+                  asChild
+                  className="bg-gold text-primary-foreground hover:bg-gold/90"
+                >
                   <a href="#contato">Reservar um evento</a>
                 </Button>
-                <Button asChild variant="outline" className="border-foreground/30 bg-transparent text-foreground hover:bg-white/10">
+
+                <Button
+                  asChild
+                  variant="outline"
+                  className="border-foreground/30 bg-transparent text-foreground hover:bg-white/10"
+                >
                   <a href="#contato">Falar com a gente</a>
                 </Button>
               </div>
@@ -732,13 +832,15 @@ function EventosEspeciais() {
                 { label: "Cantar", icon: Calendar },
                 { label: "Encontro de Casais", icon: Users },
               ].map((tag) => (
-
                 <div
                   key={tag.label}
                   className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-gold/20 bg-black/25 backdrop-blur transition-all hover:border-gold/60"
                 >
                   <tag.icon className="h-6 w-6 text-gold" />
-                  <p className="font-serif text-sm font-semibold text-foreground">{tag.label}</p>
+
+                  <p className="font-serif text-sm font-semibold text-foreground">
+                    {tag.label}
+                  </p>
                 </div>
               ))}
             </div>
@@ -753,10 +855,29 @@ function EventosEspeciais() {
 
 function Testimonials() {
   const items = [
-    { q: "Voltei a ler no ritmo que sempre quis, com gente que topa conversar de verdade.", a: "Marina R.", cidade: "Curitiba - PR", nota: 5 },
-    { q: "Os encontros presenciais são o diferencial. Saio de cada um com ideias novas.", a: "Bruno L.", cidade: "São Paulo - SP", nota: 5 },
-    { q: "A cultura de honra mudou como eu conduzo meu casamento e meu trabalho.", a: "Camila F.", cidade: "Curitiba - PR", nota: 5 },
+    {
+      q:
+        "Voltei a ler no ritmo que sempre quis, com gente que topa conversar de verdade.",
+      a: "Marina R.",
+      cidade: "Curitiba - PR",
+      nota: 5,
+    },
+    {
+      q:
+        "Os encontros presenciais são o diferencial. Saio de cada um com ideias novas.",
+      a: "Bruno L.",
+      cidade: "São Paulo - SP",
+      nota: 5,
+    },
+    {
+      q:
+        "A cultura de honra mudou como eu conduzo meu casamento e meu trabalho.",
+      a: "Camila F.",
+      cidade: "Curitiba - PR",
+      nota: 5,
+    },
   ];
+
   return (
     <section className="relative border-t border-border/40 bg-gradient-to-b from-card/40 to-background py-10 md:py-14">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
@@ -764,6 +885,7 @@ function Testimonials() {
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
             Depoimentos
           </span>
+
           <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
             Quem vive, conta
           </h2>
@@ -777,19 +899,30 @@ function Testimonials() {
             >
               <div className="flex gap-0.5">
                 {Array.from({ length: i.nota }).map((_, idx) => (
-                  <Star key={idx} className="h-4 w-4 fill-gold text-gold" />
+                  <Star
+                    key={idx}
+                    className="h-4 w-4 fill-gold text-gold"
+                  />
                 ))}
               </div>
+
               <p className="mt-5 font-serif text-[17px] italic leading-relaxed text-foreground/90">
                 "{i.q}"
               </p>
+
               <footer className="mt-6 flex items-center gap-3 border-t border-border/50 pt-5">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-wine font-serif text-sm font-semibold text-foreground">
                   {i.a.slice(0, 1)}
                 </div>
+
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{i.a}</p>
-                  <p className="text-[11px] text-foreground/60">{i.cidade}</p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {i.a}
+                  </p>
+
+                  <p className="text-[11px] text-foreground/60">
+                    {i.cidade}
+                  </p>
                 </div>
               </footer>
             </blockquote>
@@ -800,17 +933,32 @@ function Testimonials() {
   );
 }
 
-/* ———————————————— CONTATO ———————————————— */
-
 /* ———————————————— FAQ ———————————————— */
 
 function FaqSection() {
   const items = [
-    { q: "Preciso pagar mensalidade?", a: "Não. Você paga apenas pelos encontros em que se inscrever, via PIX." },
-    { q: "Os encontros são online?", a: "Não. Todos os encontros são presenciais. A cidade é indicada em cada evento." },
-    { q: "Como recebo o certificado?", a: "Ao concluir uma trilha (todos os encontros com presença registrada), o certificado é emitido pela administração e fica disponível na sua área." },
-    { q: "Posso escolher qualquer livro?", a: "As leituras seguem a ordem da trilha escolhida — assim a comunidade caminha junta." },
+    {
+      q: "Preciso pagar mensalidade?",
+      a:
+        "Não. Você paga apenas pelos encontros em que se inscrever, via PIX.",
+    },
+    {
+      q: "Os encontros são online?",
+      a:
+        "Não. Todos os encontros são presenciais. A cidade é indicada em cada evento.",
+    },
+    {
+      q: "Como recebo o certificado?",
+      a:
+        "Ao concluir uma trilha (todos os encontros com presença registrada), o certificado é emitido pela administração e fica disponível na sua área.",
+    },
+    {
+      q: "Posso escolher qualquer livro?",
+      a:
+        "As leituras seguem a ordem da trilha escolhida — assim a comunidade caminha junta.",
+    },
   ];
+
   return (
     <section id="faq" className="border-t border-border/40 py-10 md:py-14">
       <div className="mx-auto max-w-3xl px-4 md:px-8">
@@ -818,10 +966,12 @@ function FaqSection() {
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
             Perguntas frequentes
           </span>
+
           <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
             Dúvidas comuns
           </h2>
         </div>
+
         <Accordion type="single" collapsible className="mt-8">
           {items.map((i, idx) => (
             <AccordionItem
@@ -832,6 +982,7 @@ function FaqSection() {
               <AccordionTrigger className="text-left text-[15px] font-medium hover:text-gold hover:no-underline">
                 {i.q}
               </AccordionTrigger>
+
               <AccordionContent className="text-[14px] leading-relaxed text-foreground/70">
                 {i.a}
               </AccordionContent>
@@ -852,58 +1003,132 @@ function Footer() {
         <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-3">
-              <img src={logoAsset.url} alt="Book Team" className="h-10 w-10 rounded-full ring-1 ring-gold/40" />
+              <img
+                src={logoAsset.url}
+                alt="Book Team"
+                className="h-10 w-10 rounded-full ring-1 ring-gold/40"
+              />
+
               <div>
-                <p className="font-serif text-base font-semibold">BOOK TEAM</p>
-                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold">amor & honra</p>
+                <p className="font-serif text-base font-semibold">
+                  BOOK TEAM
+                </p>
+
+                <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold">
+                  amor & honra
+                </p>
               </div>
             </div>
+
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-foreground/70">
               Um ministério cristão que transforma páginas em conversas — e
               conversas em jornada.
             </p>
+
             <blockquote className="mt-6 border-l-2 border-gold/40 pl-4 font-serif text-sm italic text-foreground/80">
               "Amai-vos cordialmente uns aos outros com amor fraternal,
               preferindo-vos em honra uns aos outros."
-              <footer className="mt-1 text-[11px] not-italic text-foreground/50">Romanos 12:10</footer>
+
+              <footer className="mt-1 text-[11px] not-italic text-foreground/50">
+                Romanos 12:10
+              </footer>
             </blockquote>
           </div>
 
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">Navegação</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
+              Navegação
+            </p>
+
             <ul className="mt-4 space-y-2.5 text-sm text-foreground/70">
-              <li><a href="#quem-somos" className="hover:text-foreground">Quem somos</a></li>
-              <li><a href="#cronograma" className="hover:text-foreground">Livros</a></li>
-              <li><a href="#contato" className="hover:text-foreground">Contato</a></li>
-              <li><a href="#faq" className="hover:text-foreground">FAQ</a></li>
+              <li>
+                <a
+                  href="#quem-somos"
+                  className="hover:text-foreground"
+                >
+                  Quem somos
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="#cronograma"
+                  className="hover:text-foreground"
+                >
+                  Livros
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="#contato"
+                  className="hover:text-foreground"
+                >
+                  Contato
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="#faq"
+                  className="hover:text-foreground"
+                >
+                  FAQ
+                </a>
+              </li>
             </ul>
           </div>
 
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">Contato</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
+              Contato
+            </p>
+
             <ul className="mt-4 space-y-2.5 text-sm text-foreground/70">
               <li className="flex items-center gap-2">
-                <Phone className="h-3.5 w-3.5 text-gold" /> 41 3082-5553
+                <Phone className="h-3.5 w-3.5 text-gold" />
+                41 3082-5553
               </li>
+
               <li>
-                <a href="https://wa.me/554130825553" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-foreground">
-                  <MessageCircle className="h-3.5 w-3.5 text-gold" /> WhatsApp
+                <a
+                  href="https://wa.me/554130825553"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 hover:text-foreground"
+                >
+                  <MessageCircle className="h-3.5 w-3.5 text-gold" />
+                  WhatsApp
                 </a>
               </li>
+
               <li>
-                <a href="https://instagram.com/bookteamamor" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-foreground">
-                  <Instagram className="h-3.5 w-3.5 text-gold" /> @bookteamamor
+                <a
+                  href="https://instagram.com/bookteamamor"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 hover:text-foreground"
+                >
+                  <Instagram className="h-3.5 w-3.5 text-gold" />
+                  @bookteamamor
                 </a>
               </li>
             </ul>
           </div>
 
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">Comece agora</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
+              Comece agora
+            </p>
+
             <p className="mt-4 text-sm text-foreground/70">
               Crie sua conta e participe do próximo encontro.
             </p>
-            <Button asChild className="mt-4 w-full bg-gold text-primary-foreground hover:bg-gold/90">
+
+            <Button
+              asChild
+              className="mt-4 w-full bg-gold text-primary-foreground hover:bg-gold/90"
+            >
               <Link to="/auth" search={{ mode: "signup" }}>
                 Criar minha conta
               </Link>
@@ -912,8 +1137,16 @@ function Footer() {
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-border/40 pt-6 text-[11px] text-foreground/50 md:flex-row">
-          <p>© {new Date().getFullYear()} Ministério Book Team. Todos os direitos reservados.</p>
-          <p>Feito com <Heart className="inline h-3 w-3 fill-gold text-gold" /> em Curitiba - PR</p>
+          <p>
+            © {new Date().getFullYear()} Ministério Book Team. Todos os
+            direitos reservados.
+          </p>
+
+          <p>
+            Feito com{" "}
+            <Heart className="inline h-3 w-3 fill-gold text-gold" /> em
+            Curitiba - PR
+          </p>
         </div>
       </div>
     </footer>
