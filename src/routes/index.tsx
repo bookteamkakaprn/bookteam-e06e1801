@@ -38,7 +38,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-import logoAsset from "@/assets/book-team-logo.png";
+import logoAsset from "@/assets/book-team-logo.png.asset.json";
 import capaMantenha from "@/assets/mantenha.jpg.asset.json";
 import capaCultura from "@/assets/cultura.jpg.asset.json";
 import capaAtive from "@/assets/ative.jpg.asset.json";
@@ -115,7 +115,7 @@ function Header() {
       <div className="mx-auto grid h-16 max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 md:px-8 lg:flex lg:justify-between">
         <Link to="/" className="flex min-w-0 items-center gap-2.5">
           <img
-            src={logoAsset}
+            src={logoAsset.url}
             alt="Book Team"
             className="h-9 w-9 shrink-0 rounded-full ring-1 ring-gold/40"
           />
@@ -263,7 +263,7 @@ function HeroQuemSomos() {
       <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-4 pb-12 pt-28 md:grid-cols-2 md:gap-14 md:px-8 md:pt-32 md:pb-16">
         <div className="animate-fade-in flex justify-center md:justify-start">
           <img
-            src={logoAsset}
+            src={logoAsset.url}
             alt="Book Team — Amor & Honra"
             className="h-56 w-56 rounded-full shadow-2xl ring-1 ring-gold/40 md:h-80 md:w-80 lg:h-[22rem] lg:w-[22rem]"
           />
@@ -357,42 +357,68 @@ type JornadaLivro = {
 };
 
 function JornadaLivros() {
-    const { data: livrosDb } = useQuery({
+  const { data: livrosDb = [], isLoading, isError } = useQuery({
     queryKey: ["livros-jornada-home"],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("livros")
         .select("*")
         .order("ordem", { ascending: true });
+
+      if (error) throw error;
       return data || [];
     },
   });
 
-  const livros: JornadaLivro[] = (livrosDb || []).map((l, idx) => ({
-    id: l.id,
-    titulo: l.titulo,
-    autor: l.autor || "",
-    trilha: l.categoria || "Jornada",
-    ordem: l.ordem || idx + 1,
-    total: 10,
-    imagem_url: l.imagem_url,
-    cor: idx % 2 === 0 
-      ? "from-[oklch(0.4_0.12_25)] to-[oklch(0.22_0.06_25)]" 
-      : "from-[oklch(0.38_0.11_20)] to-[oklch(0.2_0.05_20)]",
-  }));
+  /*
+   * A jornada precisa aparecer mesmo antes de todos os livros/capas
+   * serem cadastrados no Supabase. Por isso usamos uma estrutura-base
+   * de 10 posições e mesclamos os dados cadastrados no banco.
+   *
+   * Quando o ADM cadastrar o livro ou enviar a capa, o conteúdo do
+   * Supabase passa a ocupar automaticamente a posição correspondente.
+   */
+  const jornadaBase = [
+    { ordem: 1, titulo: "Mantenha Seu Amor Aceso", autor: "", categoria: "Jornada", imagem_url: null },
+    { ordem: 2, titulo: "Cultura da Honra", autor: "", categoria: "Jornada", imagem_url: null },
+    { ordem: 3, titulo: "Livro 3", autor: "", categoria: "Jornada", imagem_url: null },
+    { ordem: 4, titulo: "Livro 4", autor: "", categoria: "Jornada", imagem_url: null },
+    { ordem: 5, titulo: "Organize a Sua Desordem Mental", autor: "", categoria: "Jornada", imagem_url: null },
+    { ordem: 6, titulo: "O Despertar da Leoa", autor: "", categoria: "Jornada", imagem_url: null },
+    { ordem: 7, titulo: "Livro 7", autor: "", categoria: "Jornada", imagem_url: null },
+    { ordem: 8, titulo: "Os Caminhos Sobrenaturais da Realeza", autor: "", categoria: "Jornada", imagem_url: null },
+    { ordem: 9, titulo: "O Poder Sobrenatural de uma Mente Transformada", autor: "", categoria: "Jornada", imagem_url: null },
+    { ordem: 10, titulo: "Impunível", autor: "Danny Silk", categoria: "Jornada", imagem_url: null },
+  ];
 
+  const livrosPorOrdem = new Map<number, any>();
+  for (const livro of livrosDb) {
+    const ordem = Number(livro.ordem);
+    if (Number.isFinite(ordem) && ordem >= 1 && ordem <= 10) {
+      livrosPorOrdem.set(ordem, livro);
+    }
+  }
 
-  const { data: trilhaMap } = useQuery({
-    queryKey: ["livros-trilha-map"],
-    queryFn: async () => {
-      const { data } = await supabase.from("livros").select("id, titulo");
-      const m = new Map<string, string>();
-      for (const l of data ?? []) m.set(l.titulo, l.id);
-      return m;
-    },
+  const livros: JornadaLivro[] = jornadaBase.map((base, idx) => {
+    const livroDb = livrosPorOrdem.get(base.ordem);
+
+    return {
+      id: livroDb?.id ?? `placeholder-${base.ordem}`,
+      titulo: livroDb?.titulo || base.titulo,
+      autor: livroDb?.autor || base.autor,
+      trilha: livroDb?.categoria || base.categoria,
+      ordem: base.ordem,
+      total: 10,
+      imagem_url: livroDb?.imagem_url || base.imagem_url,
+      cor:
+        idx % 2 === 0
+          ? "from-[oklch(0.4_0.12_25)] to-[oklch(0.22_0.06_25)]"
+          : "from-[oklch(0.38_0.11_20)] to-[oklch(0.2_0.05_20)]",
+    };
   });
 
   const scrollerRef = useRef<HTMLDivElement>(null);
+
   const scrollBy = (dir: 1 | -1) => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -416,6 +442,7 @@ function JornadaLivros() {
               caminho percorrido.
             </p>
           </div>
+
           <div className="flex gap-2">
             <button
               onClick={() => scrollBy(-1)}
@@ -433,26 +460,62 @@ function JornadaLivros() {
             </button>
           </div>
         </div>
+
+        {isLoading && (
+          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div
+                key={i}
+                className="aspect-[2/3] animate-pulse rounded-r-2xl rounded-l-md bg-gradient-to-br from-white/10 to-white/5"
+              />
+            ))}
+          </div>
+        )}
+
+        {isError && (
+          <p className="mt-6 text-sm text-muted-foreground">
+            Não foi possível carregar os dados cadastrados. A estrutura da
+            jornada continua disponível para inscrição.
+          </p>
+        )}
       </div>
 
       <div
         ref={scrollerRef}
         className="scrollbar-hidden mt-8 flex touch-pan-x snap-x snap-proximity gap-4 scroll-pl-4 overflow-x-auto overscroll-x-contain px-4 pb-4 [-webkit-overflow-scrolling:touch] md:scroll-pl-8 md:gap-8 md:px-8"
       >
-        {livros.map((l) => {
-          const card = <JornadaLivroCard l={l} />;
-          return (
-            <Link
-              key={l.id}
-              to="/livros/$id"
-              params={{ id: l.id }}
-              className="shrink-0 snap-start"
-            >
-              {card}
-            </Link>
-          );
+        {!isLoading &&
+          livros.map((l) => {
+            const cadastradoNoBanco = !l.id.startsWith("placeholder-");
 
-        })}
+            const card = <JornadaLivroCard l={l} />;
+
+            if (cadastradoNoBanco) {
+              return (
+                <Link
+                  key={l.id}
+                  to="/livros/$id"
+                  params={{ id: l.id }}
+                  className="shrink-0 snap-start rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold/70"
+                  aria-label={`Abrir ${l.titulo}`}
+                >
+                  {card}
+                </Link>
+              );
+            }
+
+            return (
+              <a
+                key={l.id}
+                href="/auth?mode=signup&area=aluno"
+                className="shrink-0 snap-start rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold/70"
+                aria-label={`Iniciar inscrição para ${l.titulo}`}
+              >
+                {card}
+              </a>
+            );
+          })}
+
         <div className="shrink-0 pr-4 md:pr-8" />
       </div>
     </section>
@@ -460,27 +523,40 @@ function JornadaLivros() {
 }
 
 function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
+  const isPlaceholder = l.id.startsWith("placeholder-");
+
   return (
     <article
-      className={`group poster-hover relative aspect-[2/3] w-[58vw] max-w-[240px] shrink-0 snap-start overflow-hidden rounded-r-2xl rounded-l-md bg-gradient-to-br ${l.cor} shadow-book sm:w-[200px] md:w-[240px] lg:w-[280px]`}
+      className={`group poster-hover relative aspect-[2/3] w-[58vw] max-w-[240px] shrink-0 snap-start overflow-hidden rounded-r-2xl rounded-l-md bg-gradient-to-br ${l.cor} shadow-book transition-transform duration-300 hover:-translate-y-1 hover:shadow-premium sm:w-[200px] md:w-[240px] lg:w-[280px]`}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_60%)]" />
 
-      {l.imagem_url && (
+      {l.imagem_url ? (
         <img
           src={l.imagem_url}
           alt={l.titulo}
           loading="lazy"
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-black/10 via-white/[0.03] to-black/30 px-5 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-gold/30 bg-black/20 shadow-inner">
+            <BookOpen className="h-9 w-9 text-gold/80" />
+          </div>
+          <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold/80">
+            Capa em breve
+          </p>
+          <p className="mt-1 text-[11px] text-foreground/50">
+            Clique para continuar
+          </p>
+        </div>
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
 
-      {/* lombada do livro (efeito de encadernação à esquerda) */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+
       <div className="pointer-events-none absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
       <div className="pointer-events-none absolute inset-y-0 left-3 w-px bg-white/10" />
 
-      {/* corações de posição na trilha (topo direito) */}
       <div className="absolute right-3 top-3 flex gap-0.5">
         {Array.from({ length: l.total }).map((_, i) => (
           <Heart
@@ -492,22 +568,28 @@ function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
         ))}
       </div>
 
-      {!l.imagem_url && (
-        <BookOpen className="absolute left-1/2 top-[38%] h-9 w-9 -translate-x-1/2 text-gold/70" />
-      )}
+      <div className="absolute left-3 top-3 rounded-full border border-gold/30 bg-black/45 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.15em] text-gold backdrop-blur">
+        Livro {l.ordem}
+      </div>
 
-      {/* conteúdo */}
       <div className="absolute inset-x-0 bottom-0 p-5">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold/90">
           {l.trilha}
         </p>
-        <p className="mt-1 font-serif text-lg font-semibold italic leading-tight text-foreground drop-shadow-md md:text-xl line-clamp-2 h-[2.5em] flex items-end">
+        <p className="mt-1 flex h-[2.5em] items-end line-clamp-2 font-serif text-lg font-semibold italic leading-tight text-foreground drop-shadow-md md:text-xl">
           {l.titulo}
         </p>
-        <p className="mt-1 text-[12px] text-foreground/75 truncate">{l.autor}</p>
+        {l.autor && (
+          <p className="mt-1 truncate text-[12px] text-foreground/75">{l.autor}</p>
+        )}
+
         <div className="mt-3 flex items-center justify-between text-[11px]">
-          <span className="text-foreground/60">Livro {l.ordem}</span>
+          <span className="text-foreground/70">
+            {isPlaceholder ? "Disponível para inscrição" : "Ver detalhes e inscrição"}
+          </span>
+          <ArrowRight className="h-4 w-4 text-gold transition-transform group-hover:translate-x-1" />
         </div>
+
         <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full bg-gradient-gold"
@@ -570,7 +652,7 @@ function HowItWorks() {
                 {/* Nó com logo do Book Team */}
                 <span className="absolute left-0 top-0 z-10 flex h-20 w-20 items-center justify-center rounded-full border border-gold/50 bg-background shadow-glow-gold md:relative md:mx-auto md:mb-6">
                   <img
-                    src={logoAsset}
+                    src={logoAsset.url}
                     alt="Book Team"
                     className="h-14 w-14 rounded-full object-cover"
                   />
@@ -770,7 +852,7 @@ function Footer() {
         <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-3">
-              <img src={logoAsset} alt="Book Team" className="h-10 w-10 rounded-full ring-1 ring-gold/40" />
+              <img src={logoAsset.url} alt="Book Team" className="h-10 w-10 rounded-full ring-1 ring-gold/40" />
               <div>
                 <p className="font-serif text-base font-semibold">BOOK TEAM</p>
                 <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold">amor & honra</p>
