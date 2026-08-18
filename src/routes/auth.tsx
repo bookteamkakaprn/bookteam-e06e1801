@@ -2,13 +2,15 @@ import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-ro
 import { useState, type FormEvent, useEffect } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
 import bookTeamLogo from "@/assets/book-team-logo.png";
 
 const searchSchema = z.object({
@@ -19,23 +21,39 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/auth")({
   validateSearch: (s) => searchSchema.parse(s),
   ssr: false,
+
   head: () => ({
     meta: [
-      { title: "Entrar ou criar conta — Book Clube" },
-      { name: "description", content: "Acesse sua conta ou cadastre-se no Book Clube." },
+      {
+        title: "Entrar ou criar conta — Book Team",
+      },
+      {
+        name: "description",
+        content:
+          "Acesse sua conta ou cadastre-se no Book Team Amor & Honra.",
+      },
     ],
   }),
+
   beforeLoad: async () => {
     const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: "/inicio" });
+
+    if (data.session) {
+      throw redirect({
+        to: "/inicio",
+      });
+    }
   },
+
   component: AuthPage,
 });
 
 function AuthPage() {
   const { mode, area } = Route.useSearch();
+
   const tab = mode ?? "signin";
   const isAdmin = area === "admin";
+
   const [year, setYear] = useState<number | null>(null);
 
   useEffect(() => {
@@ -45,15 +63,25 @@ function AuthPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto grid min-h-screen max-w-6xl grid-cols-1 lg:grid-cols-2">
+
+        {/* LADO ESQUERDO */}
         <aside className="hidden gradient-hero flex-col justify-between p-12 lg:flex">
+
           <div className="flex flex-col gap-2">
-            <Link to="/" className="flex items-center gap-3">
+
+            <Link
+              to="/"
+              className="flex items-center gap-3"
+            >
               <img
                 src={bookTeamLogo}
                 alt="Book Team Amor & Honra"
                 className="h-12 w-12 rounded-full object-contain"
               />
-              <span className="font-serif text-xl font-semibold">Book Clube</span>
+
+              <span className="font-serif text-xl font-semibold">
+                Book Team
+              </span>
             </Link>
 
             <Link
@@ -62,27 +90,37 @@ function AuthPage() {
             >
               Início
             </Link>
+
           </div>
 
           <div>
+
             <h2 className="font-serif text-4xl font-bold leading-tight">
-              {isAdmin ? "Área administrativa" : "Área do aluno"}
+              {isAdmin
+                ? "Área administrativa"
+                : "Área do aluno"}
             </h2>
 
             <p className="mt-4 text-muted-foreground">
               {isAdmin
-                ? "Acompanhe e gerencie alunos, turmas e pagamentos do Book Team Amor."
-                : "Acompanhe suas trilhas, encontros, pagamentos e certificados do Book Team Amor."}
+                ? "Acompanhe e gerencie alunos, turmas e pagamentos do Book Team Amor & Honra."
+                : "Acompanhe suas trilhas, encontros, pagamentos e certificados do Book Team Amor & Honra."}
             </p>
+
           </div>
 
           <p className="text-xs text-muted-foreground">
-            © {year ?? "2026"} Book Clube
+            © {year ?? "2026"} Book Team
           </p>
+
         </aside>
 
+        {/* LADO DIREITO */}
         <main className="flex items-center justify-center p-6 md:p-12">
+
           <div className="w-full max-w-md">
+
+            {/* LOGO MOBILE */}
             <Link
               to="/"
               className="mb-8 inline-flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground lg:hidden"
@@ -92,140 +130,248 @@ function AuthPage() {
                 alt="Book Team Amor & Honra"
                 className="h-10 w-10 rounded-full object-contain"
               />
-              <span>Book Clube</span>
+
+              <span>Book Team</span>
             </Link>
 
-            <Tabs value={tab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="signin" asChild>
-                  <Link to="/auth" search={{ mode: "signin" }}>
-                    Entrar
-                  </Link>
-                </TabsTrigger>
+            {/* ABAS */}
+            <div className="w-full">
 
-                <TabsTrigger value="signup" asChild>
-                  <Link to="/auth" search={{ mode: "signup" }}>
-                    Criar conta
-                  </Link>
-                </TabsTrigger>
-              </TabsList>
+              <div className="grid w-full grid-cols-2">
 
-              <TabsContent value="signin">
-                <SignInForm />
-              </TabsContent>
+                <Link
+                  to="/auth"
+                  search={{
+                    mode: "signin",
+                    ...(area ? { area } : {}),
+                  }}
+                  className={`flex h-10 items-center justify-center rounded-md text-sm font-medium transition-colors ${
+                    tab === "signin"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Entrar
+                </Link>
 
-              <TabsContent value="signup">
-                <SignUpForm />
-              </TabsContent>
+                <Link
+                  to="/auth"
+                  search={{
+                    mode: "signup",
+                    ...(area ? { area } : {}),
+                  }}
+                  className={`flex h-10 items-center justify-center rounded-md text-sm font-medium transition-colors ${
+                    tab === "signup"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Criar conta
+                </Link>
 
-              <TabsContent value="forgot">
-                <ForgotForm />
-              </TabsContent>
-            </Tabs>
+              </div>
+
+              {tab === "signin" && <SignInForm />}
+
+              {tab === "signup" && <SignUpForm />}
+
+              {tab === "forgot" && <ForgotForm />}
+
+            </div>
+
           </div>
+
         </main>
+
       </div>
     </div>
   );
 }
 
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
 function SignInForm() {
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
     setLoading(false);
 
     if (error) {
+
       toast.error(
         error.message === "Invalid login credentials"
           ? "Email ou senha incorretos."
           : error.message
       );
+
       return;
     }
 
     toast.success("Bem-vindo de volta!");
-    navigate({ to: "/inicio" });
+
+    navigate({
+      to: "/inicio",
+    });
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-6 space-y-4">
-      <h1 className="font-serif text-2xl font-semibold">Entrar</h1>
+    <form
+      onSubmit={onSubmit}
+      className="mt-6 space-y-4"
+    >
 
+      <h1 className="font-serif text-2xl font-semibold">
+        Entrar
+      </h1>
+
+      {/* EMAIL */}
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+
+        <Label htmlFor="email">
+          Email
+        </Label>
 
         <Input
           id="email"
           type="email"
           required
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) =>
+            setEmail(e.target.value)
+          }
           autoComplete="email"
         />
+
       </div>
 
+      {/* SENHA */}
       <div className="space-y-2">
-        <Label htmlFor="password">Senha</Label>
+
+        <Label htmlFor="password">
+          Senha
+        </Label>
 
         <Input
           id="password"
           type="password"
           required
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) =>
+            setPassword(e.target.value)
+          }
           autoComplete="current-password"
         />
+
       </div>
 
+      {/* ESQUECI SENHA */}
       <div className="flex items-center justify-between">
+
         <Link
           to="/auth"
-          search={{ mode: "forgot" }}
+          search={{
+            mode: "forgot",
+          }}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           Esqueci minha senha
         </Link>
+
       </div>
 
-      <Button type="submit" className="w-full" disabled={loading}>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={loading}
+      >
+
         {loading && (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         )}
+
         Entrar
+
       </Button>
+
     </form>
   );
 }
 
+
+/* =========================================================
+   CADASTRO
+========================================================= */
+
 const signUpSchema = z.object({
-  nome: z.string().trim().min(2, "Informe seu nome"),
-  email: z.string().trim().email("Email inválido"),
-  cpf: z.string().trim().min(11, "CPF inválido").max(14),
-  telefone: z.string().trim().min(8, "Telefone inválido"),
-  cidade: z.string().trim().min(2, "Informe sua cidade"),
-  estado: z.string().trim().length(2, "UF com 2 letras"),
-  password: z.string().min(8, "Mínimo 8 caracteres"),
+
+  nome: z
+    .string()
+    .trim()
+    .min(2, "Informe seu nome"),
+
+  email: z
+    .string()
+    .trim()
+    .email("Email inválido"),
+
+  cpf: z
+    .string()
+    .trim()
+    .min(11, "CPF inválido")
+    .max(14),
+
+  telefone: z
+    .string()
+    .trim()
+    .min(8, "Telefone inválido"),
+
+  cidade: z
+    .string()
+    .trim()
+    .min(2, "Informe sua cidade"),
+
+  estado: z
+    .string()
+    .trim()
+    .length(2, "UF com 2 letras"),
+
+  password: z
+    .string()
+    .min(8, "Mínimo 8 caracteres"),
+
   aceite_lgpd: z.literal(true, {
-    errorMap: () => ({ message: "É necessário aceitar" }),
+    errorMap: () => ({
+      message: "É necessário aceitar",
+    }),
   }),
+
 });
 
+
 function SignUpForm() {
+
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
+
     nome: "",
     email: "",
     cpf: "",
@@ -233,114 +379,226 @@ function SignUpForm() {
     cidade: "",
     estado: "",
     password: "",
+
   });
 
   const [aceite, setAceite] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
-  function set<K extends keyof typeof form>(k: K, v: string) {
-    setForm((f) => ({ ...f, [k]: v }));
+
+  function set<K extends keyof typeof form>(
+    k: K,
+    v: string
+  ) {
+
+    setForm((f) => ({
+      ...f,
+      [k]: v,
+    }));
+
   }
 
+
   async function onSubmit(e: FormEvent) {
+
     e.preventDefault();
 
-    const parsed = signUpSchema.safeParse({
-      ...form,
-      aceite_lgpd: aceite,
-    });
+    const parsed =
+      signUpSchema.safeParse({
+
+        ...form,
+
+        aceite_lgpd: aceite,
+
+      });
+
 
     if (!parsed.success) {
+
       toast.error(
-        parsed.error.errors[0]?.message ?? "Confira os campos"
+        parsed.error.errors[0]?.message ??
+          "Confira os campos"
       );
+
       return;
     }
+
 
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/inicio`,
-        data: {
-          nome: form.nome,
-          cpf: form.cpf,
-          telefone: form.telefone,
-          cidade: form.cidade,
-          estado: form.estado.toUpperCase(),
-          aceite_lgpd: true,
+
+    /*
+     * IMPORTANTE:
+     * Depois do cadastro, o Supabase enviará o usuário
+     * para esta URL após confirmar o email.
+     */
+
+    const emailRedirectTo =
+      `${window.location.origin}/inicio`;
+
+
+    const { error } =
+      await supabase.auth.signUp({
+
+        email: form.email,
+
+        password: form.password,
+
+        options: {
+
+          emailRedirectTo,
+
+          data: {
+
+            nome: form.nome,
+
+            cpf: form.cpf,
+
+            telefone: form.telefone,
+
+            cidade: form.cidade,
+
+            estado:
+              form.estado.toUpperCase(),
+
+            aceite_lgpd: true,
+
+          },
+
         },
-      },
-    });
+
+      });
+
 
     setLoading(false);
 
+
     if (error) {
+
       toast.error(error.message);
+
       return;
     }
 
-    toast.success("Conta criada! Bem-vindo ao Book Clube.");
-    navigate({ to: "/inicio" });
+
+    toast.success(
+      "Conta criada! Verifique seu email para confirmar o cadastro."
+    );
+
+
+    /*
+     * Não mandamos direto para /inicio.
+     * Primeiro o usuário precisa confirmar o email.
+     */
+
+    navigate({
+      to: "/auth",
+      search: {
+        mode: "signin",
+      },
+    });
+
   }
 
+
   return (
-    <form onSubmit={onSubmit} className="mt-6 space-y-4">
+    <form
+      onSubmit={onSubmit}
+      className="mt-6 space-y-4"
+    >
+
       <h1 className="font-serif text-2xl font-semibold">
         Criar conta
       </h1>
 
+
+      {/* NOME */}
       <div className="space-y-2">
-        <Label htmlFor="nome">Nome completo</Label>
+
+        <Label htmlFor="nome">
+          Nome completo
+        </Label>
 
         <Input
           id="nome"
           required
           value={form.nome}
-          onChange={(e) => set("nome", e.target.value)}
+          onChange={(e) =>
+            set("nome", e.target.value)
+          }
         />
+
       </div>
 
+
+      {/* CPF / TELEFONE */}
       <div className="grid grid-cols-2 gap-3">
+
         <div className="space-y-2">
-          <Label htmlFor="cpf">CPF</Label>
+
+          <Label htmlFor="cpf">
+            CPF
+          </Label>
 
           <Input
             id="cpf"
             required
             value={form.cpf}
-            onChange={(e) => set("cpf", e.target.value)}
+            onChange={(e) =>
+              set("cpf", e.target.value)
+            }
           />
+
         </div>
 
+
         <div className="space-y-2">
-          <Label htmlFor="telefone">Telefone</Label>
+
+          <Label htmlFor="telefone">
+            Telefone
+          </Label>
 
           <Input
             id="telefone"
             required
             value={form.telefone}
-            onChange={(e) => set("telefone", e.target.value)}
+            onChange={(e) =>
+              set("telefone", e.target.value)
+            }
           />
+
         </div>
+
       </div>
 
+
+      {/* CIDADE / UF */}
       <div className="grid grid-cols-[1fr_100px] gap-3">
+
         <div className="space-y-2">
-          <Label htmlFor="cidade">Cidade</Label>
+
+          <Label htmlFor="cidade">
+            Cidade
+          </Label>
 
           <Input
             id="cidade"
             required
             value={form.cidade}
-            onChange={(e) => set("cidade", e.target.value)}
+            onChange={(e) =>
+              set("cidade", e.target.value)
+            }
           />
+
         </div>
 
+
         <div className="space-y-2">
-          <Label htmlFor="estado">UF</Label>
+
+          <Label htmlFor="estado">
+            UF
+          </Label>
 
           <Input
             id="estado"
@@ -348,143 +606,281 @@ function SignUpForm() {
             maxLength={2}
             value={form.estado}
             onChange={(e) =>
-              set("estado", e.target.value.toUpperCase())
+              set(
+                "estado",
+                e.target.value.toUpperCase()
+              )
             }
           />
+
         </div>
+
       </div>
 
+
+      {/* EMAIL */}
       <div className="space-y-2">
-        <Label htmlFor="signup-email">Email</Label>
+
+        <Label htmlFor="signup-email">
+          Email
+        </Label>
 
         <Input
           id="signup-email"
           type="email"
           required
           value={form.email}
-          onChange={(e) => set("email", e.target.value)}
+          onChange={(e) =>
+            set("email", e.target.value)
+          }
           autoComplete="email"
         />
+
       </div>
 
+
+      {/* SENHA */}
       <div className="space-y-2">
-        <Label htmlFor="signup-password">Senha</Label>
+
+        <Label htmlFor="signup-password">
+          Senha
+        </Label>
 
         <Input
           id="signup-password"
           type="password"
           required
+          minLength={8}
           value={form.password}
-          onChange={(e) => set("password", e.target.value)}
+          onChange={(e) =>
+            set("password", e.target.value)
+          }
           autoComplete="new-password"
         />
 
         <p className="text-xs text-muted-foreground">
           Mínimo 8 caracteres.
         </p>
+
       </div>
 
+
+      {/* LGPD */}
       <label className="flex items-start gap-2 text-sm">
+
         <Checkbox
           checked={aceite}
-          onCheckedChange={(v) => setAceite(v === true)}
+          onCheckedChange={(v) =>
+            setAceite(v === true)
+          }
           className="mt-0.5"
         />
 
         <span className="text-muted-foreground">
-          Li e aceito os termos de uso e a política de privacidade (LGPD).
+          Li e aceito os termos de uso e a
+          política de privacidade (LGPD).
         </span>
+
       </label>
 
-      <Button type="submit" className="w-full" disabled={loading}>
+
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={loading}
+      >
+
         {loading && (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         )}
+
         Criar minha conta
+
       </Button>
+
     </form>
   );
 }
 
+
+/* =========================================================
+   RECUPERAÇÃO DE SENHA
+========================================================= */
+
 function ForgotForm() {
+
   const [email, setEmail] = useState("");
+
   const [loading, setLoading] = useState(false);
+
   const [sent, setSent] = useState(false);
 
+
   async function onSubmit(e: FormEvent) {
+
     e.preventDefault();
+
     setLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+
+    /*
+     * O usuário receberá o email de recuperação
+     * e será enviado para:
+     *
+     * /reset-password
+     */
+
+    const resetRedirectUrl =
+      `${window.location.origin}/reset-password`;
+
+
+    const { error } =
+      await supabase.auth.resetPasswordForEmail(
+        email,
+        {
+          redirectTo: resetRedirectUrl,
+        }
+      );
+
 
     setLoading(false);
 
+
     if (error) {
+
       toast.error(error.message);
+
       return;
     }
 
+
     setSent(true);
-    toast.success("Enviamos o link para o seu email.");
+
+    toast.success(
+      "Enviamos o link para o seu email."
+    );
+
   }
 
+
   if (sent) {
+
     return (
       <div className="mt-6 space-y-4">
+
         <h1 className="font-serif text-2xl font-semibold">
           Verifique seu email
         </h1>
 
         <p className="text-sm text-muted-foreground">
-          Enviamos um link para <strong>{email}</strong>. Abra-o para
-          redefinir sua senha.
+
+          Enviamos um link para{" "}
+
+          <strong>
+            {email}
+          </strong>
+
+          . Abra o email e clique no link
+          para criar uma nova senha.
+
         </p>
 
-        <Button asChild variant="outline" className="w-full">
-          <Link to="/auth" search={{ mode: "signin" }}>
-            Voltar
+
+        <Button
+          asChild
+          variant="outline"
+          className="w-full"
+        >
+
+          <Link
+            to="/auth"
+            search={{
+              mode: "signin",
+            }}
+          >
+            Voltar para entrar
           </Link>
+
         </Button>
+
       </div>
     );
+
   }
 
+
   return (
-    <form onSubmit={onSubmit} className="mt-6 space-y-4">
+    <form
+      onSubmit={onSubmit}
+      className="mt-6 space-y-4"
+    >
+
       <h1 className="font-serif text-2xl font-semibold">
         Recuperar senha
       </h1>
 
+
       <p className="text-sm text-muted-foreground">
-        Informe seu email e enviaremos um link para redefinir a senha.
+
+        Informe o email cadastrado e enviaremos
+        um link para você criar uma nova senha.
+
       </p>
 
+
       <div className="space-y-2">
-        <Label htmlFor="forgot-email">Email</Label>
+
+        <Label htmlFor="forgot-email">
+          Email
+        </Label>
 
         <Input
           id="forgot-email"
           type="email"
           required
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) =>
+            setEmail(e.target.value)
+          }
+          autoComplete="email"
+          placeholder="seuemail@email.com"
         />
+
       </div>
 
-      <Button type="submit" className="w-full" disabled={loading}>
+
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={loading}
+      >
+
         {loading && (
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         )}
-        Enviar link
+
+        Enviar link de recuperação
+
       </Button>
 
-      <Button asChild variant="ghost" className="w-full">
-        <Link to="/auth" search={{ mode: "signin" }}>
+
+      <Button
+        asChild
+        variant="ghost"
+        className="w-full"
+      >
+
+        <Link
+          to="/auth"
+          search={{
+            mode: "signin",
+          }}
+        >
           Cancelar
         </Link>
+
       </Button>
+
     </form>
   );
 }
