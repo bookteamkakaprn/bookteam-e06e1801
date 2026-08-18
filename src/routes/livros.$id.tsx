@@ -3,364 +3,516 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Calendar, Lock, MapPin, Users } from "lucide-react";
-import { BlocoTexto, GradeInfo } from "@/components/livro/ficha-livro";
-import { conclusaoValida, dataLimiteConclusao, LIMITE_MESES } from "@/lib/prerequisito";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Calendar,
+  Clock,
+  MapPin,
+  BookOpen,
+  User,
+  CheckCircle2,
+  CreditCard,
+  Heart,
+} from "lucide-react";
 
 export const Route = createFileRoute("/livros/$id")({
   head: () => ({
     meta: [
-      { title: "Livro — Book Team" },
-      { name: "description", content: "Detalhes do livro, próximos encontros, vagas e inscrição." },
-      { property: "og:title", content: "Livro — Book Team" },
-      { property: "og:description", content: "Detalhes do livro, próximos encontros, vagas e inscrição." },
+      {
+        title: "Livro — Book Team",
+      },
+      {
+        name: "robots",
+        content: "noindex",
+      },
     ],
   }),
-  component: LivroPage,
+  component: LivroDetalhesPage,
 });
 
-function LivroPage() {
+type Livro = {
+  id: string;
+  titulo: string;
+  autor: string | null;
+  categoria: string | null;
+  ordem: number | null;
+  imagem_url: string | null;
+};
+
+type Evento = {
+  id: string;
+  titulo: string;
+  data: string;
+  hora: string | null;
+  cidade: string | null;
+  local: string | null;
+  valor: number | null;
+  pix_codigo: string | null;
+  pix_copia_cola: string | null;
+  livro_id: string | null;
+};
+
+function LivroDetalhesPage() {
   const { id } = Route.useParams();
   const { user } = useAuth();
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["livro", id, user?.id ?? "anon"],
+  const isPlaceholder = id.startsWith("placeholder-");
+
+  /*
+   * Busca o livro quando ele já existe no Supabase.
+   */
+  const {
+    data: livro,
+    isLoading: carregandoLivro,
+  } = useQuery({
+    queryKey: ["livro-detalhes", id],
+    enabled: !isPlaceholder,
     queryFn: async () => {
-      const today = new Date().toISOString().slice(0, 10);
-      const livroRes = await supabase.from("livros").select("*").eq("id", id).maybeSingle();
-      if (livroRes.error) throw livroRes.error;
-      const livro = livroRes.data;
-      if (!livro) return { livro: null, trilha: null, eventos: [], prereq: null, prereqOk: true };
-
-      const [trilhaRes, eventosRes, prereqRes] = await Promise.all([
-        supabase.from("trilhas").select("id, nome").eq("id", livro.trilha_id).maybeSingle(),
-        supabase
-          .from("eventos")
-          .select("*")
-          .eq("livro_id", id)
-          .eq("status", "aberto")
-          .gte("data", today)
-          .order("data"),
-        livro.ordem > 1
-          ? supabase
-              .from("livros")
-              .select("id, titulo, ordem")
-              .eq("trilha_id", livro.trilha_id)
-              .eq("ordem", livro.ordem - 1)
-              .maybeSingle()
-          : Promise.resolve({ data: null, error: null }),
-      ]);
-
-      const turmasRes = await supabase
-        .from("turmas")
+      const { data, error } = await supabase
+        .from("livros")
         .select("*")
-        .eq("livro_id", id)
-        .order("created_at");
+        .eq("id", id)
+        .maybeSingle();
 
-      let prereqOk = true;
-      let prereqManualVencido = false;
-      const prereq = prereqRes.data ?? null;
-      if (prereq && user) {
-        const { count } = await supabase
-          .from("presencas")
-          .select("id, eventos!inner(livro_id)", { count: "exact", head: true })
-          .eq("participante_id", user.id)
-          .eq("presente", true)
-          .eq("eventos.livro_id", prereq.id);
-        prereqOk = (count ?? 0) > 0;
-        if (!prereqOk) {
-          // Conclusão registrada manualmente pelo aluno (data retroativa):
-          // só libera se ocorreu dentro do prazo de validade da trilha.
-          const { data: manual } = await supabase
-            .from("historico_livros")
-            .select("data_conclusao")
-            .eq("participante_id", user.id)
-            .eq("livro_id", prereq.id)
-            .maybeSingle();
-          if (manual?.data_conclusao) {
-            prereqOk = conclusaoValida(manual.data_conclusao);
-            prereqManualVencido = !prereqOk;
-          }
-        }
-      } else if (prereq && !user) {
-        prereqOk = false;
-      }
+      if (error) throw error;
 
-      return {
-        livro,
-        trilha: trilhaRes.data,
-        eventos: eventosRes.data ?? [],
-        turmas: turmasRes.data ?? [],
-        prereq,
-        prereqOk,
-        prereqManualVencido,
-      };
+      return data as Livro | null;
     },
   });
 
-  if (isLoading) {
-    return <div className="mx-auto max-w-5xl px-4 py-16 text-muted-foreground">Carregando livro…</div>;
-  }
-  if (error || !data?.livro) {
+  /*
+   * Busca os encontros disponíveis para este livro.
+   */
+  const {
+    data: eventos = [],
+    isLoading: carregandoEventos,
+  } = useQuery({
+    queryKey: ["eventos-livro", id],
+    enabled: !isPlaceholder,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("eventos")
+        .select(
+          "id, titulo, data, hora, cidade, local, valor, pix_codigo, pix_copia_cola, livro_id",
+        )
+        .eq("livro_id", id)
+        .order("data", { ascending: true });
+
+      if (error) throw error;
+
+      return (data ?? []) as Evento[];
+    },
+  });
+
+  /*
+   * Para livros que ainda não foram cadastrados pelo ADM,
+   * usamos as posições fixas da jornada.
+   */
+  const ordemPlaceholder = isPlaceholder
+    ? Number(id.replace("placeholder-", ""))
+    : null;
+
+  const jornadaBase: Record<
+    number,
+    {
+      titulo: string;
+      autor: string;
+    }
+  > = {
+    1: {
+      titulo: "Mantenha Seu Amor Aceso",
+      autor: "",
+    },
+    2: {
+      titulo: "Cultura da Honra",
+      autor: "",
+    },
+    3: {
+      titulo: "Livro 3",
+      autor: "",
+    },
+    4: {
+      titulo: "Livro 4",
+      autor: "",
+    },
+    5: {
+      titulo: "Organize a Sua Desordem Mental",
+      autor: "",
+    },
+    6: {
+      titulo: "O Despertar da Leoa",
+      autor: "",
+    },
+    7: {
+      titulo: "Livro 7",
+      autor: "",
+    },
+    8: {
+      titulo: "Os Caminhos Sobrenaturais da Realeza",
+      autor: "",
+    },
+    9: {
+      titulo: "O Poder Sobrenatural de uma Mente Transformada",
+      autor: "",
+    },
+    10: {
+      titulo: "Impunível",
+      autor: "Danny Silk",
+    },
+  };
+
+  const livroVisual: Livro | null =
+    livro ??
+    (isPlaceholder && ordemPlaceholder
+      ? {
+          id,
+          titulo:
+            jornadaBase[ordemPlaceholder]?.titulo ??
+            `Livro ${ordemPlaceholder}`,
+          autor: jornadaBase[ordemPlaceholder]?.autor ?? "",
+          categoria: "Jornada",
+          ordem: ordemPlaceholder,
+          imagem_url: null,
+        }
+      : null);
+
+  if (carregandoLivro) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-16">
-        <p className="text-muted-foreground">Livro não encontrado.</p>
-        <Button asChild variant="link" className="mt-2 px-0">
-          <Link to="/">Voltar</Link>
-        </Button>
+      <div className="min-h-screen bg-background px-4 py-20">
+        <div className="mx-auto max-w-5xl animate-pulse">
+          <div className="h-8 w-40 rounded bg-muted" />
+          <div className="mt-8 grid gap-8 md:grid-cols-[300px_1fr]">
+            <div className="aspect-[2/3] rounded-2xl bg-muted" />
+            <div className="space-y-4">
+              <div className="h-10 w-3/4 rounded bg-muted" />
+              <div className="h-5 w-1/2 rounded bg-muted" />
+              <div className="h-24 rounded bg-muted" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  const { livro, trilha, eventos, turmas, prereq, prereqOk, prereqManualVencido } = data;
-  const bloqueado = !!prereq && !prereqOk;
-  const vagasRestantes = livro.vagas_restantes ?? 0;
-  const esgotado = (livro.vagas_total ?? 0) > 0 && vagasRestantes <= 0;
-  const proximoEvento = eventos[0];
-  const moeda = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  if (!livroVisual) {
+    return (
+      <div className="min-h-screen bg-background px-4 py-20">
+        <div className="mx-auto max-w-3xl text-center">
+          <BookOpen className="mx-auto h-12 w-12 text-gold" />
+
+          <h1 className="mt-5 font-serif text-3xl font-semibold">
+            Livro não encontrado
+          </h1>
+
+          <p className="mt-3 text-muted-foreground">
+            Não conseguimos encontrar este livro.
+          </p>
+
+          <Button asChild className="mt-6 bg-gold text-primary-foreground">
+            <Link to="/">Voltar para os livros</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const numeroLivro = livroVisual.ordem ?? ordemPlaceholder ?? 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="h-4 w-4" /> Voltar
+      {/* TOPO */}
+      <header className="border-b border-border/50 bg-background/95 backdrop-blur">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-8">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-sm text-foreground/70 transition-colors hover:text-gold"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar para os livros
           </Link>
-          {user ? (
-            <Button asChild size="sm" variant="outline">
-              <Link to="/inicio">Meu painel</Link>
-            </Button>
-          ) : (
-            <Button asChild size="sm" className="bg-gold text-primary-foreground hover:bg-gold/90">
-              <Link to="/auth">Entrar</Link>
-            </Button>
-          )}
+
+          <div className="flex items-center gap-2">
+            <Heart className="h-4 w-4 fill-gold text-gold" />
+            <span className="font-serif text-sm font-semibold">
+              BOOK TEAM
+            </span>
+          </div>
         </div>
       </header>
 
-      <section className="mx-auto max-w-5xl px-4 py-10">
-        <div className="grid gap-6 md:grid-cols-[220px_1fr]">
-          {livro.imagem_url ? (
-            <img src={livro.imagem_url} alt={livro.titulo} className="h-80 w-full max-w-[220px] rounded-md object-cover shadow-book" />
-          ) : (
-            <div className="flex h-80 w-full max-w-[220px] items-center justify-center rounded-md bg-muted">
-              <BookOpen className="h-10 w-10 text-muted-foreground" />
-            </div>
-          )}
+      {/* CONTEÚDO */}
+      <main className="mx-auto max-w-6xl px-4 py-10 md:px-8 md:py-16">
+        <div className="grid gap-10 md:grid-cols-[300px_1fr] lg:grid-cols-[340px_1fr]">
+          {/* CAPA */}
           <div>
-            {trilha && (
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">{trilha.nome} · Livro {livro.ordem}</p>
-            )}
-            <h1 className="mt-2 font-serif text-3xl font-semibold md:text-4xl">{livro.titulo}</h1>
-            {livro.autor && <p className="mt-1 text-sm text-muted-foreground">{livro.autor}</p>}
-            {livro.descricao && (
-              <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-foreground/75">{livro.descricao}</p>
-            )}
+            <div className="relative aspect-[2/3] overflow-hidden rounded-r-3xl rounded-l-lg border border-gold/20 bg-gradient-to-br from-[oklch(0.4_0.12_25)] to-[oklch(0.2_0.05_20)] shadow-premium">
+              {livroVisual.imagem_url ? (
+                <img
+                  src={livroVisual.imagem_url}
+                  alt={livroVisual.titulo}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
+                  <div className="flex h-24 w-24 items-center justify-center rounded-3xl border border-gold/30 bg-black/20">
+                    <BookOpen className="h-12 w-12 text-gold" />
+                  </div>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3">
-              {livro.valor != null && (
-                <Badge variant="secondary" className="text-sm">{moeda(Number(livro.valor))}</Badge>
+                  <p className="mt-5 text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+                    Capa em breve
+                  </p>
+
+                  <p className="mt-2 text-sm text-foreground/60">
+                    O ADM ainda não cadastrou a capa deste livro.
+                  </p>
+                </div>
               )}
-              {(livro.vagas_total ?? 0) > 0 && (
-                <Badge variant="outline" className="text-sm">
-                  {esgotado ? "0 vagas" : `${vagasRestantes} de ${livro.vagas_total} vagas`}
-                </Badge>
-              )}
-              {esgotado ? (
-                <Button size="lg" disabled className="uppercase tracking-wide">
-                  Turma esgotada
-                </Button>
-              ) : bloqueado ? (
-                <Button size="lg" disabled className="gap-2 uppercase tracking-wide">
-                  <Lock className="h-4 w-4" /> Bloqueado
-                </Button>
-              ) : !user ? (
-                <Button asChild size="lg" className="bg-gold uppercase tracking-wide text-primary-foreground hover:bg-gold/90">
-                  <Link to="/auth">Quero participar</Link>
-                </Button>
-              ) : proximoEvento ? (
-                <Button asChild size="lg" className="bg-gold uppercase tracking-wide text-primary-foreground hover:bg-gold/90">
-                  <Link to="/inscricao/$eventoId" params={{ eventoId: proximoEvento.id }}>Quero participar</Link>
-                </Button>
-              ) : null}
+
+              <div className="absolute left-4 top-4 rounded-full border border-gold/30 bg-black/60 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-gold backdrop-blur">
+                Livro {numeroLivro} de 10
+              </div>
             </div>
 
-            {bloqueado && (
-              <div className="mt-6 flex items-start gap-3 rounded-md border border-gold/40 bg-gold/10 p-4 text-sm">
-                <Lock className="mt-0.5 h-4 w-4 text-gold" />
+            {/* PROGRESSO */}
+            <div className="mt-4">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Jornada</span>
+                <span>{numeroLivro}/10</span>
+              </div>
+
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full bg-gradient-gold"
+                  style={{
+                    width: `${Math.min((numeroLivro / 10) * 100, 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* INFORMAÇÕES */}
+          <div>
+            <Badge
+              variant="outline"
+              className="border-gold/30 text-gold"
+            >
+              {livroVisual.categoria || "Jornada"}
+            </Badge>
+
+            <h1 className="mt-4 max-w-3xl font-serif text-3xl font-semibold leading-tight md:text-5xl">
+              {livroVisual.titulo}
+            </h1>
+
+            {livroVisual.autor && (
+              <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                <User className="h-4 w-4" />
+                {livroVisual.autor}
+              </p>
+            )}
+
+            <div className="mt-8 rounded-2xl border border-gold/20 bg-card/60 p-5">
+              <div className="flex gap-3">
+                <BookOpen className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
+
                 <div>
-                  <p className="font-semibold text-foreground">Pré-requisito pendente</p>
-                  {prereqManualVencido ? (
-                    <p className="text-foreground/75">
-                      Sua conclusão de {prereq ? `"${prereq.titulo}"` : "livro anterior"} é anterior a{" "}
-                      {new Date(dataLimiteConclusao() + "T00:00:00").toLocaleDateString("pt-BR")} — passou do prazo de{" "}
-                      {LIMITE_MESES / 12} ano. É necessário recomeçar a trilha.
+                  <h2 className="font-semibold">
+                    Sobre esta etapa da jornada
+                  </h2>
+
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    Este é o livro {numeroLivro} da jornada Book Team.
+                    Escolha o próximo encontro disponível para participar
+                    desta etapa.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* ENCONTROS */}
+            <section className="mt-10">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="font-serif text-2xl font-semibold">
+                    Próximos encontros
+                  </h2>
+
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Escolha a turma da qual deseja participar.
+                  </p>
+                </div>
+              </div>
+
+              {carregandoEventos && (
+                <div className="mt-5 space-y-3">
+                  {[1, 2].map((item) => (
+                    <div
+                      key={item}
+                      className="h-36 animate-pulse rounded-2xl bg-muted"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {!carregandoEventos && eventos.length === 0 && (
+                <div className="mt-5 rounded-2xl border border-border/60 bg-card/50 p-6">
+                  <div className="flex gap-3">
+                    <Calendar className="h-5 w-5 shrink-0 text-gold" />
+
+                    <div>
+                      <p className="font-semibold">
+                        Ainda não há turma cadastrada
+                      </p>
+
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                        O ADM ainda não cadastrou o próximo encontro para
+                        este livro. Assim que a turma for cadastrada, ela
+                        aparecerá aqui automaticamente.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-5 space-y-4">
+                {eventos.map((evento) => (
+                  <EventoCard
+                    key={evento.id}
+                    evento={evento}
+                    userId={user?.id}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {/* AVISO PARA LIVRO AINDA NÃO CADASTRADO */}
+            {isPlaceholder && (
+              <div className="mt-6 rounded-2xl border border-gold/20 bg-gold/5 p-5">
+                <div className="flex gap-3">
+                  <BookOpen className="h-5 w-5 shrink-0 text-gold" />
+
+                  <div>
+                    <p className="font-semibold">
+                      Este livro já faz parte da jornada
                     </p>
-                  ) : (
-                    <p className="text-foreground/75">
-                      Para se inscrever neste livro, é preciso ter concluído o livro anterior
-                      {prereq ? ` — "${prereq.titulo}"` : ""}. Se você já fez esse livro, registre a conclusão com a data
-                      retroativa em <span className="font-medium text-foreground">Área do aluno → Meu histórico</span> (válido
-                      por até {LIMITE_MESES / 12} ano).
+
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      O livro está reservado nesta posição da sequência.
+                      Quando o ADM cadastrar as informações e a turma,
+                      elas aparecerão automaticamente nesta página.
                     </p>
-                  )}
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
-      </section>
+      </main>
+    </div>
+  );
+}
 
-      <section className="mx-auto max-w-5xl px-4 pb-16">
-        {turmas.length > 0 && (
-          <div className="mb-10">
-            <h2 className="font-serif text-xl font-semibold">Turmas</h2>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {turmas.map((t) => {
-                const esgotada = t.vagas_max > 0 && (t.vagas_restantes ?? 0) <= 0;
-                return (
-                  <Card key={t.id}>
-                    <CardContent className="space-y-3 p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-serif text-lg font-semibold">{t.nome}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {[t.temporada, t.ano].filter(Boolean).join(" · ")}
-                          </p>
-                        </div>
-                        {esgotada ? (
-                          <Badge variant="destructive">ESGOTADO</Badge>
-                        ) : (
-                          <Badge variant="secondary">{t.vagas_restantes} vagas</Badge>
-                        )}
-                      </div>
-                      <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                        {[
-                          { label: "Início", value: t.data_inicio ? new Date(t.data_inicio + "T00:00:00").toLocaleDateString("pt-BR") : null },
-                          { label: "Término", value: t.data_fim ? new Date(t.data_fim + "T00:00:00").toLocaleDateString("pt-BR") : null },
-                          { label: "Horário", value: t.horario },
-                          { label: "Professor", value: t.professor },
-                          { label: "Coordenador", value: t.coordenador },
-                          { label: "Staff", value: t.staff },
-                          { label: "Sala", value: t.sala },
-                          { label: "Valor", value: t.valor != null ? moeda(Number(t.valor)) : null },
-                          { label: "Vagas", value: t.vagas_max || null },
-                          { label: "Inscritos", value: t.inscritos },
-                        ]
-                          .filter((i) => i.value !== null && i.value !== undefined && String(i.value) !== "")
-                          .map((i) => (
-                            <div key={i.label} className="min-w-0">
-                              <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{i.label}</dt>
-                              <dd className="truncate text-foreground">{String(i.value)}</dd>
-                            </div>
-                          ))}
-                      </dl>
-                      <Button
-                        asChild={!bloqueado}
-                        disabled={bloqueado}
-                        className={
-                          esgotada
-                            ? "w-full"
-                            : "w-full bg-gold text-primary-foreground hover:bg-gold/90"
-                        }
-                        variant={esgotada ? "outline" : "default"}
-                      >
-                        {bloqueado ? (
-                          <span className="inline-flex items-center gap-2"><Lock className="h-4 w-4" /> Bloqueado</span>
-                        ) : (
-                          <Link to="/cadastro/$turmaId" params={{ turmaId: t.id }}>
-                            {esgotada ? "Entrar na lista de espera" : "Quero participar"}
-                          </Link>
-                        )}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+/* ———————————————— EVENTO ———————————————— */
+
+function EventoCard({
+  evento,
+}: {
+  evento: Evento;
+  userId?: string;
+}) {
+  const dataFormatada = new Date(
+    `${evento.data}T00:00:00`,
+  ).toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+  });
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/60 p-5 transition-all hover:border-gold/30 hover:bg-card">
+      <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
+          <p className="font-serif text-lg font-semibold">
+            {evento.titulo}
+          </p>
+
+          <div className="mt-3 grid gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-gold" />
+              <span className="capitalize">{dataFormatada}</span>
+            </div>
+
+            {evento.hora && (
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-gold" />
+                <span>{evento.hora.slice(0, 5)}</span>
+              </div>
+            )}
+
+            {(evento.local || evento.cidade) && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-gold" />
+                <span>
+                  {[evento.local, evento.cidade]
+                    .filter(Boolean)
+                    .join(", ")}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex shrink-0 flex-col gap-2 md:min-w-[190px]">
+          {evento.valor !== null && (
+            <div className="mb-1 text-center">
+              <p className="text-xs text-muted-foreground">
+                Investimento
+              </p>
+
+              <p className="font-serif text-xl font-semibold text-gold">
+                {Number(evento.valor).toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })}
+              </p>
+            </div>
+          )}
+
+          <Button
+            asChild
+            className="w-full bg-gold text-primary-foreground hover:bg-gold/90"
+          >
+            <Link
+              to="/inscricao/$eventoId"
+              params={{ eventoId: evento.id }}
+            >
+              Quero participar
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* PIX */}
+      {(evento.pix_codigo || evento.pix_copia_cola) && (
+        <div className="mt-5 border-t border-border/50 pt-4">
+          <div className="flex items-start gap-3">
+            <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-gold" />
+
+            <div>
+              <p className="text-sm font-semibold">
+                Pagamento via PIX
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                O código PIX será disponibilizado durante a inscrição.
+              </p>
             </div>
           </div>
-        )}
-
-        <div className="mb-10 space-y-4">
-          <GradeInfo
-            itens={[
-              { label: "Categoria", value: livro.categoria },
-              { label: "Autor", value: livro.autor },
-              { label: "Ordem da trilha", value: livro.ordem },
-              { label: "Professor responsável", value: livro.professor },
-              { label: "Coordenador", value: livro.coordenador },
-              { label: "Ano", value: livro.ano },
-              { label: "Turma", value: livro.turma },
-              { label: "Datas do curso", value: livro.datas_curso },
-              { label: "Horário", value: livro.horario },
-              { label: "Sala", value: livro.sala },
-              { label: "Encontros", value: livro.qtd_encontros },
-              { label: "Duração", value: livro.duracao },
-              { label: "Valor", value: livro.valor != null ? moeda(Number(livro.valor)) : null },
-              { label: "Vagas", value: livro.vagas_total || null },
-              { label: "Inscritos", value: livro.inscritos },
-              { label: "Vagas restantes", value: esgotado ? "Turma esgotada" : vagasRestantes },
-              { label: "Status", value: livro.status },
-            ]}
-          />
-          <BlocoTexto titulo="Objetivo" texto={livro.objetivo} />
-          <BlocoTexto titulo="Público-alvo" texto={livro.publico_alvo} />
-          <BlocoTexto titulo="Conteúdo programático" texto={livro.conteudo_programatico} />
-          <BlocoTexto titulo="Competências desenvolvidas" texto={livro.competencias} />
-          <BlocoTexto titulo="Material necessário" texto={livro.material_necessario} />
         </div>
-
-        <h2 className="font-serif text-xl font-semibold">Próximos encontros</h2>
-        <div className="mt-4 space-y-3">
-          {eventos.map((e) => (
-            <Card key={e.id}>
-              <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="font-serif text-lg font-semibold">{e.titulo}</p>
-                  {e.descricao && <p className="text-sm text-muted-foreground">{e.descricao}</p>}
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {new Date(e.data + "T00:00:00").toLocaleDateString("pt-BR")} {e.hora?.slice(0, 5)}
-                    </span>
-                    {(e.cidade || e.local) && (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5" /> {[e.local, e.cidade].filter(Boolean).join(" — ")}
-                      </span>
-                    )}
-                    <span className="inline-flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5" /> {e.vagas} vagas
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col items-start gap-2 md:items-end">
-                  <Badge variant="secondary" className="text-sm">
-                    {Number(e.valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                  </Badge>
-                  {!user ? (
-                    <Button asChild size="sm" variant="outline">
-                      <Link to="/auth">Entre para se inscrever</Link>
-                    </Button>
-                  ) : bloqueado ? (
-                    <Button size="sm" disabled className="gap-1">
-                      <Lock className="h-3.5 w-3.5" /> Bloqueado
-                    </Button>
-                  ) : (
-                    <Button asChild size="sm" className="bg-gold text-primary-foreground hover:bg-gold/90">
-                      <Link to="/inscricao/$eventoId" params={{ eventoId: e.id }}>Inscreva-se agora</Link>
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-          {eventos.length === 0 && (
-            <p className="text-sm text-muted-foreground">Ainda não há encontros abertos para este livro.</p>
-          )}
-        </div>
-      </section>
+      )}
     </div>
   );
 }
