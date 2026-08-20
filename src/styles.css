@@ -243,3 +243,14 @@
 @utility animate-glow {
   animation: glow-pulse 3s ease-in-out infinite;
 }
+
+/* Logo fallback: use the original repository asset directly if the bundler fails to serve the imported image. */
+img[alt="Book Team"],
+img[alt="Book Team — Amor & Honra"] {
+  background-image: url("https://raw.githubusercontent.com/brefiai2020-ui/bookteam-e06e1801/main/src/assets/book-team-logo.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  color: transparent;
+  font-size: 0;
+}
