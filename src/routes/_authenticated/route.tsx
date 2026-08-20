@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Home, User, Calendar, CalendarDays, CreditCard, Award, LogOut, LayoutDashboard, History } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import logo from "@/assets/book-team-logo.png";
+const logo = "/book-team-logo.png";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
