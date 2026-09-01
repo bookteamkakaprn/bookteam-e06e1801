@@ -23,14 +23,17 @@ export const Route = createFileRoute("/_admin")({
   beforeLoad: async () => {
     const { data: userData, error } = await supabase.auth.getUser();
     if (error || !userData.user) throw redirect({ to: "/auth", search: { area: "admin" as const } });
-    const { data: role } = await supabase
+
+    const { data: role, error: roleError } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userData.user.id)
-      .eq("role", "admin")
+      .in("role", ["admin_master", "admin_suporte"])
       .maybeSingle();
-    if (!role) throw redirect({ to: "/inicio" });
-    return { user: userData.user };
+
+    if (roleError || !role) throw redirect({ to: "/inicio" });
+
+    return { user: userData.user, role: role.role };
   },
   component: AdminLayout,
 });
