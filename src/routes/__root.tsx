@@ -134,11 +134,9 @@ function RootComponent() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        // User signed in
         router.invalidate();
         queryClient.invalidateQueries();
       } else {
-        // User signed out
         router.invalidate();
       }
     });
