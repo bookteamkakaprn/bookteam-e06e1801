@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/firebase";
-import { useAuth } from "@/lib/use-auth";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,12 +16,12 @@ export const Route = createFileRoute("/_authenticated/pagamentos")({
 type PagRow = { id: string; status: string; valor?: number; observacao?: string | null; created_at?: string; evento_id?: string; evento_titulo?: string; evento_data?: string };
 
 function PagPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { data, isLoading, error } = useQuery({
-    enabled: !!user,
-    queryKey: ["meus-pagamentos", user?.id],
+    enabled: !!user && !authLoading,
+    queryKey: ["meus-pagamentos", user?.uid],
     queryFn: async () => {
-      const snap = await getDocs(query(collection(db, "pagamentos"), where("participante_id", "==", user!.id)));
+      const snap = await getDocs(query(collection(db, "pagamentos"), where("participante_id", "==", user!.uid)));
       return snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => String(b.created_at ?? "").localeCompare(String(a.created_at ?? ""))) as PagRow[];
     },
   });
