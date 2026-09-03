@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -7,19 +6,26 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
-      <div className="text-center max-w-2xl mx-auto px-4">
-        <h1 className="text-5xl font-bold font-serif mb-4">Book Team</h1>
-        <p className="text-xl text-foreground/70 mb-8">
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+      <div style={{ maxWidth: "600px", padding: "20px" }}>
+        <h1 style={{ fontSize: "48px", marginBottom: "20px", fontWeight: "bold" }}>Book Team</h1>
+        <p style={{ fontSize: "18px", marginBottom: "30px", color: "#999" }}>
           Bem-vindo ao Ministério de Leitura
         </p>
-        <div className="flex gap-4 justify-center flex-wrap">
-          <Button asChild size="lg" className="bg-gold text-white hover:bg-gold/90">
-            <Link to="/auth" search={{ mode: "signup" }}>Criar Conta</Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link to="/auth">Entrar</Link>
-          </Button>
+        <div style={{ display: "flex", gap: "20px", justifyContent: "center", flexWrap: "wrap" }}>
+          <Link 
+            to="/auth" 
+            search={{ mode: "signup" }}
+            style={{ padding: "12px 24px", backgroundColor: "#d4af37", color: "white", borderRadius: "6px", textDecoration: "none", fontWeight: "bold" }}
+          >
+            Criar Conta
+          </Link>
+          <Link 
+            to="/auth"
+            style={{ padding: "12px 24px", border: "1px solid #d4af37", color: "#d4af37", borderRadius: "6px", textDecoration: "none", fontWeight: "bold" }}
+          >
+            Entrar
+          </Link>
         </div>
       </div>
     </div>
