@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
-import { useState, FormEvent } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, type FormEvent, useEffect } from "react";
 import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -10,382 +10,55 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import bookTeamLogo from "@/assets/book-team-logo.png";
 
-const searchSchema = z.object({
-  mode: z.enum(["signin", "signup", "forgot"]).optional(),
-});
-
-// Validation schemas
-const signupSchema = z.object({
-  nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  cpf: z.string().min(11, "CPF inválido"),
-  email: z.string().email("Email inválido"),
-  telefone: z.string().min(10, "Telefone inválido"),
-  cidade: z.string().min(2, "Cidade obrigatória"),
-  estado: z.string().min(2, "Estado obrigatório"),
-  senha: z.string().min(8, "Senha deve ter pelo menos 8 caracteres"),
-  lgpd: z.boolean().refine((val) => val === true, {
-    message: "Você deve aceitar os termos LGPD",
-  }),
-});
-
-const signinSchema = z.object({
-  email: z.string().email("Email inválido"),
-  senha: z.string().min(1, "Senha obrigatória"),
-});
+const searchSchema = z.object({ mode: z.enum(["signin", "signup", "forgot"]).optional(), area: z.enum(["aluno", "admin"]).optional() });
+const signUpSchema = z.object({ nome: z.string().trim().min(2, "Informe seu nome"), email: z.string().trim().email("Email inválido"), cpf: z.string().trim().min(11, "CPF inválido").max(14), telefone: z.string().trim().min(8, "Telefone inválido"), cidade: z.string().trim().min(2, "Informe sua cidade"), estado: z.string().trim().length(2, "UF com 2 letras"), password: z.string().min(8, "Mínimo 8 caracteres"), aceite_lgpd: z.literal(true, { errorMap: () => ({ message: "É necessário aceitar" }) }) });
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (search) => searchSchema.parse(search),
-  beforeLoad: async ({ context }) => {
-    // Check if user is already authenticated
-    if (context.auth?.isAuthenticated) {
-      throw redirect({ to: "/inicio" });
-    }
-  },
+  validateSearch: (s) => searchSchema.parse(s),
+  ssr: false,
+  head: () => ({ meta: [{ title: "Entrar ou criar conta — Book Team" }, { name: "description", content: "Acesse sua conta ou cadastre-se no Book Team Amor & Honra." }] }),
   component: AuthPage,
 });
 
 function AuthPage() {
-  const search = Route.useSearch();
-  const mode = search.mode || "signin";
+  const { mode, area } = Route.useSearch();
+  const tab = mode ?? "signin";
+  const isAdmin = area === "admin";
+  const [year, setYear] = useState<number | null>(null);
+  useEffect(() => setYear(new Date().getFullYear()), []);
+
+  return <div className="min-h-screen bg-background"><div className="mx-auto grid min-h-screen max-w-6xl grid-cols-1 lg:grid-cols-2">
+    <aside className="hidden gradient-hero flex-col justify-between p-12 lg:flex">
+      <div className="flex flex-col gap-2"><Link to="/" className="flex items-center gap-3"><img src={bookTeamLogo} alt="Book Team Amor & Honra" className="h-12 w-12 rounded-full object-contain" /><span className="font-serif text-xl font-semibold">Book Team</span></Link><Link to="/" className="text-sm text-muted-foreground hover:text-foreground">Início</Link></div>
+      <div><h2 className="font-serif text-4xl font-bold leading-tight">{isAdmin ? "Área administrativa" : "Área do aluno"}</h2><p className="mt-4 text-muted-foreground">{isAdmin ? "Acompanhe e gerencie alunos, turmas e pagamentos do Book Team Amor & Honra." : "Acompanhe suas trilhas, encontros, pagamentos e certificados do Book Team Amor & Honra."}</p></div>
+      <p className="text-xs text-muted-foreground">© {year ?? "2026"} Book Team</p>
+    </aside>
+    <main className="flex items-center justify-center p-6 md:p-12"><div className="w-full max-w-md">
+      <Link to="/" className="mb-8 inline-flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground lg:hidden"><img src={bookTeamLogo} alt="Book Team Amor & Honra" className="h-10 w-10 rounded-full object-contain" /><span>Book Team</span></Link>
+      <div className="grid w-full grid-cols-2"><Link to="/auth" search={{ mode: "signin", ...(area ? { area } : {}) }} className={`flex h-10 items-center justify-center rounded-md text-sm font-medium ${tab === "signin" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Entrar</Link><Link to="/auth" search={{ mode: "signup", ...(area ? { area } : {}) }} className={`flex h-10 items-center justify-center rounded-md text-sm font-medium ${tab === "signup" ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>Criar conta</Link></div>
+      {tab === "signin" && <SignInForm />}{tab === "signup" && <SignUpForm />}{tab === "forgot" && <ForgotForm />}
+    </div></main>
+  </div></div>;
+}
+
+function SignInForm() {
   const navigate = useNavigate();
-  const { signup, login, loading } = useAuth();
-
-  const [signupData, setSignupData] = useState({
-    nome: "",
-    cpf: "",
-    email: "",
-    telefone: "",
-    cidade: "",
-    estado: "",
-    senha: "",
-    lgpd: false,
-  });
-
-  const [signinData, setSigninData] = useState({
-    email: "",
-    senha: "",
-  });
-
-  const handleSignup = async (e: FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      signupSchema.parse(signupData);
-      
-      const result = await signup(signupData.email, signupData.senha, {
-        nome: signupData.nome,
-        cpf: signupData.cpf,
-        telefone: signupData.telefone,
-        cidade: signupData.cidade,
-        estado: signupData.estado,
-        aceite_lgpd: signupData.lgpd,
-      });
-
-      if (result.success) {
-        navigate({ to: "/inicio" });
-      }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        error.errors.forEach((err) => {
-          toast.error(err.message);
-        });
-      }
-    }
-  };
-
-  const handleSignin = async (e: FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      signinSchema.parse(signinData);
-      
-      const result = await login(signinData.email, signinData.senha);
-      
-      if (result.success) {
-        navigate({ to: "/inicio" });
-      }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        error.errors.forEach((err) => {
-          toast.error(err.message);
-        });
-      }
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-950 to-amber-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          {/* Left Side - Info */}
-          <div className="text-white space-y-6">
-            <div className="flex items-center gap-3">
-              <img src={bookTeamLogo} alt="Book Team" className="w-12 h-12" />
-              <h1 className="text-3xl font-bold">Book Team</h1>
-            </div>
-            
-            <h2 className="text-4xl font-bold leading-tight">
-              Área do aluno
-            </h2>
-            
-            <p className="text-lg text-amber-100">
-              Acompanhe suas trilhas, encontros, pagamentos e certificados do
-              Book Team Amor & Honra.
-            </p>
-
-            {mode === "signin" ? (
-              <div>
-                <p className="text-amber-100 mb-4">
-                  Não tem conta ainda?{" "}
-                  <Link
-                    to="/auth"
-                    search={{ mode: "signup" }}
-                    className="text-amber-300 font-semibold hover:underline"
-                  >
-                    Criar conta
-                  </Link>
-                </p>
-              </div>
-            ) : (
-              <div>
-                <p className="text-amber-100 mb-4">
-                  Já tem conta?{" "}
-                  <Link
-                    to="/auth"
-                    search={{ mode: "signin" }}
-                    className="text-amber-300 font-semibold hover:underline"
-                  >
-                    Entrar
-                  </Link>
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Right Side - Forms */}
-          <div className="bg-white rounded-lg shadow-xl p-8">
-            {mode === "signin" ? (
-              <SigninForm
-                data={signinData}
-                setData={setSigninData}
-                onSubmit={handleSignin}
-                loading={loading}
-              />
-            ) : (
-              <SignupForm
-                data={signupData}
-                setData={setSignupData}
-                onSubmit={handleSignup}
-                loading={loading}
-              />
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const { login, loading } = useAuth();
+  const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
+  async function onSubmit(e: FormEvent) { e.preventDefault(); const parsed = z.object({ email: z.string().email("Email inválido"), password: z.string().min(1, "Senha obrigatória") }).safeParse({ email, password }); if (!parsed.success) { toast.error(parsed.error.errors[0]?.message ?? "Confira os campos"); return; } const result = await login(email, password); if (result.success) navigate({ to: "/inicio" }); }
+  return <form onSubmit={onSubmit} className="mt-6 space-y-4"><h1 className="font-serif text-2xl font-semibold">Entrar</h1><div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></div><div className="space-y-2"><Label htmlFor="password">Senha</Label><Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" /></div><div className="flex items-center justify-between"><Link to="/auth" search={{ mode: "forgot" }} className="text-sm text-muted-foreground hover:text-foreground">Esqueci minha senha</Link></div><Button type="submit" className="w-full" disabled={loading}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Entrar</Button></form>;
 }
 
-function SigninForm({ data, setData, onSubmit, loading }: any) {
-  return (
-    <form onSubmit={onSubmit} className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Entrar ou criar conta</h2>
-      </div>
-
-      <div>
-        <Label htmlFor="email" className="text-gray-700">
-          Email
-        </Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="seu@email.com"
-          value={data.email}
-          onChange={(e) => setData({ ...data, email: e.target.value })}
-          className="mt-2"
-          disabled={loading}
-          required
-        />
-      </div>
-
-      <div>
-        <Label htmlFor="senha" className="text-gray-700">
-          Senha
-        </Label>
-        <Input
-          id="senha"
-          type="password"
-          placeholder="••••••••"
-          value={data.senha}
-          onChange={(e) => setData({ ...data, senha: e.target.value })}
-          className="mt-2"
-          disabled={loading}
-          required
-        />
-      </div>
-
-      <Button
-        type="submit"
-        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 rounded-lg"
-        disabled={loading}
-      >
-        {loading ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Entrando...
-          </>
-        ) : (
-          "Entrar"
-        )}
-      </Button>
-    </form>
-  );
+function SignUpForm() {
+  const navigate = useNavigate(); const { signup, loading } = useAuth();
+  const [form, setForm] = useState({ nome: "", email: "", cpf: "", telefone: "", cidade: "", estado: "", password: "" }); const [aceite, setAceite] = useState(false);
+  function set<K extends keyof typeof form>(key: K, value: string) { setForm((current) => ({ ...current, [key]: value })); }
+  async function onSubmit(e: FormEvent) { e.preventDefault(); const parsed = signUpSchema.safeParse({ ...form, aceite_lgpd: aceite }); if (!parsed.success) { toast.error(parsed.error.errors[0]?.message ?? "Confira os campos"); return; } const result = await signup(form.email, form.password, { nome: form.nome, cpf: form.cpf, telefone: form.telefone, cidade: form.cidade, estado: form.estado.toUpperCase(), aceite_lgpd: true }); if (result.success) navigate({ to: "/inicio" }); }
+  return <form onSubmit={onSubmit} className="mt-6 space-y-4"><h1 className="font-serif text-2xl font-semibold">Criar conta</h1><div className="space-y-2"><Label htmlFor="nome">Nome completo</Label><Input id="nome" required value={form.nome} onChange={(e) => set("nome", e.target.value)} /></div><div className="grid grid-cols-2 gap-3"><div className="space-y-2"><Label htmlFor="cpf">CPF</Label><Input id="cpf" required value={form.cpf} onChange={(e) => set("cpf", e.target.value)} /></div><div className="space-y-2"><Label htmlFor="telefone">Telefone</Label><Input id="telefone" required value={form.telefone} onChange={(e) => set("telefone", e.target.value)} /></div></div><div className="grid grid-cols-[1fr_100px] gap-3"><div className="space-y-2"><Label htmlFor="cidade">Cidade</Label><Input id="cidade" required value={form.cidade} onChange={(e) => set("cidade", e.target.value)} /></div><div className="space-y-2"><Label htmlFor="estado">UF</Label><Input id="estado" required maxLength={2} value={form.estado} onChange={(e) => set("estado", e.target.value.toUpperCase())} /></div></div><div className="space-y-2"><Label htmlFor="signup-email">Email</Label><Input id="signup-email" type="email" required value={form.email} onChange={(e) => set("email", e.target.value)} autoComplete="email" /></div><div className="space-y-2"><Label htmlFor="signup-password">Senha</Label><Input id="signup-password" type="password" required minLength={8} value={form.password} onChange={(e) => set("password", e.target.value)} autoComplete="new-password" /><p className="text-xs text-muted-foreground">Mínimo 8 caracteres.</p></div><label className="flex items-start gap-2 text-sm"><Checkbox checked={aceite} onCheckedChange={(value) => setAceite(value === true)} className="mt-0.5" /><span className="text-muted-foreground">Li e aceito os termos de uso e a política de privacidade (LGPD).</span></label><Button type="submit" className="w-full" disabled={loading}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Criar minha conta</Button></form>;
 }
 
-function SignupForm({ data, setData, onSubmit, loading }: any) {
-  return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Criar conta</h2>
-      </div>
-
-      <div>
-        <Label htmlFor="nome" className="text-gray-700 text-sm">
-          Nome completo
-        </Label>
-        <Input
-          id="nome"
-          placeholder="Seu nome"
-          value={data.nome}
-          onChange={(e) => setData({ ...data, nome: e.target.value })}
-          className="mt-1 text-sm"
-          disabled={loading}
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="cpf" className="text-gray-700 text-sm">
-            CPF
-          </Label>
-          <Input
-            id="cpf"
-            placeholder="000.000.000-00"
-            value={data.cpf}
-            onChange={(e) => setData({ ...data, cpf: e.target.value })}
-            className="mt-1 text-sm"
-            disabled={loading}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="telefone" className="text-gray-700 text-sm">
-            Telefone
-          </Label>
-          <Input
-            id="telefone"
-            placeholder="(00) 00000-0000"
-            value={data.telefone}
-            onChange={(e) => setData({ ...data, telefone: e.target.value })}
-            className="mt-1 text-sm"
-            disabled={loading}
-            required
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="email" className="text-gray-700 text-sm">
-          Email
-        </Label>
-        <Input
-          id="email"
-          type="email"
-          placeholder="seu@email.com"
-          value={data.email}
-          onChange={(e) => setData({ ...data, email: e.target.value })}
-          className="mt-1 text-sm"
-          disabled={loading}
-          required
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="cidade" className="text-gray-700 text-sm">
-            Cidade
-          </Label>
-          <Input
-            id="cidade"
-            placeholder="Sua cidade"
-            value={data.cidade}
-            onChange={(e) => setData({ ...data, cidade: e.target.value })}
-            className="mt-1 text-sm"
-            disabled={loading}
-            required
-          />
-        </div>
-        <div>
-          <Label htmlFor="estado" className="text-gray-700 text-sm">
-            Estado
-          </Label>
-          <Input
-            id="estado"
-            placeholder="SP"
-            value={data.estado}
-            onChange={(e) => setData({ ...data, estado: e.target.value })}
-            className="mt-1 text-sm"
-            disabled={loading}
-            required
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="senha" className="text-gray-700 text-sm">
-          Senha
-        </Label>
-        <Input
-          id="senha"
-          type="password"
-          placeholder="••••••••"
-          value={data.senha}
-          onChange={(e) => setData({ ...data, senha: e.target.value })}
-          className="mt-1 text-sm"
-          disabled={loading}
-          required
-        />
-        <p className="text-xs text-gray-500 mt-1">Mínimo 8 caracteres</p>
-      </div>
-
-      <div className="flex items-center space-x-2 pt-2">
-        <Checkbox
-          id="lgpd"
-          checked={data.lgpd}
-          onCheckedChange={(checked) => setData({ ...data, lgpd: checked })}
-          disabled={loading}
-        />
-        <Label htmlFor="lgpd" className="text-xs text-gray-600 cursor-pointer">
-          Li e aceito os termos de uso e a política de privacidade (LGPD).
-        </Label>
-      </div>
-
-      <Button
-        type="submit"
-        className="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 rounded-lg mt-4"
-        disabled={loading}
-      >
-        {loading ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Criando conta...
-          </>
-        ) : (
-          "Criar minha conta"
-        )}
-      </Button>
-    </form>
-  );
+function ForgotForm() {
+  const { resetPassword, loading } = useAuth(); const [email, setEmail] = useState("");
+  async function onSubmit(e: FormEvent) { e.preventDefault(); if (!z.string().email("Email inválido").safeParse(email).success) { toast.error("Informe um email válido"); return; } await resetPassword(email); }
+  return <form onSubmit={onSubmit} className="mt-6 space-y-4"><h1 className="font-serif text-2xl font-semibold">Recuperar senha</h1><p className="text-sm text-muted-foreground">Informe seu email e enviaremos as instruções para criar uma nova senha.</p><div className="space-y-2"><Label htmlFor="forgot-email">Email</Label><Input id="forgot-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div><Button type="submit" className="w-full" disabled={loading}>{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Enviar instruções</Button><Link to="/auth" search={{ mode: "signin" }} className="block text-center text-sm text-muted-foreground">Voltar para entrar</Link></form>;
 }
