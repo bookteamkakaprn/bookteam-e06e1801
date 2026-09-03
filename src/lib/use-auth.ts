@@ -1,63 +1,23 @@
-import { useEffect, useState } from "react";
-import type { User } from "firebase/auth";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "@/firebase";
+import { useAuth as useSharedAuth, type AuthUser } from '@/hooks/useAuth';
 
-export type AppRole = "admin" | "participante";
+export type AppRole = 'admin' | 'participante';
 
 export interface AuthState {
-  user: User | null;
+  user: (AuthUser & { id: string }) | null;
   roles: AppRole[];
   loading: boolean;
   isAdmin: boolean;
 }
 
 export function useAuth(): AuthState {
-  const [user, setUser] = useState<User | null>(null);
-  const [roles, setRoles] = useState<AppRole[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!mounted) return;
-
-      setUser(firebaseUser);
-
-      if (!firebaseUser) {
-        setRoles([]);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const userSnap = await getDoc(doc(db, "users", firebaseUser.uid));
-        const role = userSnap.exists() ? userSnap.data().role : undefined;
-        setRoles(
-          role === "admin" || role === "admin_master" || role === "admin_suporte"
-            ? ["admin"]
-            : ["participante"]
-        );
-      } catch (error) {
-        console.error("Erro ao carregar perfil de autenticação:", error);
-        setRoles(["participante"]);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    });
-
-    return () => {
-      mounted = false;
-      unsubscribe();
-    };
-  }, []);
+  const { user, loading } = useSharedAuth();
+  const userWithId = user ? Object.assign(user, { id: user.uid }) : null;
+  const isAdmin = user?.role === 'admin' || user?.role === 'admin_master' || user?.role === 'admin_suporte';
 
   return {
-    user,
-    roles,
+    user: userWithId,
+    roles: [isAdmin ? 'admin' : 'participante'],
     loading,
-    isAdmin: roles.includes("admin"),
+    isAdmin,
   };
 }
