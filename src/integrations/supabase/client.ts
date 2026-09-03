@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
@@ -33,7 +33,9 @@ const firebaseConfig = {
   appId: FIREBASE_APP_ID,
 };
 
-export const app = initializeApp(firebaseConfig);
+// Reuse the existing Firebase app instead of initializing a second [DEFAULT]
+// app when this legacy compatibility module is evaluated during SSR.
+export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
