@@ -1,36 +1,38 @@
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "./types";
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
-const SUPABASE_URL =
-  import.meta.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const FIREBASE_API_KEY = import.meta.env.VITE_FIREBASE_API_KEY;
+const FIREBASE_AUTH_DOMAIN = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
+const FIREBASE_PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+const FIREBASE_STORAGE_BUCKET = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
+const FIREBASE_MESSAGING_SENDER_ID = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID;
+const FIREBASE_APP_ID = import.meta.env.VITE_FIREBASE_APP_ID;
 
-const SUPABASE_PUBLISHABLE_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.SUPABASE_PUBLISHABLE_KEY;
+const missingVars = [
+  !FIREBASE_API_KEY && 'VITE_FIREBASE_API_KEY',
+  !FIREBASE_AUTH_DOMAIN && 'VITE_FIREBASE_AUTH_DOMAIN',
+  !FIREBASE_PROJECT_ID && 'VITE_FIREBASE_PROJECT_ID',
+  !FIREBASE_STORAGE_BUCKET && 'VITE_FIREBASE_STORAGE_BUCKET',
+  !FIREBASE_MESSAGING_SENDER_ID && 'VITE_FIREBASE_MESSAGING_SENDER_ID',
+  !FIREBASE_APP_ID && 'VITE_FIREBASE_APP_ID',
+].filter(Boolean);
 
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  const missing = [
-    ...(!SUPABASE_URL ? ["VITE_SUPABASE_URL"] : []),
-    ...(!SUPABASE_PUBLISHABLE_KEY
-      ? ["VITE_SUPABASE_PUBLISHABLE_KEY"]
-      : []),
-  ];
-
+if (missingVars.length > 0) {
   throw new Error(
-    `Missing Supabase environment variable(s): ${missing.join(", ")}`
+    `Missing Firebase environment variable(s): ${missingVars.join(', ')}`
   );
 }
 
-export const supabase = createClient<Database>(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY,
-  {
-    auth: {
-      storage:
-        typeof window !== "undefined" ? window.localStorage : undefined,
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-    },
-  }
-);
+const firebaseConfig = {
+  apiKey: FIREBASE_API_KEY,
+  authDomain: FIREBASE_AUTH_DOMAIN,
+  projectId: FIREBASE_PROJECT_ID,
+  storageBucket: FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
+  appId: FIREBASE_APP_ID,
+};
+
+export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app);
