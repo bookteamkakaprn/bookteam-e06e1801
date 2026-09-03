@@ -1,34 +1,45 @@
 import { createFileRoute, Outlet, redirect, Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/use-auth";
+import { auth } from "@/firebase";
+import { signOut as firebaseSignOut } from "firebase/auth";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Home, User, Calendar, CalendarDays, CreditCard, Award, LogOut, LayoutDashboard, History } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
 const logo = "/book-team-logo.png";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
-    return { user: data.user };
+    const user = auth.currentUser;
+    if (!user) throw redirect({ to: "/auth" });
+    return { user };
   },
   component: AuthenticatedLayout,
 });
 
 function AuthenticatedLayout() {
-  const { isAdmin, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const qc = useQueryClient();
 
   async function signOut() {
-    await qc.cancelQueries();
-    qc.clear();
-    await supabase.auth.signOut();
-    toast.success("Até logo!");
-    navigate({ to: "/auth", replace: true });
+    try {
+      await qc.cancelQueries();
+      qc.clear();
+      await firebaseSignOut(auth);
+      toast.success("Até logo!");
+      navigate({ to: "/auth", replace: true });
+    } catch (error) {
+      toast.error("Erro ao sair");
+      console.error(error);
+    }
+  }
+
+  if (!isAuthenticated) {
+    return null;
   }
 
   const navItems = [
@@ -64,16 +75,6 @@ function AuthenticatedLayout() {
                 </Link>
               );
             })}
-            {isAdmin && (
-              <Link
-                to="/admin"
-                className={`ml-2 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm ${
-                  pathname.startsWith("/admin") ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
-                }`}
-              >
-                <LayoutDashboard className="h-4 w-4" /> Admin
-              </Link>
-            )}
           </nav>
           <div className="flex items-center gap-2">
             <span className="hidden text-xs text-muted-foreground sm:inline">{user?.email}</span>
@@ -92,11 +93,6 @@ function AuthenticatedLayout() {
               <Icon className="h-3.5 w-3.5" /> {label}
             </Link>
           ))}
-          {isAdmin && (
-            <Link to="/admin" className="ml-1 inline-flex items-center gap-1 whitespace-nowrap rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground">
-              <LayoutDashboard className="h-3.5 w-3.5" /> Admin
-            </Link>
-          )}
         </nav>
       </header>
 
