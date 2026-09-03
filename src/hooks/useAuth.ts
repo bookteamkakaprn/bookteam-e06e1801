@@ -129,8 +129,12 @@ export function useAuth() {
     try {
       setLoading(true);
       setError(null);
+
+      // Garante que o modelo padrão do Firebase seja enviado em português.
+      auth.languageCode = 'pt-BR';
+
       await sendPasswordResetEmail(auth, email, {
-        url: `${window.location.origin}/auth?mode=signin`,
+        url: 'https://ministeriobookteam.com.br/auth/action',
         handleCodeInApp: false,
       });
       toast.success('Enviamos as instruções de recuperação para seu email.');
