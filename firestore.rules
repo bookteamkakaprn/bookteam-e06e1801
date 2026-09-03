@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isSelf(uid) { return signedIn() && request.auth.uid == uid; }
+    function isAdmin() {
+      return signedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'admin_master', 'admin_suporte'];
+    }
+
+    match /users/{uid} {
+      allow read, write: if isSelf(uid) || isAdmin();
+    }
+    match /participants/{uid} {
+      allow read, write: if isSelf(uid) || isAdmin();
+    }
+    match /trilhas/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
+    match /livros/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
+    match /materiais/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
+    match /eventos/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
+
+    match /inscricoes/{id} {
+      allow read: if signedIn() && (resource.data.participante_id == request.auth.uid || isAdmin());
+      allow create: if signedIn() && request.resource.data.participante_id == request.auth.uid;
+      allow update, delete: if signedIn() && (resource.data.participante_id == request.auth.uid || isAdmin());
+    }
+
+    match /pagamentos/{id} {
+      allow read: if signedIn() && (resource.data.participante_id == request.auth.uid || isAdmin());
+      allow create: if signedIn() && request.resource.data.participante_id == request.auth.uid;
+      allow update: if isAdmin() || (signedIn() && resource.data.participante_id == request.auth.uid && request.resource.data.participante_id == request.auth.uid && request.resource.data.status == 'aguardando');
+    }
+
+    match /presencas/{id} {
+      allow read: if signedIn() && (resource.data.participante_id == request.auth.uid || isAdmin());
+      allow create, update: if isAdmin() || (signedIn() && request.resource.data.participante_id == request.auth.uid && request.resource.data.presente == true);
+    }
+
+    match /historico_livros/{id} {
+      allow read, delete: if signedIn() && (resource.data.participante_id == request.auth.uid || isAdmin());
+      allow create: if signedIn() && request.resource.data.participante_id == request.auth.uid;
+      allow update: if isAdmin() || (signedIn() && resource.data.participante_id == request.auth.uid && request.resource.data.participante_id == request.auth.uid);
+    }
+
+    match /certificados/{id} {
+      allow read: if signedIn() && (resource.data.participante_id == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /{document=**} { allow read, write: if false; }
+  }
+}
