@@ -4,8 +4,6 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
-import { auth } from "@/firebase";
-import { onAuthStateChanged } from "firebase/auth";
 
 function NotFoundComponent() {
   return (
@@ -64,11 +62,27 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, () => {
-      router.invalidate();
-      queryClient.invalidateQueries();
-    });
-    return () => unsubscribe();
+    // Firebase Auth is browser-only here. Keeping it out of the SSR module
+    // graph prevents the Cloudflare Worker from initializing Firebase twice.
+    if (typeof window === "undefined") return;
+
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+
+    Promise.all([import("@/firebase"), import("firebase/auth")])
+      .then(([{ auth }, { onAuthStateChanged }]) => {
+        if (cancelled) return;
+        unsubscribe = onAuthStateChanged(auth, () => {
+          router.invalidate();
+          queryClient.invalidateQueries();
+        });
+      })
+      .catch((error) => console.error("Firebase Auth initialization failed", error));
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, [queryClient, router]);
   return <QueryClientProvider client={queryClient}><Outlet /><Toaster richColors position="top-right" /></QueryClientProvider>;
 }
