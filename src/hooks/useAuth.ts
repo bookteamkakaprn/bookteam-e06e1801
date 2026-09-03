@@ -23,28 +23,34 @@ export function useAuth() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          const userData = userDocSnap.exists() ? userDocSnap.data() : {};
+    let active = true;
 
-          setUser({
-            ...firebaseUser,
-            role: userData.role || 'participante',
-          } as AuthUser);
-        } catch (err) {
-          console.error('Error fetching user data:', err);
-          setUser(firebaseUser as AuthUser);
-        }
-      } else {
-        setUser(null);
-      }
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (!active) return;
+
+      // Do not block the authenticated area waiting for Firestore.
+      // Firebase Auth restores the persisted session independently.
+      setUser(firebaseUser as AuthUser | null);
       setLoading(false);
+
+      if (!firebaseUser) return;
+
+      // Role/profile data is secondary and must not prevent navigation after refresh.
+      getDoc(doc(db, 'users', firebaseUser.uid))
+        .then((snap) => {
+          if (!active || !snap.exists()) return;
+          const role = snap.data().role;
+          setUser((current) => current ? ({ ...current, role } as AuthUser) : current);
+        })
+        .catch((err) => {
+          console.error('Erro ao carregar perfil de autenticação:', err);
+        });
     });
 
-    return () => unsubscribe();
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   const signup = async (email: string, password: string, userData: any) => {
@@ -130,7 +136,6 @@ export function useAuth() {
       setLoading(true);
       setError(null);
 
-      // Garante que o modelo padrão do Firebase seja enviado em português.
       auth.languageCode = 'pt-BR';
 
       await sendPasswordResetEmail(auth, email, {
