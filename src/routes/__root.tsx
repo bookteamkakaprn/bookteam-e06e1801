@@ -12,7 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { auth } from "@/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 function NotFoundComponent() {
   return (
@@ -62,7 +63,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             Tentar novamente
           </button>
-          <a
+          
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
           >
@@ -104,7 +105,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap",
       },
-
     ],
   }),
   shellComponent: RootShell,
@@ -132,15 +132,18 @@ function RootComponent() {
   const router = useRouter();
 
   useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User signed in
         router.invalidate();
-        if (event !== "SIGNED_OUT") {
-          queryClient.invalidateQueries();
-        }
+        queryClient.invalidateQueries();
+      } else {
+        // User signed out
+        router.invalidate();
       }
     });
-    return () => data.subscription.unsubscribe();
+    
+    return () => unsubscribe();
   }, [queryClient, router]);
 
   return (
