@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addDoc, collection, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
 import { db } from "@/firebase";
-import { useAuth } from "@/lib/use-auth";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,23 +25,23 @@ const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart
 const fmtData = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("pt-BR");
 
 function CalendarioPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const qc = useQueryClient();
   const hoje = new Date(); const hojeIso = iso(hoje);
   const [mes, setMes] = useState(new Date(hoje.getFullYear(), hoje.getMonth(), 1));
   const [detalhe, setDetalhe] = useState<Evento | null>(null);
   const inicio = iso(new Date(mes.getFullYear(), mes.getMonth(), 1)); const fim = iso(new Date(mes.getFullYear(), mes.getMonth() + 1, 0));
 
-  const eventosQ = useQuery({ queryKey: ["aluno-calendario", inicio], queryFn: async () => {
+  const eventosQ = useQuery({ enabled: !authLoading && !!user, queryKey: ["aluno-calendario", inicio], queryFn: async () => {
     const snap = await getDocs(collection(db, "eventos"));
     return snap.docs.map((d) => ({ id: d.id, ...d.data() })).filter((e) => String(e.data ?? "") >= inicio && String(e.data ?? "") <= fim).sort((a,b) => String(a.data).localeCompare(String(b.data))) as Evento[];
   }});
-  const inscricoesQ = useQuery({ enabled: !!user, queryKey: ["aluno-inscricoes-cal", user?.id], queryFn: async () => {
-    const snap = await getDocs(query(collection(db, "inscricoes"), where("participante_id", "==", user!.id)));
+  const inscricoesQ = useQuery({ enabled: !authLoading && !!user, queryKey: ["aluno-inscricoes-cal", user?.uid], queryFn: async () => {
+    const snap = await getDocs(query(collection(db, "inscricoes"), where("participante_id", "==", user!.uid)));
     return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Inscricao[];
   }});
-  const presencasQ = useQuery({ enabled: !!user, queryKey: ["aluno-presencas-cal", user?.id], queryFn: async () => {
-    const snap = await getDocs(query(collection(db, "presencas"), where("participante_id", "==", user!.id)));
+  const presencasQ = useQuery({ enabled: !authLoading && !!user, queryKey: ["aluno-presencas-cal", user?.uid], queryFn: async () => {
+    const snap = await getDocs(query(collection(db, "presencas"), where("participante_id", "==", user!.uid)));
     return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as Presenca[];
   }});
 
@@ -58,7 +58,7 @@ function CalendarioPage() {
     if (evento.data !== hojeIso) throw new Error("A presença só pode ser marcada no dia do encontro.");
     const atual = presencaDe(evento.id);
     if (atual) await updateDoc(doc(db, "presencas", atual.id), { presente: true, horario_checkin: new Date().toISOString() });
-    else await addDoc(collection(db, "presencas"), { participante_id: user.id, evento_id: evento.id, inscricao_id: ins.id, presente: true, horario_checkin: new Date().toISOString(), created_at: new Date().toISOString() });
+    else await addDoc(collection(db, "presencas"), { participante_id: user.uid, evento_id: evento.id, inscricao_id: ins.id, presente: true, horario_checkin: new Date().toISOString(), created_at: new Date().toISOString() });
   }, onSuccess: () => { toast.success("Presença confirmada!"); qc.invalidateQueries({ queryKey: ["aluno-presencas-cal"] }); }, onError: (e: Error) => toast.error(e.message) });
 
   const proximos = eventos.filter((e) => e.data >= hojeIso);
