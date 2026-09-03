@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/firebase";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ type EventoRow = {
   vagas?: number | null;
   livro_titulo?: string | null;
   trilha_nome?: string | null;
+  status?: string;
 };
 
 function EventosPage() {
@@ -31,14 +32,11 @@ function EventosPage() {
     queryKey: ["eventos-abertos"],
     queryFn: async () => {
       const today = new Date().toISOString().slice(0, 10);
-      const q = query(
-        collection(db, "eventos"),
-        where("status", "==", "aberto"),
-        where("data", ">=", today),
-        orderBy("data", "asc"),
-      );
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as EventoRow[];
+      const snap = await getDocs(collection(db, "eventos"));
+      return snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .filter((e) => e.status === "aberto" && String(e.data ?? "") >= today)
+        .sort((a, b) => String(a.data ?? "").localeCompare(String(b.data ?? ""))) as EventoRow[];
     },
   });
 
@@ -48,9 +46,7 @@ function EventosPage() {
       <h1 className="font-serif text-3xl font-bold">Encontros abertos</h1>
       {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
       {error && <p className="text-sm text-destructive">Não foi possível carregar os encontros. Verifique as permissões do Firestore.</p>}
-      {!isLoading && !error && eventos.length === 0 && (
-        <p className="text-sm text-muted-foreground">Nenhum encontro aberto no momento.</p>
-      )}
+      {!isLoading && !error && eventos.length === 0 && <p className="text-sm text-muted-foreground">Nenhum encontro aberto no momento.</p>}
       {eventos.map((e) => (
         <Card key={e.id}>
           <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
@@ -66,9 +62,7 @@ function EventosPage() {
             </div>
             <div className="flex items-center gap-3">
               <Badge variant="secondary">{Number(e.valor ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</Badge>
-              <Button asChild size="sm" className="bg-gold text-primary-foreground hover:bg-gold/90">
-                <Link to="/inscricao/$eventoId" params={{ eventoId: e.id }}>Inscrever-se</Link>
-              </Button>
+              <Button asChild size="sm" className="bg-gold text-primary-foreground hover:bg-gold/90"><Link to="/inscricao/$eventoId" params={{ eventoId: e.id }}>Inscrever-se</Link></Button>
             </div>
           </CardContent>
         </Card>
