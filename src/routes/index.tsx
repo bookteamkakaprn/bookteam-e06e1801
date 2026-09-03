@@ -47,30 +47,15 @@ function Header() {
         </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">
-          <a href="#visao" className="group relative text-[15px] font-medium text-foreground/80 transition-colors hover:text-foreground">
-            Quem somos
-            <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" />
-          </a>
-          <a href="#como" className="group relative text-[15px] font-medium text-foreground/80 transition-colors hover:text-foreground">
-            Como funciona
-            <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" />
-          </a>
-          <a href="#faq" className="group relative text-[15px] font-medium text-foreground/80 transition-colors hover:text-foreground">
-            FAQ
-            <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" />
-          </a>
+          <a href="#visao" className="group relative text-[15px] font-medium text-foreground/80 transition-colors hover:text-foreground">Quem somos<span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" /></a>
+          <a href="#como" className="group relative text-[15px] font-medium text-foreground/80 transition-colors hover:text-foreground">Como funciona<span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" /></a>
+          <a href="#faq" className="group relative text-[15px] font-medium text-foreground/80 transition-colors hover:text-foreground">FAQ<span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" /></a>
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" size="sm" className="hidden text-foreground/90 hover:bg-white/5 hover:text-foreground sm:inline-flex">
-            <Link to="/auth">Entrar</Link>
-          </Button>
-          <Button asChild size="sm" className="hidden bg-gold text-primary-foreground hover:bg-gold/90 sm:inline-flex">
-            <Link to="/auth" search={{ mode: "signup" }}>Quero participar</Link>
-          </Button>
-          <button className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-foreground lg:hidden" onClick={() => setOpen(!open)} aria-label="Menu">
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
+          <Button asChild variant="ghost" size="sm" className="hidden text-foreground/90 hover:bg-white/5 hover:text-foreground sm:inline-flex"><Link to="/auth">Entrar</Link></Button>
+          <Button asChild size="sm" className="hidden bg-gold text-primary-foreground hover:bg-gold/90 sm:inline-flex"><Link to="/auth" search={{ mode: "signup" }}>Quero participar</Link></Button>
+          <button className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-foreground lg:hidden" onClick={() => setOpen(!open)} aria-label="Menu">{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
         </div>
       </div>
 
@@ -124,13 +109,16 @@ function VisionSection() {
           <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">Nossos pilares</h2>
         </div>
         <div className="grid gap-6 md:grid-cols-3">
-          {pilares.map((p) => (
-            <div key={p.title} className="rounded-xl border border-border/40 bg-white/5 p-6 backdrop-blur-sm hover:bg-white/10 transition-colors">
-              <p.icon className="h-8 w-8 text-gold" />
-              <h3 className="mt-4 font-serif text-lg font-semibold">{p.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-foreground/70">{p.text}</p>
-            </div>
-          ))}
+          {pilares.map((p) => {
+            const IconComponent = p.icon;
+            return (
+              <div key={p.title} className="rounded-xl border border-border/40 bg-white/5 p-6 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                <IconComponent className="h-8 w-8 text-gold" />
+                <h3 className="mt-4 font-serif text-lg font-semibold">{p.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/70">{p.text}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -153,14 +141,17 @@ function HowItWorks() {
           <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">Seu caminho começa aqui</h2>
         </div>
         <div className="grid gap-6 md:grid-cols-4">
-          {steps.map((step) => (
-            <div key={step.num} className="rounded-xl border border-border/40 bg-white/5 p-6 backdrop-blur-sm hover:bg-white/10 transition-colors">
-              <div className="text-3xl font-bold text-gold/50">{step.num}</div>
-              <step.icon className="h-6 w-6 text-gold mt-3" />
-              <h3 className="mt-4 font-serif text-lg font-semibold">{step.title}</h3>
-              <p className="mt-2 text-sm text-foreground/70">{step.desc}</p>
-            </div>
-          ))}
+          {steps.map((step) => {
+            const StepIcon = step.icon;
+            return (
+              <div key={step.num} className="rounded-xl border border-border/40 bg-white/5 p-6 backdrop-blur-sm hover:bg-white/10 transition-colors">
+                <div className="text-3xl font-bold text-gold/50">{step.num}</div>
+                <StepIcon className="h-6 w-6 text-gold mt-3" />
+                <h3 className="mt-4 font-serif text-lg font-semibold">{step.title}</h3>
+                <p className="mt-2 text-sm text-foreground/70">{step.desc}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -185,7 +176,7 @@ function Testimonials() {
           {testimonios.map((i, idx) => (
             <blockquote key={idx} className="rounded-xl border border-border/40 bg-white/5 p-6 backdrop-blur-sm hover:bg-white/10 transition-colors">
               <div className="flex gap-0.5">
-                {Array.from({ length: i.nota }).map((_, i) => <Star key={i} className="h-4 w-4 fill-gold text-gold" />)}
+                {Array.from({ length: i.nota }).map((_, idx) => <Star key={idx} className="h-4 w-4 fill-gold text-gold" />)}
               </div>
               <p className="mt-5 font-serif text-sm italic leading-relaxed text-foreground/90">"{i.q}"</p>
               <footer className="mt-6 flex items-center gap-3 border-t border-border/50 pt-5">
