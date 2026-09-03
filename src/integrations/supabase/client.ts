@@ -36,3 +36,6 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+
+// Temporary export for compatibility during migration
+export const supabase = null as any;
