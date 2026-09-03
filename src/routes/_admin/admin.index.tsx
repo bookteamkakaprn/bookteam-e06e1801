@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Calendar, CreditCard, DollarSign, CheckCircle2, Clock, BookOpen, GraduationCap, Plus, ArrowRight } from "lucide-react";
 
-export const Route = createFileRoute("/_admin/admin")({
+export const Route = createFileRoute("/_admin/admin/")({
   head: () => ({ meta: [{ title: "Dashboard — Admin — Book Clube" }, { name: "robots", content: "noindex" }] }),
   component: AdminDashboard,
 });
