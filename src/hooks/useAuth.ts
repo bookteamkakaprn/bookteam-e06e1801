@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { auth, db } from '@/integrations/supabase/client';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
+import { auth, db } from '@/firebase';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
   onAuthStateChanged,
-  User 
+  sendPasswordResetEmail,
+  User,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
@@ -21,17 +22,14 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Monitor auth state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Get user data from Firestore
           const userDocRef = doc(db, 'users', firebaseUser.uid);
           const userDocSnap = await getDoc(userDocRef);
-          
           const userData = userDocSnap.exists() ? userDocSnap.data() : {};
-          
+
           setUser({
             ...firebaseUser,
             role: userData.role || 'participante',
@@ -49,32 +47,28 @@ export function useAuth() {
     return () => unsubscribe();
   }, []);
 
-  // Signup
   const signup = async (email: string, password: string, userData: any) => {
     try {
       setLoading(true);
       setError(null);
 
-      // Create Firebase Auth user
       const { user: firebaseUser } = await createUserWithEmailAndPassword(
         auth,
         email,
         password
       );
 
-      // Create Firestore document
-      const userDocRef = doc(db, 'users', firebaseUser.uid);
-      await setDoc(userDocRef, {
+      const now = new Date().toISOString();
+
+      await setDoc(doc(db, 'users', firebaseUser.uid), {
         email,
         ...userData,
         role: 'participante',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: now,
+        updated_at: now,
       });
 
-      // Create participant document
-      const participantRef = doc(db, 'participants', firebaseUser.uid);
-      await setDoc(participantRef, {
+      await setDoc(doc(db, 'participants', firebaseUser.uid), {
         user_id: firebaseUser.uid,
         nome: userData.nome,
         email,
@@ -84,13 +78,11 @@ export function useAuth() {
         estado: userData.estado,
         aceite_lgpd: userData.aceite_lgpd,
         status: 'lead',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: now,
+        updated_at: now,
       });
 
       toast.success('Conta criada com sucesso!');
-      navigate({ to: '/inicio' });
-      
       return { success: true, user: firebaseUser };
     } catch (err: any) {
       const errorMessage = err.message || 'Erro ao criar conta';
@@ -102,7 +94,6 @@ export function useAuth() {
     }
   };
 
-  // Login
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
@@ -114,18 +105,18 @@ export function useAuth() {
         password
       );
 
-      toast.success('Login realizado com sucesso!');
-      navigate({ to: '/inicio' });
-      
+      toast.success('Bem-vindo de volta!');
       return { success: true, user: firebaseUser };
     } catch (err: any) {
-      const errorMessage = 
-        err.code === 'auth/user-not-found' 
-          ? 'Email não encontrado'
+      const errorMessage =
+        err.code === 'auth/user-not-found'
+          ? 'Email não encontrado.'
           : err.code === 'auth/wrong-password'
-          ? 'Senha incorreta'
-          : err.message || 'Erro ao fazer login';
-      
+            ? 'Senha incorreta.'
+            : err.code === 'auth/invalid-credential'
+              ? 'Email ou senha incorretos.'
+              : err.message || 'Erro ao fazer login';
+
       setError(errorMessage);
       toast.error(errorMessage);
       return { success: false, error: errorMessage };
@@ -134,7 +125,29 @@ export function useAuth() {
     }
   };
 
-  // Logout
+  const resetPassword = async (email: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      await sendPasswordResetEmail(auth, email, {
+        url: `${window.location.origin}/auth?mode=signin`,
+        handleCodeInApp: false,
+      });
+      toast.success('Enviamos as instruções de recuperação para seu email.');
+      return { success: true };
+    } catch (err: any) {
+      const errorMessage =
+        err.code === 'auth/user-not-found'
+          ? 'Email não encontrado.'
+          : err.message || 'Erro ao recuperar senha';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       setLoading(true);
@@ -159,6 +172,7 @@ export function useAuth() {
     error,
     signup,
     login,
+    resetPassword,
     logout,
     isAuthenticated: !!user,
   };
