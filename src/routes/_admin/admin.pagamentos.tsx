@@ -25,7 +25,7 @@ function AdminPag() {
   const query = useQuery({ queryKey: ["admin-pagamentos", filter], queryFn: async () => { let q = supabase.from("pagamentos").select(`id,status,valor,comprovante_url,created_at,inscricao:inscricoes(id,status,participante:participantes(id,nome,email,telefone),livro:livros(titulo,autor),turma:turmas(nome,data_inicio,data_fim),evento:eventos(titulo,data,local))`).order("created_at", { ascending: false }); if (filter !== "todos") q = q.eq("status", filter); const { data, error } = await q; if (error) throw error; return (data ?? []) as unknown as Pagamento[]; } });
   const decidir = useMutation({
     mutationFn: async ({ pagamento, status }: { pagamento: Pagamento; status: "aprovado" | "rejeitado" }) => {
-      const { error } = await supabase.from("pagamentos").update({ status }).eq("id", pagamento.id);
+      const { error } = await supabase.from("pagamentos").update({ status, pago_em: status === "aprovado" ? new Date().toISOString() : null }).eq("id", pagamento.id);
       if (error) throw error;
       const participanteId = pagamento.inscricao?.participante?.id;
       if (participanteId) {
