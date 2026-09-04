@@ -27,7 +27,7 @@ function AdminInscricoes() {
       const { error } = await supabase.from("participantes").update({ status: "participando" }).eq("id", participanteId);
       if (error) throw error;
       const livro = inscricao.livro?.titulo ?? "Book Team";
-      const { error: notificationError } = await supabase.from("notificacoes").insert({ participante_id: participanteId, assunto: "Você pode iniciar sua jornada!", canal: "sistema", mensagem: `Seu pagamento foi aprovado e sua inscrição em ${livro} está confirmada. Você já pode iniciar sua jornada.`, enviada: false });
+      const { error: notificationError } = await supabase.from("notificacoes").insert({ participante_id: participanteId, titulo: "Você pode iniciar sua jornada!", mensagem: `Seu pagamento foi aprovado e sua inscrição em ${livro} está confirmada. Você já pode iniciar sua jornada.`, lida: false });
       if (notificationError) throw notificationError;
       const emailRes = await supabase.functions.invoke("bookteam-send-notification-email", { body: { participante_id: participanteId, assunto: "Você pode iniciar sua jornada — Book Team", mensagem: `Seu pagamento foi aprovado e sua inscrição em ${livro} está confirmada. Você já pode iniciar sua jornada. Acesse sua área do aluno para começar.` } });
       if (emailRes.error) console.warn("E-mail de liberação não enviado:", emailRes.error.message);
