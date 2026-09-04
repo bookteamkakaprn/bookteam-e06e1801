@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +42,7 @@ function dataBR(v: string | null) { return v ? new Date(`${v}T00:00:00`).toLocal
 
 function AdminPag() {
   const qc = useQueryClient();
-  const [filter, setFilter] = React.useState<Filtro>("aguardando");
+  const [filter, setFilter] = useState<Filtro>("aguardando");
 
   const query = useQuery({
     queryKey: ["admin-pagamentos", filter],
