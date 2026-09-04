@@ -29,7 +29,7 @@ const menu: MenuItem[] = [
   { to: "/admin/participantes", label: "Aprovar inscrições", icon: ClipboardCheck },
   { to: "/admin/participantes", label: "Perfis / ADM", icon: UserCog },
   { to: "/admin/livros", label: "Livros e cursos", icon: BookOpen },
-  { to: "/admin/turmas", label: "Turmas", icon: GraduationCap },
+  { to: "/admin/turmas", label: "Ver turmas", icon: GraduationCap },
   { to: "/admin/eventos", label: "Cadastrar evento", icon: Calendar },
   { to: "/admin/pagamentos", label: "Aprovar pagamentos", icon: CreditCard },
   { to: "/admin/conta", label: "Conta PIX", icon: Wallet },
@@ -42,41 +42,55 @@ function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const qc = useQueryClient();
+
   async function signOut() {
     await qc.cancelQueries(); qc.clear(); await supabase.auth.signOut(); toast.success("Até logo!");
     navigate({ to: "/auth", replace: true });
   }
+
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen min-w-0 overflow-x-hidden bg-muted/30">
       <header className="sticky top-0 z-30 border-b-2 border-primary bg-primary/10 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
-          <Link to="/admin" className="flex items-center gap-2">
-            <ShieldCheck className="h-6 w-6 text-primary" />
-            <span className="font-serif text-xl font-semibold">Book Team</span>
-            <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-bold uppercase tracking-widest text-primary-foreground">Admin</span>
+        <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-2 px-3 sm:px-4">
+          <Link to="/admin" className="flex min-w-0 items-center gap-2">
+            <ShieldCheck className="h-6 w-6 shrink-0 text-primary" />
+            <span className="truncate font-serif text-lg font-semibold sm:text-xl">Book Team</span>
+            <span className="shrink-0 rounded-md bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-foreground sm:text-xs">Admin</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link to="/inicio" className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-foreground hover:bg-secondary">
-              <GraduationCap className="h-4 w-4" /> Área do aluno
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <Link to="/inicio" aria-label="Área do aluno" className="inline-flex min-h-10 items-center justify-center gap-1 rounded-md border border-border px-2 text-xs text-foreground hover:bg-secondary sm:gap-1.5 sm:px-3 sm:text-sm">
+              <GraduationCap className="h-4 w-4 shrink-0" /><span>Área do aluno</span>
             </Link>
-            <Button size="sm" variant="ghost" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
+            <Button size="sm" variant="ghost" onClick={signOut} aria-label="Sair"><LogOut className="h-4 w-4" /></Button>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[240px_1fr]">
-        <aside className="rounded-xl border border-border bg-card p-2 lg:sticky lg:top-24 lg:self-start">
+      <div className="mx-auto max-w-6xl px-3 pt-3 sm:px-4 sm:pt-4">
+        <aside className="rounded-xl border border-border bg-card p-2 shadow-sm">
           <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Área administrativa</p>
-          <nav className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
+          <nav className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4 lg:hidden">
             {menu.map(({ to, label, icon: Icon, exact }, index) => {
               const active = exact ? pathname === to : pathname === to || pathname.startsWith(to + "/");
-              return <Link key={`${to}-${label}-${index}`} to={to} className={`inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors ${active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"}`}>
-                <Icon className="h-4 w-4" /> {label}
+              return <Link key={`mobile-${to}-${label}-${index}`} to={to} className={`flex min-h-11 min-w-0 items-center justify-center gap-1.5 rounded-md px-2 py-2 text-center text-xs leading-tight transition-colors sm:text-sm ${active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"}`}>
+                <Icon className="h-4 w-4 shrink-0" /><span className="min-w-0 break-words">{label}</span>
               </Link>;
             })}
           </nav>
         </aside>
-        <div className="min-w-0"><Outlet /></div>
+      </div>
+
+      <div className="mx-auto grid min-w-0 max-w-6xl gap-4 px-3 py-5 sm:gap-6 sm:px-4 sm:py-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+        <aside className="hidden rounded-xl border border-border bg-card p-2 lg:sticky lg:top-24 lg:block lg:self-start">
+          <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Área administrativa</p>
+          <nav className="flex flex-col gap-1">
+            {menu.map(({ to, label, icon: Icon, exact }, index) => {
+              const active = exact ? pathname === to : pathname === to || pathname.startsWith(to + "/");
+              return <Link key={`side-${to}-${label}-${index}`} to={to} className={`inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"}`}><Icon className="h-4 w-4" /> {label}</Link>;
+            })}
+          </nav>
+        </aside>
+        <main className="min-w-0 overflow-hidden"><Outlet /></main>
       </div>
     </div>
   );
