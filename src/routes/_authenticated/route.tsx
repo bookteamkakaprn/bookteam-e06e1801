@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Home, User, Calendar, CalendarDays, CreditCard, Award, LogOut, LayoutDashboard, History } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-const logo = "/book-team-logo.png";
+import bookTeamLogo from "@/assets/book-team-logo.png";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -46,7 +46,7 @@ function AuthenticatedLayout() {
       <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Link to="/inicio" className="flex items-center gap-2">
-            <img src={logo} alt="Book Team" className="h-8 w-auto" />
+            <img src={bookTeamLogo} alt="Book Team" className="h-8 w-auto object-contain" />
             <span className="font-serif text-xl font-semibold">Book Clube</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
@@ -99,8 +99,7 @@ function AuthenticatedLayout() {
           )}
         </nav>
       </header>
-
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto max-w-6xl px-4 py-6">
         <Outlet />
       </main>
     </div>
