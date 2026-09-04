@@ -22,7 +22,7 @@ const menu: MenuItem[] = [
   { to: "/admin", label: "Visão geral", icon: LayoutDashboard, exact: true },
   { to: "/admin/participantes", label: "Alunos", icon: Users },
   { to: "/admin/participantes", label: "Cadastrar aluno", icon: UserPlus },
-  { to: "/admin/participantes", label: "Aprovar inscrições", icon: ClipboardCheck },
+  { to: "/admin/inscricoes", label: "Aprovar inscrições", icon: ClipboardCheck },
   { to: "/admin/participantes", label: "Perfis / ADM", icon: UserCog },
   { to: "/admin/livros", label: "Livros e cursos", icon: BookOpen },
   { to: "/admin/turmas", label: "Ver turmas", icon: GraduationCap },
