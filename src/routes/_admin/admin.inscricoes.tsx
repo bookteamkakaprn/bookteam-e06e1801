@@ -12,16 +12,18 @@ export const Route = createFileRoute("/_admin/admin/inscricoes")({
   component: AdminInscricoes,
 });
 
-type Inscricao = { id: string; status: string; created_at: string; participante: { id: string; nome: string | null; email: string | null; status: string } | null; livro: { titulo: string | null; autor: string | null } | null; turma: { nome: string | null; data_inicio: string | null; data_fim: string | null } | null; };
+type Inscricao = { id: string; status: string; created_at: string; participante: { id: string; nome: string | null; email: string | null; status: string } | null; livro: { titulo: string | null; autor: string | null } | null; turma: { nome: string | null; data_inicio: string | null; data_fim: string | null } | null; pagamentos: { id: string; status: "aguardando" | "aprovado" | "rejeitado"; valor: number }[] };
 function dataBR(v: string | null) { return v ? new Date(`${v}T00:00:00`).toLocaleDateString("pt-BR") : "—"; }
 
 function AdminInscricoes() {
   const qc = useQueryClient();
-  const query = useQuery({ queryKey: ["admin-inscricoes"], queryFn: async () => { const { data, error } = await supabase.from("inscricoes").select("id,status,created_at,participante:participantes(id,nome,email,status),livro:livros(titulo,autor),turma:turmas(nome,data_inicio,data_fim)").eq("status", "confirmada").order("created_at", { ascending: false }); if (error) throw error; return (data ?? []) as unknown as Inscricao[]; } });
+  const query = useQuery({ queryKey: ["admin-inscricoes"], queryFn: async () => { const { data, error } = await supabase.from("inscricoes").select("id,status,created_at,participante:participantes(id,nome,email,status),livro:livros(titulo,autor),turma:turmas(nome,data_inicio,data_fim),pagamentos(id,status,valor)").eq("status", "confirmada").order("created_at", { ascending: false }); if (error) throw error; return (data ?? []) as unknown as Inscricao[]; } });
   const liberar = useMutation({
     mutationFn: async (inscricao: Inscricao) => {
       const participanteId = inscricao.participante?.id;
       if (!participanteId) throw new Error("Aluno não encontrado.");
+      const pagamentoAprovado = inscricao.pagamentos?.some((p) => p.status === "aprovado");
+      if (!pagamentoAprovado) throw new Error("A inscrição só pode ser liberada depois que o pagamento estiver aprovado.");
       const { error } = await supabase.from("participantes").update({ status: "participando" }).eq("id", participanteId);
       if (error) throw error;
       const livro = inscricao.livro?.titulo ?? "Book Team";
