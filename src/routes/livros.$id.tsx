@@ -1,21 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, Calendar, Clock, MapPin, BookOpen, User, Heart } from "lucide-react";
+import { toast } from "sonner";
+import { ArrowLeft, ArrowRight, Calendar, Clock, MapPin, BookOpen, User, Heart, Loader2 } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/livros/$id")({
-  head: () => ({ meta: [{ title: "Livro — Book Team" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Curso — Book Team" }, { name: "robots", content: "noindex" }] }),
   component: LivroDetalhesPage,
 });
 
 type Livro = { id: string; titulo: string; autor: string | null; categoria: string | null; ordem: number | null; imagem_url: string | null };
-type Evento = { id: string; nome: string; data_evento: string | null; local: string | null; descricao: string | null; vagas: number | null };
-type Turma = { id: string; nome: string; data_inicio: string | null; data_fim: string | null; horario: string | null; sala: string | null; professor: string | null; vagas_max: number; vagas_restantes: number | null; ativo: boolean };
+type Turma = { id: string; nome: string; data_inicio: string | null; data_fim: string | null; horario: string | null; sala: string | null; professor: string | null; vagas_max: number; vagas_restantes: number | null; ativo: boolean; livro_id: string | null };
 
 function LivroDetalhesPage() {
   const { id } = Route.useParams();
+  const { user } = useAuth();
   const isPlaceholder = id.startsWith("placeholder-");
 
   const { data: livro, isLoading: carregandoLivro } = useQuery({
@@ -23,14 +26,28 @@ function LivroDetalhesPage() {
     queryFn: async () => { const { data, error } = await supabase.from("livros").select("id,titulo,autor,categoria,ordem,imagem_url").eq("id", id).maybeSingle(); if (error) throw error; return data as Livro | null; },
   });
 
-  const { data: eventos = [] } = useQuery({
-    queryKey: ["eventos-livro", id], enabled: !isPlaceholder,
-    queryFn: async () => { const { data, error } = await supabase.from("eventos").select("id,nome,data_evento,local,descricao,vagas").gte("data_evento", new Date().toISOString().slice(0, 10)).order("data_evento", { ascending: true }); if (error) throw error; return (data ?? []) as Evento[]; },
-  });
-
   const { data: turmas = [], isLoading: carregandoTurmas } = useQuery({
     queryKey: ["turmas-livro-publico", id], enabled: !isPlaceholder,
-    queryFn: async () => { const { data, error } = await supabase.from("turmas").select("id,nome,data_inicio,data_fim,horario,sala,professor,vagas_max,vagas_restantes,ativo").eq("livro_id", id).eq("ativo", true).gte("data_inicio", new Date().toISOString().slice(0, 10)).order("data_inicio", { ascending: true }); if (error) throw error; return (data ?? []) as Turma[]; },
+    queryFn: async () => { const { data, error } = await supabase.from("turmas").select("id,nome,data_inicio,data_fim,horario,sala,professor,vagas_max,vagas_restantes,ativo,livro_id").eq("livro_id", id).eq("ativo", true).gte("data_inicio", new Date().toISOString().slice(0, 10)).order("data_inicio", { ascending: true }); if (error) throw error; return (data ?? []) as Turma[]; },
+  });
+
+  const inscrever = useMutation({
+    mutationFn: async (turma: Turma) => {
+      if (!user?.id) return { logged: false };
+      const { data: existente, error: consultaError } = await supabase.from("inscricoes").select("id,status").eq("participante_id", user.id).eq("turma_id", turma.id).maybeSingle();
+      if (consultaError) throw consultaError;
+      if (existente) return { logged: true, existente: true };
+      const esgotada = turma.vagas_max > 0 && (turma.vagas_restantes ?? 0) <= 0;
+      const { error } = await supabase.from("inscricoes").insert({ participante_id: user.id, turma_id: turma.id, livro_id: id, status: esgotada ? "lista_espera" : "aguardando_pagamento" });
+      if (error) throw error;
+      return { logged: true, existente: false };
+    },
+    onSuccess: (res) => {
+      if (!res.logged) return;
+      toast.success(res.existente ? "Você já está inscrito nesta turma." : "Inscrição realizada com sucesso!");
+      window.location.href = "/inicio";
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Não foi possível realizar a inscrição."),
   });
 
   const numeroLivro = livro?.ordem ?? (isPlaceholder ? Number(id.replace("placeholder-", "")) : 0);
@@ -40,16 +57,21 @@ function LivroDetalhesPage() {
   if (carregandoLivro) return <div className="min-h-screen bg-background px-4 py-16"><div className="mx-auto max-w-5xl animate-pulse space-y-5"><div className="h-8 w-40 rounded bg-muted" /><div className="h-96 rounded-2xl bg-muted" /></div></div>;
   if (!livro && !isPlaceholder) return <div className="min-h-screen bg-background px-4 py-20 text-center"><BookOpen className="mx-auto h-12 w-12 text-gold" /><h1 className="mt-5 font-serif text-3xl font-semibold">Livro não encontrado</h1><Button asChild className="mt-6 bg-gold text-primary-foreground"><Link to="/">Voltar para os livros</Link></Button></div>;
 
+  const BotaoInscricao = ({ turma }: { turma: Turma }) => {
+    if (user) {
+      return <Button type="button" disabled={inscrever.isPending} onClick={() => inscrever.mutate(turma)} className="w-full bg-gold text-primary-foreground sm:w-auto">{inscrever.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Inscreva-se<ArrowRight className="ml-2 h-4 w-4" /></Button>;
+    }
+    return <Button asChild className="w-full bg-gold text-primary-foreground hover:bg-gold/90 sm:w-auto"><Link to="/cadastro/$turmaId" params={{ turmaId: turma.id }}>Inscreva-se<ArrowRight className="ml-2 h-4 w-4" /></Link></Button>;
+  };
+
   return <div className="min-h-screen min-w-0 overflow-x-hidden bg-background text-foreground">
     <header className="border-b border-border/50 bg-background/95 backdrop-blur"><div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-3 sm:px-4 md:px-8"><Link to="/" className="inline-flex min-w-0 items-center gap-2 text-xs text-foreground/70 hover:text-gold sm:text-sm"><ArrowLeft className="h-4 w-4 shrink-0" /><span className="truncate">Voltar para os livros</span></Link><div className="flex shrink-0 items-center gap-2"><Heart className="h-4 w-4 fill-gold text-gold" /><span className="hidden font-serif text-sm font-semibold sm:inline">BOOK TEAM</span></div></div></header>
     <main className="mx-auto max-w-6xl min-w-0 px-3 py-7 sm:px-4 sm:py-10 md:px-8 md:py-14"><div className="grid min-w-0 gap-7 md:grid-cols-[260px_minmax(0,1fr)] lg:grid-cols-[300px_minmax(0,1fr)]">
       <div className="mx-auto w-full max-w-[260px] md:mx-0 md:max-w-none"><div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-gold/20 bg-muted shadow-premium">{livro?.imagem_url ? <img src={livro.imagem_url} alt={titulo} className="absolute inset-0 h-full w-full object-cover" /> : <div className="absolute inset-0 flex items-center justify-center"><BookOpen className="h-12 w-12 text-gold" /></div>}<div className="absolute left-3 top-3 rounded-full border border-gold/30 bg-black/60 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-gold">Livro {numeroLivro} de 10</div></div><div className="mt-3"><div className="flex justify-between text-[11px] text-muted-foreground"><span>Jornada</span><span>{numeroLivro}/10</span></div><div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full bg-gradient-gold" style={{ width: `${Math.min((numeroLivro / 10) * 100, 100)}%` }} /></div></div></div>
       <div className="min-w-0"><Badge variant="outline" className="border-gold/30 text-gold">{livro?.categoria || "Jornada"}</Badge><h1 className="mt-3 max-w-3xl break-words font-serif text-2xl font-semibold leading-tight sm:text-3xl md:text-4xl">{titulo}</h1>{livro?.autor && <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground sm:text-sm"><User className="h-4 w-4" />{livro.autor}</p>}
-        {primeiraTurma && <div className="mt-5 flex flex-col gap-3 rounded-xl border border-gold/20 bg-card/50 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold">Próxima turma</p><p className="mt-1 text-xs text-muted-foreground">Escolha a turma e faça sua inscrição.</p></div><Button asChild className="w-full bg-gold text-primary-foreground hover:bg-gold/90 sm:w-auto"><Link to="/cadastro/$turmaId" params={{ turmaId: primeiraTurma.id }}>Inscreva-se<ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div>}
-        <section className="mt-7"><h2 className="font-serif text-xl font-semibold sm:text-2xl">Próximas turmas</h2><p className="mt-1 text-xs text-muted-foreground sm:text-sm">As turmas abertas aparecem aqui automaticamente.</p>{carregandoTurmas && <div className="mt-4 h-28 animate-pulse rounded-xl bg-muted" />}{!carregandoTurmas && !turmas.length && !eventos.length && <div className="mt-4 rounded-xl border border-border/60 bg-card/40 p-4 text-sm text-muted-foreground">Ainda não há turma aberta para este livro.</div>}
-          <div className="mt-4 space-y-3">{turmas.map((turma) => <div key={turma.id} className="rounded-xl border border-border/60 bg-card/60 p-4"><div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="break-words font-serif text-base font-semibold">{turma.nome}</p><div className="mt-2 grid gap-1.5 text-xs text-muted-foreground">{turma.data_inicio && <span><Calendar className="mr-1 inline h-3.5 w-3.5 text-gold" />Início: {new Date(`${turma.data_inicio}T00:00:00`).toLocaleDateString("pt-BR")}</span>}{turma.data_fim && <span><Calendar className="mr-1 inline h-3.5 w-3.5 text-gold" />Fim: {new Date(`${turma.data_fim}T00:00:00`).toLocaleDateString("pt-BR")}</span>}{turma.horario && <span><Clock className="mr-1 inline h-3.5 w-3.5 text-gold" />{turma.horario}</span>}{turma.sala && <span><MapPin className="mr-1 inline h-3.5 w-3.5 text-gold" />{turma.sala}</span>}{turma.professor && <span>Professor: {turma.professor}</span>}<span>{turma.vagas_max > 0 ? `${turma.vagas_restantes ?? 0} vagas restantes` : "Vagas disponíveis"}</span></div></div><Button asChild className="w-full bg-gold text-primary-foreground sm:w-auto"><Link to="/cadastro/$turmaId" params={{ turmaId: turma.id }}>Inscreva-se<ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div></div>)}
-          {eventos.map((evento) => <div key={evento.id} className="rounded-xl border border-border/60 bg-card/60 p-4"><div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="break-words font-serif text-base font-semibold">{evento.nome}</p><div className="mt-2 grid gap-1.5 text-xs text-muted-foreground">{evento.data_evento && <span><Calendar className="mr-1 inline h-3.5 w-3.5 text-gold" />{new Date(`${evento.data_evento}T00:00:00`).toLocaleDateString("pt-BR")}</span>}{evento.local && <span><MapPin className="mr-1 inline h-3.5 w-3.5 text-gold" />{evento.local}</span>}{evento.vagas != null && <span>{evento.vagas} vagas</span>}</div></div><Button asChild className="w-full bg-gold text-primary-foreground sm:w-auto"><Link to="/cadastro/$turmaId" params={{ turmaId: id }}>Ver inscrição<ArrowRight className="ml-2 h-4 w-4" /></Link></Button></div></div>)}
-          </div></section>
+        {primeiraTurma && <div className="mt-5 flex flex-col gap-3 rounded-xl border border-gold/20 bg-card/50 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold">Próxima turma</p><p className="mt-1 text-xs text-muted-foreground">Escolha a turma e faça sua inscrição.</p></div><BotaoInscricao turma={primeiraTurma} /></div>}
+        <section className="mt-7"><h2 className="font-serif text-xl font-semibold sm:text-2xl">Próximas turmas</h2><p className="mt-1 text-xs text-muted-foreground sm:text-sm">As turmas abertas aparecem aqui automaticamente.</p>{carregandoTurmas && <div className="mt-4 h-28 animate-pulse rounded-xl bg-muted" />}{!carregandoTurmas && !turmas.length && <div className="mt-4 rounded-xl border border-border/60 bg-card/40 p-4 text-sm text-muted-foreground">Ainda não há turma aberta para este curso.</div>}
+          <div className="mt-4 space-y-3">{turmas.map((turma) => <div key={turma.id} className="rounded-xl border border-border/60 bg-card/60 p-4"><div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="min-w-0"><p className="break-words font-serif text-base font-semibold">{turma.nome}</p><div className="mt-2 grid gap-1.5 text-xs text-muted-foreground">{turma.data_inicio && <span><Calendar className="mr-1 inline h-3.5 w-3.5 text-gold" />Início: {new Date(`${turma.data_inicio}T00:00:00`).toLocaleDateString("pt-BR")}</span>}{turma.data_fim && <span><Calendar className="mr-1 inline h-3.5 w-3.5 text-gold" />Fim: {new Date(`${turma.data_fim}T00:00:00`).toLocaleDateString("pt-BR")}</span>}{turma.horario && <span><Clock className="mr-1 inline h-3.5 w-3.5 text-gold" />{turma.horario}</span>}{turma.sala && <span><MapPin className="mr-1 inline h-3.5 w-3.5 text-gold" />{turma.sala}</span>}{turma.professor && <span>Professor: {turma.professor}</span>}<span>{turma.vagas_max > 0 ? `${turma.vagas_restantes ?? 0} vagas restantes` : "Vagas disponíveis"}</span></div></div><BotaoInscricao turma={turma} /></div></div>)}</div></section>
       </div></div></main>
   </div>;
 }
