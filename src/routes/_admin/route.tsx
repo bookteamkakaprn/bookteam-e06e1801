@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_admin")({
       .from("user_roles")
       .select("role")
       .eq("user_id", userData.user.id)
-      .in("role", ["admin_master", "admin_suporte"])
+      .in("role", ["admin", "admin_master", "admin_suporte"])
       .maybeSingle();
 
     if (roleError || !role) throw redirect({ to: "/inicio" });
