@@ -18,6 +18,7 @@ import {
   Wallet,
   UserPlus,
   ClipboardCheck,
+  UserCog,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_admin")({
@@ -48,6 +49,7 @@ const menu: MenuItem[] = [
   { to: "/admin/participantes", label: "Alunos", icon: Users },
   { to: "/admin/participantes", label: "Cadastrar aluno", icon: UserPlus },
   { to: "/admin/participantes", label: "Aprovar inscrições", icon: ClipboardCheck },
+  { to: "/admin/participantes", label: "Perfis / ADM", icon: UserCog },
   { to: "/admin/livros", label: "Livros e cursos", icon: BookOpen },
   { to: "/admin/turmas", label: "Turmas", icon: GraduationCap },
   { to: "/admin/eventos", label: "Cadastrar evento", icon: Calendar },
@@ -96,7 +98,26 @@ function AdminLayout() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 lg:grid-cols-[240px_1fr]">
+      <div className="mx-auto max-w-6xl px-4 pt-4">
+        <nav className="flex gap-2 overflow-x-auto rounded-xl border border-border bg-card p-2 shadow-sm">
+          {menu.slice(0, 8).map(({ to, label, icon: Icon, exact }, index) => {
+            const active = exact ? pathname === to : pathname === to || pathname.startsWith(to + "/");
+            return (
+              <Link
+                key={`quick-${to}-${label}-${index}`}
+                to={to}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
+                }`}
+              >
+                <Icon className="h-4 w-4" /> {label}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[240px_1fr]">
         <aside className="rounded-xl border border-border bg-card p-2 lg:sticky lg:top-24 lg:self-start">
           <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Área administrativa
