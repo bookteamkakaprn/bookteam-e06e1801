@@ -4,21 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  CreditCard,
-  CheckSquare,
-  Award,
-  FileText,
-  ShieldCheck,
-  LogOut,
-  GraduationCap,
-  BookOpen,
-  Wallet,
-  UserPlus,
-  ClipboardCheck,
-  UserCog,
+  LayoutDashboard, Users, Calendar, CreditCard, CheckSquare, Award, FileText,
+  ShieldCheck, LogOut, GraduationCap, BookOpen, Wallet, UserPlus, ClipboardCheck, UserCog,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_admin")({
@@ -26,25 +13,15 @@ export const Route = createFileRoute("/_admin")({
   beforeLoad: async () => {
     const { data: userData, error } = await supabase.auth.getUser();
     if (error || !userData.user) throw redirect({ to: "/auth", search: { area: "admin" as const } });
-
-    // O banco atual usa apenas os perfis "admin" e "participante".
-    // Não consultar valores que não existem no enum app_role, pois isso gera erro no Postgres.
     const { data: role, error: roleError } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userData.user.id)
-      .eq("role", "admin")
-      .maybeSingle();
-
+      .from("user_roles").select("role").eq("user_id", userData.user.id).eq("role", "admin").maybeSingle();
     if (roleError || !role) throw redirect({ to: "/inicio" });
-
     return { user: userData.user, role: role.role };
   },
   component: AdminLayout,
 });
 
 type MenuItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
-
 const menu: MenuItem[] = [
   { to: "/admin", label: "Visão geral", icon: LayoutDashboard, exact: true },
   { to: "/admin/participantes", label: "Alunos", icon: Users },
@@ -65,15 +42,10 @@ function AdminLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const qc = useQueryClient();
-
   async function signOut() {
-    await qc.cancelQueries();
-    qc.clear();
-    await supabase.auth.signOut();
-    toast.success("Até logo!");
+    await qc.cancelQueries(); qc.clear(); await supabase.auth.signOut(); toast.success("Até logo!");
     navigate({ to: "/auth", replace: true });
   }
-
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="sticky top-0 z-30 border-b-2 border-primary bg-primary/10 backdrop-blur">
@@ -81,68 +53,30 @@ function AdminLayout() {
           <Link to="/admin" className="flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-primary" />
             <span className="font-serif text-xl font-semibold">Book Team</span>
-            <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-bold uppercase tracking-widest text-primary-foreground">
-              Admin
-            </span>
+            <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-bold uppercase tracking-widest text-primary-foreground">Admin</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Link
-              to="/inicio"
-              className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-foreground hover:bg-secondary"
-            >
+            <Link to="/inicio" className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-foreground hover:bg-secondary">
               <GraduationCap className="h-4 w-4" /> Área do aluno
             </Link>
-            <Button size="sm" variant="ghost" onClick={signOut}>
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <Button size="sm" variant="ghost" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-4 pt-4">
-        <nav className="flex gap-2 overflow-x-auto rounded-xl border border-border bg-card p-2 shadow-sm">
-          {menu.slice(0, 8).map(({ to, label, icon: Icon, exact }, index) => {
-            const active = exact ? pathname === to : pathname === to || pathname.startsWith(to + "/");
-            return (
-              <Link
-                key={`quick-${to}-${label}-${index}`}
-                to={to}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
-                }`}
-              >
-                <Icon className="h-4 w-4" /> {label}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[240px_1fr]">
         <aside className="rounded-xl border border-border bg-card p-2 lg:sticky lg:top-24 lg:self-start">
-          <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Área administrativa
-          </p>
+          <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Área administrativa</p>
           <nav className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
             {menu.map(({ to, label, icon: Icon, exact }, index) => {
               const active = exact ? pathname === to : pathname === to || pathname.startsWith(to + "/");
-              return (
-                <Link
-                  key={`${to}-${label}-${index}`}
-                  to={to}
-                  className={`inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors ${
-                    active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" /> {label}
-                </Link>
-              );
+              return <Link key={`${to}-${label}-${index}`} to={to} className={`inline-flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm transition-colors ${active ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"}`}>
+                <Icon className="h-4 w-4" /> {label}
+              </Link>;
             })}
           </nav>
         </aside>
-        <div>
-          <Outlet />
-        </div>
+        <div className="min-w-0"><Outlet /></div>
       </div>
     </div>
   );
