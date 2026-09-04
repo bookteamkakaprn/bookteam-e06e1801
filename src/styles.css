@@ -1,11 +1,169 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
 
-@theme {
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Book Team — Premium editorial system.
+ * Deep burgundy + gold + champagne. Cinematic, warm, sophisticated.
+ * All colors in oklch. Never use hard-coded colors in components.
+ */
+
+@theme inline {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Space Grotesk", "Inter", ui-sans-serif, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --color-wine: var(--wine);
+  --color-burgundy: var(--burgundy);
+  --color-gold: var(--gold);
+  --color-champagne: var(--champagne);
 }
 
-/* Logo fallback: use the current repository asset directly if the bundler fails to serve the imported image. */
+:root {
+  --radius: 0.875rem;
+  --background: oklch(0.16 0.012 25);
+  --foreground: oklch(0.95 0.02 75);
+  --card: oklch(0.21 0.02 25);
+  --card-foreground: oklch(0.95 0.02 75);
+  --popover: oklch(0.19 0.02 25);
+  --popover-foreground: oklch(0.95 0.02 75);
+  --primary: oklch(0.78 0.13 78);
+  --primary-foreground: oklch(0.18 0.03 25);
+  --secondary: oklch(0.35 0.11 22);
+  --secondary-foreground: oklch(0.95 0.02 75);
+  --muted: oklch(0.26 0.02 25);
+  --muted-foreground: oklch(0.7 0.03 65);
+  --accent: oklch(0.78 0.13 78);
+  --accent-foreground: oklch(0.18 0.03 25);
+  --destructive: oklch(0.6 0.2 25);
+  --destructive-foreground: oklch(0.98 0.01 80);
+  --success: oklch(0.68 0.14 150);
+  --success-foreground: oklch(0.16 0.012 25);
+  --warning: oklch(0.78 0.14 75);
+  --warning-foreground: oklch(0.16 0.012 25);
+  --border: oklch(0.28 0.02 25);
+  --input: oklch(0.24 0.02 25);
+  --ring: oklch(0.78 0.13 78);
+  --burgundy: oklch(0.32 0.12 22);
+  --wine: oklch(0.38 0.13 22);
+  --gold: oklch(0.78 0.13 78);
+  --champagne: oklch(0.95 0.02 75);
+  --chart-1: oklch(0.78 0.13 78);
+  --chart-2: oklch(0.55 0.15 22);
+  --chart-3: oklch(0.65 0.1 55);
+  --chart-4: oklch(0.42 0.13 22);
+  --chart-5: oklch(0.9 0.05 75);
+  --sidebar: oklch(0.19 0.02 25);
+  --sidebar-foreground: oklch(0.95 0.02 75);
+  --sidebar-primary: oklch(0.78 0.13 78);
+  --sidebar-primary-foreground: oklch(0.18 0.03 25);
+  --sidebar-accent: oklch(0.26 0.02 25);
+  --sidebar-accent-foreground: oklch(0.95 0.02 75);
+  --sidebar-border: oklch(0.28 0.02 25);
+  --sidebar-ring: oklch(0.78 0.13 78);
+}
+
+.dark {
+  --background: oklch(0.14 0.012 25);
+  --foreground: oklch(0.96 0.02 75);
+  --card: oklch(0.19 0.02 25);
+  --card-foreground: oklch(0.96 0.02 75);
+  --popover: oklch(0.17 0.02 25);
+  --popover-foreground: oklch(0.96 0.02 75);
+  --primary: oklch(0.8 0.14 78);
+  --primary-foreground: oklch(0.14 0.012 25);
+  --secondary: oklch(0.32 0.11 22);
+  --secondary-foreground: oklch(0.96 0.02 75);
+  --muted: oklch(0.24 0.02 25);
+  --muted-foreground: oklch(0.72 0.03 65);
+  --accent: oklch(0.8 0.14 78);
+  --accent-foreground: oklch(0.14 0.012 25);
+  --border: oklch(0.26 0.02 25);
+  --input: oklch(0.22 0.02 25);
+  --ring: oklch(0.8 0.14 78);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html { font-family: var(--font-sans); scroll-behavior: smooth; }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .font-serif { font-family: var(--font-serif); letter-spacing: -0.02em; }
+  ::selection { background: color-mix(in oklab, var(--gold) 40%, transparent); color: var(--foreground); }
+}
+
+@utility gradient-hero {
+  background: radial-gradient(ellipse at 20% 10%, color-mix(in oklab, var(--gold) 12%, transparent), transparent 55%), radial-gradient(ellipse at 80% 90%, color-mix(in oklab, var(--wine) 30%, transparent), transparent 60%), linear-gradient(160deg, var(--background) 0%, color-mix(in oklab, var(--burgundy) 40%, var(--background)) 100%);
+}
+
+@utility gradient-wine { background: linear-gradient(135deg, var(--burgundy) 0%, var(--wine) 50%, oklch(0.24 0.08 22) 100%); }
+@utility gradient-gold { background: linear-gradient(135deg, oklch(0.72 0.13 78) 0%, oklch(0.85 0.12 82) 100%); }
+@utility text-gradient-gold { background: linear-gradient(135deg, oklch(0.82 0.14 78) 0%, oklch(0.9 0.1 82) 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+@utility shadow-book { box-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 20px 50px -20px color-mix(in oklab, var(--burgundy) 60%, black); }
+@utility shadow-glow-gold { box-shadow: 0 0 0 1px color-mix(in oklab, var(--gold) 30%, transparent), 0 12px 40px -10px color-mix(in oklab, var(--gold) 40%, transparent); }
+@utility shadow-premium { box-shadow: 0 1px 3px rgb(0 0 0 / 0.5), 0 30px 60px -30px rgb(0 0 0 / 0.7); }
+@utility scrollbar-hidden { scrollbar-width: none; &::-webkit-scrollbar { display: none; } }
+@utility poster-hover { transition: transform 400ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 400ms; &:hover { transform: translateY(-6px) scale(1.03); box-shadow: 0 30px 60px -20px rgb(0 0 0 / 0.6), 0 0 0 1px color-mix(in oklab, var(--gold) 40%, transparent); } }
+@utility fade-mask-r { mask-image: linear-gradient(to right, black 85%, transparent); }
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px color-mix(in oklab, var(--gold) 25%, transparent); }
+  50% { box-shadow: 0 0 40px color-mix(in oklab, var(--gold) 45%, transparent); }
+}
+
+@utility animate-glow { animation: glow-pulse 3s ease-in-out infinite; }
+
+/* Logo fallback updated after repository migration. */
 img[alt="Book Team"],
 img[alt="Book Team — Amor & Honra"],
 img[alt="Book Team Amor & Honra"] {
