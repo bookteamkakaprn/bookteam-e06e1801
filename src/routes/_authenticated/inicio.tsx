@@ -8,191 +8,28 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle, Calendar, CheckCircle2, Clock, BookOpen, GraduationCap, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_authenticated/inicio")({
-  head: () => ({ meta: [{ title: "Meu painel — Book Team" }, { name: "robots", content: "noindex" }] }),
-  component: InicioPage,
-});
+export const Route = createFileRoute("/_authenticated/inicio")({ head: () => ({ meta: [{ title: "Meu painel — Book Team" }, { name: "robots", content: "noindex" }] }), component: InicioPage });
 
-type Insc = {
-  id: string;
-  status: string;
-  created_at: string;
-  evento: { id: string; titulo: string; data: string; hora: string | null; cidade: string | null; local: string | null; livro: { titulo: string; imagem_url: string | null } | null } | null;
-  pagamentos: { status: string; created_at: string }[] | null;
-};
+type Turma = { id: string; nome: string | null; descricao: string | null; data_inicio: string | null; data_fim: string | null; vagas: number; inscritos: number; vagas_restantes: number; ativo: boolean; livros: { id: string; titulo: string; imagem_url: string | null } | null };
+type Insc = { id: string; status: string; created_at: string; turma: Turma | null; pagamentos: { status: string; created_at: string }[] | null };
+type Livro = { id: string; titulo: string; autor: string | null; imagem_url: string | null; ordem: number | null };
 
-type Livro = {
-  id: string;
-  titulo: string;
-  autor: string | null;
-  imagem_url: string | null;
-  ordem: number | null;
-};
-
-function statusMeta(i: Insc) {
-  if (i.status === "confirmada") return { label: "Confirmada", Icon: CheckCircle2, variant: "default" as const };
-  const p = [...(i.pagamentos ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
-  if (p?.status === "aguardando") return { label: "Em validação", Icon: Clock, variant: "secondary" as const };
-  if (p?.status === "rejeitado") return { label: "Não validado", Icon: AlertCircle, variant: "destructive" as const };
-  return { label: "Pendente pagamento", Icon: AlertCircle, variant: "outline" as const };
-}
+function statusMeta(i: Insc) { if (i.status === "confirmada") return { label: "Confirmada", Icon: CheckCircle2, variant: "default" as const }; const p = [...(i.pagamentos ?? [])].sort((a,b) => b.created_at.localeCompare(a.created_at))[0]; if (p?.status === "aguardando") return { label: "Em validação", Icon: Clock, variant: "secondary" as const }; if (p?.status === "rejeitado") return { label: "Não validado", Icon: AlertCircle, variant: "destructive" as const }; return { label: "Pendente pagamento", Icon: AlertCircle, variant: "outline" as const }; }
+function dataBR(data: string | null) { return data ? new Date(`${data}T00:00:00`).toLocaleDateString("pt-BR") : "A definir"; }
 
 function InicioPage() {
-  const { user } = useAuth();
-  const nome = (user?.user_metadata?.nome as string | undefined) ?? user?.email;
-  const [livrosAbertos, setLivrosAbertos] = useState(false);
+  const { user } = useAuth(); const nome = (user?.user_metadata?.nome as string | undefined) ?? user?.email; const [livrosAbertos, setLivrosAbertos] = useState(false);
+  const { data: inscricoes = [], isLoading } = useQuery({ enabled: !!user, queryKey: ["minhas-inscricoes", user?.id], queryFn: async () => { const { data, error } = await supabase.from("inscricoes").select("id,status,created_at,turma:turmas(id,nome,descricao,data_inicio,data_fim,vagas,inscritos,vagas_restantes,ativo,livros(id,titulo,imagem_url)),pagamentos(status,created_at)").eq("participante_id", user!.id).order("created_at", { ascending: false }); if (error) throw error; return (data ?? []) as unknown as Insc[]; } });
+  const { data: proximasTurmas = [] } = useQuery({ queryKey: ["proximas-turmas-aluno"], queryFn: async () => { const hoje = new Date().toISOString().slice(0,10); const { data, error } = await supabase.from("turmas").select("id,nome,descricao,data_inicio,data_fim,vagas,inscritos,vagas_restantes,ativo,livros(id,titulo,imagem_url)").eq("ativo", true).gte("data_inicio", hoje).order("data_inicio", { ascending: true }).limit(6); if (error) throw error; return (data ?? []) as unknown as Turma[]; } });
+  const { data: livros = [], isLoading: livrosLoading } = useQuery({ queryKey: ["livros-disponiveis-aluno"], queryFn: async () => { const { data, error } = await supabase.from("livros").select("id,titulo,autor,imagem_url,ordem").order("ordem", { ascending: true }); if (error) throw error; return (data ?? []) as Livro[]; } });
 
-  const { data, isLoading } = useQuery({
-    enabled: !!user,
-    queryKey: ["minhas-inscricoes", user?.id],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("inscricoes")
-        .select(
-          "id, status, created_at, evento:eventos(id, titulo, data, hora, cidade, local, livro:livros(titulo, imagem_url)), pagamentos(status, created_at)"
-        )
-        .eq("participante_id", user!.id)
-        .order("created_at", { ascending: false });
-      return (data ?? []) as unknown as Insc[];
-    },
-  });
-
-  const { data: livros = [], isLoading: livrosLoading } = useQuery({
-    queryKey: ["livros-disponiveis-aluno"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("livros")
-        .select("id, titulo, autor, imagem_url, ordem")
-        .order("ordem", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as Livro[];
-    },
-  });
-
-  const inscricoes = data ?? [];
-
-  return (
-    <div className="space-y-8">
-      <div className="rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-background p-6">
-        <p className="text-sm text-muted-foreground">Bem-vindo(a) ao painel do aluno</p>
-        <h1 className="font-serif text-3xl font-bold">{nome}</h1>
-        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-          Aqui você acompanha suas inscrições, pagamentos, encontros e certificados. Escolha um livro na página inicial e clique em "Quero participar" para se inscrever.
-        </p>
-      </div>
-
-      <section>
-        <div className="flex items-center justify-between">
-          <h2 className="font-serif text-xl font-semibold">Minhas inscrições</h2>
-          <Button asChild size="sm" variant="outline">
-            <Link to="/eventos">Ver encontros</Link>
-          </Button>
-        </div>
-        <div className="mt-3 space-y-3">
-          {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
-          {!isLoading && inscricoes.length === 0 && (
-            <Card>
-              <CardContent className="p-6 text-sm text-muted-foreground">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="font-semibold text-foreground">Você ainda não se inscreveu em nenhum curso.</p>
-                    <p>Escolha um livro na trilha e faça sua inscrição.</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="shrink-0"
-                    onClick={() => setLivrosAbertos((v) => !v)}
-                    aria-expanded={livrosAbertos}
-                  >
-                    <BookOpen className="mr-2 h-4 w-4" />
-                    Ver livros disponíveis
-                    <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${livrosAbertos ? "rotate-180" : ""}`} />
-                  </Button>
-                </div>
-
-                {livrosAbertos && (
-                  <div className="mt-4 overflow-hidden rounded-xl border border-gold/30 bg-background/60">
-                    <div className="border-b border-border/60 px-4 py-3">
-                      <p className="font-serif font-semibold text-foreground">Livros disponíveis</p>
-                      <p className="text-xs text-muted-foreground">Escolha um livro para conhecer a trilha e participar.</p>
-                    </div>
-                    <div className="max-h-80 overflow-y-auto p-2">
-                      {livrosLoading && <p className="p-3 text-sm text-muted-foreground">Carregando livros…</p>}
-                      {!livrosLoading && livros.length === 0 && <p className="p-3 text-sm text-muted-foreground">Nenhum livro disponível no momento.</p>}
-                      {!livrosLoading && livros.map((livro) => (
-                        <Link
-                          key={livro.id}
-                          to="/livros/$id"
-                          params={{ id: livro.id }}
-                          className="flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-secondary"
-                          onClick={() => setLivrosAbertos(false)}
-                        >
-                          {livro.imagem_url ? (
-                            <img src={livro.imagem_url} alt={livro.titulo} className="h-14 w-10 shrink-0 rounded object-cover shadow-sm" />
-                          ) : (
-                            <div className="flex h-14 w-10 shrink-0 items-center justify-center rounded bg-muted">
-                              <BookOpen className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="truncate font-serif font-semibold text-foreground">{livro.titulo}</p>
-                            {livro.autor && <p className="truncate text-xs text-muted-foreground">{livro.autor}</p>}
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-          {inscricoes.map((i) => {
-            const meta = statusMeta(i);
-            const Icon = meta.Icon;
-            const ev = i.evento;
-            if (!ev) return null;
-            return (
-              <Card key={i.id} className="overflow-hidden">
-                <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-start gap-4">
-                    {ev.livro?.imagem_url ? (
-                      <img src={ev.livro.imagem_url} alt={ev.livro.titulo} className="h-20 w-14 rounded object-cover shadow-sm" />
-                    ) : (
-                      <div className="flex h-20 w-14 items-center justify-center rounded bg-muted">
-                        <BookOpen className="h-6 w-6 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div>
-                      <p className="font-serif text-lg font-semibold">{ev.titulo}</p>
-                      <p className="text-xs text-muted-foreground">
-                        <Calendar className="mr-1 inline h-3.5 w-3.5" />
-                        {new Date(ev.data + "T00:00:00").toLocaleDateString("pt-BR")} {ev.hora?.slice(0, 5)}
-                        {(ev.local || ev.cidade) && ` — ${[ev.local, ev.cidade].filter(Boolean).join(", ")}`}
-                      </p>
-                      {ev.livro?.titulo && (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          <GraduationCap className="mr-1 inline h-3.5 w-3.5" /> {ev.livro.titulo}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant={meta.variant} className="inline-flex items-center gap-1">
-                      <Icon className="h-3 w-3" /> {meta.label}
-                    </Badge>
-                    <Button asChild size="sm" variant="outline">
-                      <Link to="/inscricao/$eventoId" params={{ eventoId: ev.id }}>
-                        Ver
-                      </Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </section>
-    </div>
-  );
+  return <div className="min-w-0 space-y-7 overflow-hidden">
+    <div className="rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-background p-5 sm:p-6"><p className="text-sm text-muted-foreground">Bem-vindo(a) ao painel do aluno</p><h1 className="break-words font-serif text-2xl font-bold sm:text-3xl">{nome}</h1><p className="mt-2 max-w-xl text-sm text-muted-foreground">Aqui você acompanha suas inscrições, próximas turmas, pagamentos, encontros e certificados.</p></div>
+    <section><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-serif text-xl font-semibold">Minhas inscrições</h2><Button asChild size="sm" variant="outline"><Link to="/eventos">Ver encontros</Link></Button></div><div className="mt-3 space-y-3">
+      {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
+      {!isLoading && inscricoes.length === 0 && <Card><CardContent className="p-5 text-sm text-muted-foreground"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-foreground">Você ainda não se inscreveu em nenhuma turma.</p><p>Escolha um livro e faça sua inscrição.</p></div><Button type="button" variant="outline" className="shrink-0" onClick={() => setLivrosAbertos(v => !v)}><BookOpen className="mr-2 h-4 w-4" />Ver livros disponíveis<ChevronDown className={`ml-2 h-4 w-4 ${livrosAbertos ? "rotate-180" : ""}`} /></Button></div>{livrosAbertos && <div className="mt-4 overflow-hidden rounded-xl border border-gold/30 bg-background/60"><div className="border-b border-border/60 px-4 py-3"><p className="font-serif font-semibold text-foreground">Livros disponíveis</p><p className="text-xs text-muted-foreground">Escolha um livro para conhecer as próximas turmas.</p></div><div className="max-h-80 overflow-y-auto p-2">{livrosLoading && <p className="p-3">Carregando livros…</p>}{!livrosLoading && livros.map(livro => <Link key={livro.id} to="/livros/$id" params={{id: livro.id}} className="flex min-w-0 items-center gap-3 rounded-lg p-3 hover:bg-secondary"><div className="h-14 w-10 shrink-0 overflow-hidden rounded bg-muted">{livro.imagem_url ? <img src={livro.imagem_url} alt={livro.titulo} className="h-full w-full object-cover"/> : <BookOpen className="m-2 h-5 w-5 text-muted-foreground"/>}</div><div className="min-w-0"><p className="truncate font-serif font-semibold text-foreground">{livro.titulo}</p>{livro.autor && <p className="truncate text-xs text-muted-foreground">{livro.autor}</p>}</div></Link>)}</div></div>}</CardContent></Card>}
+      {inscricoes.map(i => { const meta=statusMeta(i), Icon=meta.Icon, t=i.turma; if(!t) return null; return <Card key={i.id} className="overflow-hidden"><CardContent className="flex min-w-0 flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex min-w-0 items-start gap-3"><div className="h-20 w-14 shrink-0 overflow-hidden rounded bg-muted">{t.livros?.imagem_url ? <img src={t.livros.imagem_url} alt={t.livros.titulo} className="h-full w-full object-cover"/> : <BookOpen className="m-3 h-7 w-7 text-muted-foreground"/>}</div><div className="min-w-0"><p className="break-words font-serif text-lg font-semibold">{t.nome || "Turma Book Team"}</p>{t.livros?.titulo && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><GraduationCap className="h-3.5 w-3.5"/>{t.livros.titulo}</p>}<p className="mt-1 text-xs text-muted-foreground"><Calendar className="mr-1 inline h-3.5 w-3.5"/>{dataBR(t.data_inicio)}{t.data_fim ? ` a ${dataBR(t.data_fim)}` : ""}</p></div></div><div className="flex flex-wrap items-center gap-2"><Badge variant={meta.variant} className="inline-flex items-center gap-1"><Icon className="h-3 w-3"/>{meta.label}</Badge><Button asChild size="sm" variant="outline"><Link to="/matricula/$inscricaoId" params={{inscricaoId:i.id}}>Ver inscrição</Link></Button></div></CardContent></Card>; })}
+    </div></section>
+    <section><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-serif text-xl font-semibold">Próximas turmas</h2></div><div className="mt-3 grid gap-3 md:grid-cols-2">{proximasTurmas.map(t => <Card key={t.id} className="overflow-hidden"><CardContent className="p-4"><div className="flex min-w-0 gap-3">{t.livros?.imagem_url ? <img src={t.livros.imagem_url} alt={t.livros.titulo} className="h-20 w-14 shrink-0 rounded object-cover"/> : <div className="flex h-20 w-14 shrink-0 items-center justify-center rounded bg-muted"><BookOpen className="h-6 w-6 text-muted-foreground"/></div>}<div className="min-w-0"><p className="font-semibold">{t.nome || "Próxima turma"}</p><p className="truncate text-xs text-muted-foreground">{t.livros?.titulo || "Book Team"}</p><p className="mt-2 text-xs text-muted-foreground"><Calendar className="mr-1 inline h-3.5 w-3.5"/>{dataBR(t.data_inicio)}{t.data_fim ? ` a ${dataBR(t.data_fim)}` : ""}</p><p className="mt-1 text-xs text-muted-foreground">{t.vagas_restantes ?? 0} vagas disponíveis</p></div></div><Button asChild size="sm" className="mt-3 w-full bg-gold text-primary-foreground hover:bg-gold/90"><Link to="/cadastro/$turmaId" params={{turmaId:t.id}}>Inscreva-se</Link></Button></CardContent></Card>)}</div></section>
+  </div>;
 }
