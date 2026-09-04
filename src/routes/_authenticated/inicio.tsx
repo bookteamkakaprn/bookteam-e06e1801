@@ -5,7 +5,8 @@ import { useAuth } from "@/lib/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Calendar, CheckCircle2, Clock, BookOpen, GraduationCap } from "lucide-react";
+import { AlertCircle, Calendar, CheckCircle2, Clock, BookOpen, GraduationCap, ChevronDown } from "lucide-react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/inicio")({
   head: () => ({ meta: [{ title: "Meu painel — Book Team" }, { name: "robots", content: "noindex" }] }),
@@ -20,6 +21,14 @@ type Insc = {
   pagamentos: { status: string; created_at: string }[] | null;
 };
 
+type Livro = {
+  id: string;
+  titulo: string;
+  autor: string | null;
+  imagem_url: string | null;
+  ordem: number | null;
+};
+
 function statusMeta(i: Insc) {
   if (i.status === "confirmada") return { label: "Confirmada", Icon: CheckCircle2, variant: "default" as const };
   const p = [...(i.pagamentos ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
@@ -31,6 +40,7 @@ function statusMeta(i: Insc) {
 function InicioPage() {
   const { user } = useAuth();
   const nome = (user?.user_metadata?.nome as string | undefined) ?? user?.email;
+  const [livrosAbertos, setLivrosAbertos] = useState(false);
 
   const { data, isLoading } = useQuery({
     enabled: !!user,
@@ -47,9 +57,19 @@ function InicioPage() {
     },
   });
 
-  const inscricoes = data ?? [];
+  const { data: livros = [], isLoading: livrosLoading } = useQuery({
+    queryKey: ["livros-disponiveis-aluno"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("livros")
+        .select("id, titulo, autor, imagem_url, ordem")
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Livro[];
+    },
+  });
 
-  /* quickLinks removido conforme solicitado */
+  const inscricoes = data ?? [];
 
   return (
     <div className="space-y-8">
@@ -72,14 +92,58 @@ function InicioPage() {
           {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
           {!isLoading && inscricoes.length === 0 && (
             <Card>
-              <CardContent className="flex flex-col gap-3 p-6 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="font-semibold text-foreground">Você ainda não se inscreveu em nenhum curso.</p>
-                  <p>Escolha um livro na trilha e faça sua inscrição.</p>
+              <CardContent className="p-6 text-sm text-muted-foreground">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="font-semibold text-foreground">Você ainda não se inscreveu em nenhum curso.</p>
+                    <p>Escolha um livro na trilha e faça sua inscrição.</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="shrink-0"
+                    onClick={() => setLivrosAbertos((v) => !v)}
+                    aria-expanded={livrosAbertos}
+                  >
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    Ver livros disponíveis
+                    <ChevronDown className={`ml-2 h-4 w-4 transition-transform ${livrosAbertos ? "rotate-180" : ""}`} />
+                  </Button>
                 </div>
-                <Button asChild variant="link" className="px-0">
-                  <Link to="/">Ver livros disponíveis</Link>
-                </Button>
+
+                {livrosAbertos && (
+                  <div className="mt-4 overflow-hidden rounded-xl border border-gold/30 bg-background/60">
+                    <div className="border-b border-border/60 px-4 py-3">
+                      <p className="font-serif font-semibold text-foreground">Livros disponíveis</p>
+                      <p className="text-xs text-muted-foreground">Escolha um livro para conhecer a trilha e participar.</p>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto p-2">
+                      {livrosLoading && <p className="p-3 text-sm text-muted-foreground">Carregando livros…</p>}
+                      {!livrosLoading && livros.length === 0 && <p className="p-3 text-sm text-muted-foreground">Nenhum livro disponível no momento.</p>}
+                      {!livrosLoading && livros.map((livro) => (
+                        <Link
+                          key={livro.id}
+                          to="/livros/$id"
+                          params={{ id: livro.id }}
+                          className="flex items-center gap-3 rounded-lg p-3 transition-colors hover:bg-secondary"
+                          onClick={() => setLivrosAbertos(false)}
+                        >
+                          {livro.imagem_url ? (
+                            <img src={livro.imagem_url} alt={livro.titulo} className="h-14 w-10 shrink-0 rounded object-cover shadow-sm" />
+                          ) : (
+                            <div className="flex h-14 w-10 shrink-0 items-center justify-center rounded bg-muted">
+                              <BookOpen className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="truncate font-serif font-semibold text-foreground">{livro.titulo}</p>
+                            {livro.autor && <p className="truncate text-xs text-muted-foreground">{livro.autor}</p>}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
