@@ -19,20 +19,18 @@ begin
   end if;
 
   if new.status = 'aprovado' and (tg_op = 'INSERT' or old.status is distinct from new.status) then
-    insert into public.notificacoes (participante_id, assunto, canal, mensagem, enviada)
+    insert into public.notificacoes (participante_id, titulo, mensagem, lida)
     values (
       v_participante_id,
       'Pagamento aprovado',
-      'sistema',
       'Seu pagamento foi aprovado. Sua inscrição em ' || coalesce(v_livro, 'Book Team') || ' está confirmada e aguarda a liberação para iniciar.',
       false
     );
   elsif new.status = 'rejeitado' and (tg_op = 'INSERT' or old.status is distinct from new.status) then
-    insert into public.notificacoes (participante_id, assunto, canal, mensagem, enviada)
+    insert into public.notificacoes (participante_id, titulo, mensagem, lida)
     values (
       v_participante_id,
       'Pagamento não aprovado',
-      'sistema',
       'Seu pagamento não foi aprovado. Acesse sua área do aluno para verificar e regularizar o pagamento.',
       false
     );
