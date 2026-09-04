@@ -27,12 +27,13 @@ export const Route = createFileRoute("/_admin")({
     const { data: userData, error } = await supabase.auth.getUser();
     if (error || !userData.user) throw redirect({ to: "/auth", search: { area: "admin" as const } });
 
+    // O banco atual usa apenas os perfis "admin" e "participante".
+    // Não consultar valores que não existem no enum app_role, pois isso gera erro no Postgres.
     const { data: role, error: roleError } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userData.user.id)
-      .in("role", ["admin", "admin_master", "admin_suporte"])
-      .limit(1)
+      .eq("role", "admin")
       .maybeSingle();
 
     if (roleError || !role) throw redirect({ to: "/inicio" });
