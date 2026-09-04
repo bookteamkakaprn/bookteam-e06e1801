@@ -2,11 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Users, Calendar, CreditCard, DollarSign, CheckCircle2, Clock, BookOpen, GraduationCap, Plus, ArrowRight } from "lucide-react";
+import { Users, Calendar, CreditCard, DollarSign, CheckCircle2, Clock, BookOpen, GraduationCap, UserPlus, ClipboardCheck, Plus, ArrowRight } from "lucide-react";
 
 export const Route = createFileRoute("/_admin/admin")({
-  head: () => ({ meta: [{ title: "Dashboard — Admin — Book Clube" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "Área administrativa — Book Clube" }, { name: "robots", content: "noindex" }] }),
   component: AdminDashboard,
 });
 
@@ -39,53 +38,37 @@ function AdminDashboard() {
   });
 
   const cards = [
-    { title: "Participantes", value: stats?.participantes ?? "—", icon: Users, href: "/admin/participantes" },
-    { title: "Turmas ativas", value: stats?.turmas ?? "—", icon: GraduationCap, href: "/admin/turmas" },
-    { title: "Livros na grade", value: stats?.livros ?? "—", icon: BookOpen, href: "/admin/livros" },
-    { title: "Encontros futuros", value: stats?.eventosFuturos ?? "—", icon: Calendar, href: "/admin/eventos" },
+    { title: "Alunos", value: stats?.participantes ?? "—", icon: Users, href: "/admin/participantes" },
+    { title: "Turmas", value: stats?.turmas ?? "—", icon: GraduationCap, href: "/admin/turmas" },
+    { title: "Livros e cursos", value: stats?.livros ?? "—", icon: BookOpen, href: "/admin/livros" },
+    { title: "Eventos futuros", value: stats?.eventosFuturos ?? "—", icon: Calendar, href: "/admin/eventos" },
     { title: "Pagamentos pendentes", value: stats?.pagPend ?? "—", icon: Clock, href: "/admin/pagamentos" },
     { title: "Pagamentos aprovados", value: stats?.pagAprov ?? "—", icon: CreditCard, href: "/admin/pagamentos" },
-    { title: "Encontros realizados", value: stats?.eventosPassados ?? "—", icon: CheckCircle2, href: "/admin/eventos" },
+    { title: "Eventos realizados", value: stats?.eventosPassados ?? "—", icon: CheckCircle2, href: "/admin/eventos" },
     { title: "Receita total", value: stats ? stats.receita.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—", icon: DollarSign, href: "/admin/pagamentos" },
   ];
 
   const actions = [
-    { to: "/admin/turmas", label: "Aprovar turmas", icon: GraduationCap, desc: "Criar, editar e gerenciar vagas de turmas por livro." },
-    { to: "/admin/participantes", label: "Aprovar alunos", icon: Users, desc: "Visualizar inscrições, dados dos alunos e confirmar matrículas." },
-    { to: "/admin/pagamentos", label: "Aprovar pagamentos", icon: CreditCard, desc: "Validar comprovantes, aprovar, recusar ou solicitar novo envio." },
-    { to: "/admin/livros", label: "Incluir novos cursos", icon: Plus, desc: "Adicionar ou editar livros e trilhas na grade de cursos." },
-    { to: "/admin/eventos", label: "Gerenciar encontros", icon: Calendar, desc: "Organizar datas, locais e calendário de encontros." },
-    { to: "/admin/conta", label: "Dados da conta PIX", icon: DollarSign, desc: "Configurar chave PIX, QR Code e instruções de pagamento." },
+    { to: "/admin/participantes", label: "Alunos", icon: Users, desc: "Consultar alunos, inscrições e dados cadastrais." },
+    { to: "/admin/participantes", label: "Cadastrar aluno", icon: UserPlus, desc: "Acessar a gestão de alunos e inscrições." },
+    { to: "/admin/participantes", label: "Aprovar inscrições", icon: ClipboardCheck, desc: "Consultar inscrições e confirmar matrículas." },
+    { to: "/admin/pagamentos", label: "Aprovar pagamentos", icon: CreditCard, desc: "Validar comprovantes e aprovar pagamentos." },
+    { to: "/admin/livros", label: "Cadastrar livro / curso", icon: Plus, desc: "Adicionar e editar livros e cursos da plataforma." },
+    { to: "/admin/eventos", label: "Cadastrar evento", icon: Calendar, desc: "Criar e organizar os eventos e encontros." },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-3xl font-bold">Painel administrativo</h1>
-        <p className="text-muted-foreground">Aprove turmas, alunos e pagamentos, e inclua novos cursos na grade.</p>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map(({ title, value, icon: Icon, href }) => (
-          <Card key={title} className="transition-colors hover:border-primary/50">
-            <Link to={href} className="block">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <p className="font-serif text-2xl font-bold">{value}</p>
-              </CardContent>
-            </Link>
-          </Card>
-        ))}
+        <h1 className="font-serif text-3xl font-bold">Área administrativa</h1>
+        <p className="text-muted-foreground">Aqui você administra alunos, livros e cursos, eventos, inscrições e pagamentos.</p>
       </div>
 
       <section>
-        <h2 className="font-serif text-xl font-semibold">Ações rápidas</h2>
+        <h2 className="font-serif text-xl font-semibold">Funções administrativas</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {actions.map(({ to, label, icon: Icon, desc }) => (
-            <Card key={to} className="transition-colors hover:border-primary/50">
+            <Card key={`${to}-${label}`} className="transition-colors hover:border-primary/50">
               <CardContent className="p-4">
                 <Link to={to} className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
@@ -105,9 +88,24 @@ function AdminDashboard() {
         </div>
       </section>
 
-      <div className="rounded-2xl border border-dashed border-border bg-card/50 p-8 text-center text-sm text-muted-foreground">
-        CRM, presença, certificados e relatórios avançados estarão disponíveis nas próximas fases.
-      </div>
+      <section>
+        <h2 className="font-serif text-xl font-semibold">Resumo</h2>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {cards.map(({ title, value, icon: Icon, href }) => (
+            <Card key={title} className="transition-colors hover:border-primary/50">
+              <Link to={href} className="block">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                  <Icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <p className="font-serif text-2xl font-bold">{value}</p>
+                </CardContent>
+              </Link>
+            </Card>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
