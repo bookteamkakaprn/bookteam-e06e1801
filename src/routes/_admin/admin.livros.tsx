@@ -46,9 +46,7 @@ import {
 
 import { toast } from "sonner";
 
-export const Route = createFileRoute(
-  "/_admin/admin/livros"
-)({
+export const Route = createFileRoute("/_admin/admin/livros")({
   component: AdminLivrosPage,
 });
 
@@ -100,15 +98,6 @@ type Nivel = {
   trilha_id: string | null;
 };
 
-/*
- * Formulário usa STRINGS nos campos numéricos.
- *
- * Isso é importante porque permite:
- * - apagar o 0;
- * - digitar normalmente;
- * - não aparecerem setinhas;
- * - não perder o foco.
- */
 type FormLivro = {
   trilha_id: string;
   nivel_id: string;
@@ -139,23 +128,6 @@ type FormLivro = {
 };
 
 /* =========================================================
-   LIVROS DA HOME / JORNADA
-========================================================= */
-
-const HOME = [
-  [1, "Mantenha Seu Amor Aceso", ""],
-  [2, "Cultura da Honra", ""],
-  [3, "Livro 3", ""],
-  [4, "Livro 4", ""],
-  [5, "Organize a Sua Desordem Mental", ""],
-  [6, "O Despertar da Leoa", ""],
-  [7, "Livro 7", ""],
-  [8, "Os Caminhos Sobrenaturais da Realeza", ""],
-  [9, "O Poder Sobrenatural de uma Mente Transformada", ""],
-  [10, "Impunível", "Danny Silk"],
-] as const;
-
-/* =========================================================
    FORMULÁRIO VAZIO
 ========================================================= */
 
@@ -172,7 +144,7 @@ const vazio: FormLivro = {
   descricao: "",
 
   valor: "",
-  vagas: "0",
+  vagas: "",
 
   ano: "",
   qtd_encontros: "",
@@ -190,13 +162,8 @@ const vazio: FormLivro = {
 
 /* =========================================================
    FIELD
-   FORA DO COMPONENTE PRINCIPAL
-   =========================================================
-   
-   Esta é a correção do problema do cursor.
-
-   Antes o Field era criado dentro de AdminLivrosPage.
-   Agora ele fica fora e não é recriado a cada tecla.
+   Fica FORA do componente principal para não perder o foco
+   enquanto o usuário digita.
 ========================================================= */
 
 function Field({
@@ -223,36 +190,71 @@ function Field({
 }
 
 /* =========================================================
+   HELPERS
+========================================================= */
+
+function numeroMoeda(valor: string) {
+  if (!valor.trim()) {
+    return null;
+  }
+
+  const normalizado = valor
+    .replace(/\s/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
+
+  const numero = Number(normalizado);
+
+  return Number.isFinite(numero) ? numero : null;
+}
+
+function somenteNumeros(valor: string) {
+  return valor.replace(/\D/g, "");
+}
+
+/* =========================================================
    COMPONENTE
 ========================================================= */
 
 function AdminLivrosPage() {
   const qc = useQueryClient();
 
-  const [
-    selecionado,
-    setSelecionado,
-  ] = useState<string | null>(null);
+  const [selecionado, setSelecionado] =
+    useState<string | null>(null);
 
-  const [
-    criando,
-    setCriando,
-  ] = useState(false);
+  const [criando, setCriando] =
+    useState(false);
 
-  const [
-    form,
-    setForm,
-  ] = useState<FormLivro>(vazio);
+  const [form, setForm] =
+    useState<FormLivro>(vazio);
 
   const [
     uploadingCapa,
     setUploadingCapa,
   ] = useState(false);
 
+  /* =======================================================
+     FILTROS
+  ======================================================= */
+
+  const [
+    filtroTipo,
+    setFiltroTipo,
+  ] = useState("todos");
+
+  const [
+    filtroTrilha,
+    setFiltroTrilha,
+  ] = useState("todas");
+
   const [
     filtroNivel,
     setFiltroNivel,
   ] = useState("todos");
+
+  /* =======================================================
+     NOVO NÍVEL
+  ======================================================= */
 
   const [
     novoNivelAberto,
@@ -270,7 +272,7 @@ function AdminLivrosPage() {
   ] = useState("");
 
   /* =======================================================
-     LIVROS
+     LIVROS / CURSOS
   ======================================================= */
 
   const livrosQuery = useQuery({
@@ -286,7 +288,9 @@ function AdminLivrosPage() {
         .order("ordem");
 
       if (error) {
-        throw error;
+        throw new Error(
+          `Não foi possível carregar os cursos: ${error.message}`
+        );
       }
 
       return (data ?? []) as Livro[];
@@ -310,7 +314,9 @@ function AdminLivrosPage() {
         .order("nome");
 
       if (error) {
-        throw error;
+        throw new Error(
+          `Não foi possível carregar as trilhas: ${error.message}`
+        );
       }
 
       return (data ?? []) as Trilha[];
@@ -330,14 +336,14 @@ function AdminLivrosPage() {
         error,
       } = await supabase
         .from("niveis_trilha")
-        .select(
-          "id,nome,ordem,trilha_id"
-        )
+        .select("id,nome,ordem,trilha_id")
         .order("ordem")
         .order("nome");
 
       if (error) {
-        throw error;
+        throw new Error(
+          `Não foi possível carregar os níveis: ${error.message}`
+        );
       }
 
       return (data ?? []) as Nivel[];
@@ -345,95 +351,142 @@ function AdminLivrosPage() {
   });
 
   const livros = livrosQuery.data ?? [];
-  const trilhas =
-    trilhasQuery.data ?? [];
-  const niveis =
-    niveisQuery.data ?? [];
-
-  /* =======================================================
-     MAPA POR ORDEM
-  ======================================================= */
-
-  const porOrdem = useMemo(
-    () =>
-      new Map(
-        livros.map((livro) => [
-          Number(livro.ordem),
-          livro,
-        ])
-      ),
-    [livros]
-  );
+  const trilhas = trilhasQuery.data ?? [];
+  const niveis = niveisQuery.data ?? [];
 
   /* =======================================================
      TRILHA JORNADA
   ======================================================= */
 
-  const trilhaJornada = useMemo(
-    () =>
+  const trilhaJornada = useMemo(() => {
+    return (
       trilhas.find(
         (trilha) =>
           trilha.nome
             .trim()
-            .toLowerCase() ===
-          "jornada"
-      ) ?? null,
-    [trilhas]
-  );
+            .toLowerCase() === "jornada"
+      ) ?? null
+    );
+  }, [trilhas]);
 
   /* =======================================================
      TRILHAS COMPLEMENTARES
   ======================================================= */
 
-  const trilhasComplementares =
-    useMemo(
-      () =>
-        trilhas.filter(
-          (trilha) =>
-            trilha.id !==
-            trilhaJornada?.id
-        ),
-      [trilhas, trilhaJornada]
+  const trilhasComplementares = useMemo(() => {
+    return trilhas.filter(
+      (trilha) =>
+        trilha.id !== trilhaJornada?.id
     );
+  }, [trilhas, trilhaJornada]);
 
   /* =======================================================
-     NÍVEIS DO FILTRO
+     CURSOS FILTRADOS
   ======================================================= */
 
-  const niveisFiltrados =
-    useMemo(() => {
-      if (filtroNivel === "todos") {
-        return niveis;
-      }
+  const cursosFiltrados = useMemo(() => {
+    return [...livros]
+      .filter((livro) => {
+        if (filtroTipo === "todos") {
+          return true;
+        }
 
-      return niveis.filter(
-        (nivel) =>
-          nivel.id === filtroNivel
+        if (filtroTipo === "jornada") {
+          return (
+            livro.trilha_id ===
+            trilhaJornada?.id
+          );
+        }
+
+        if (
+          filtroTipo ===
+          "complementares"
+        ) {
+          return (
+            livro.trilha_id !==
+            trilhaJornada?.id
+          );
+        }
+
+        return true;
+      })
+      .filter((livro) => {
+        if (filtroTrilha === "todas") {
+          return true;
+        }
+
+        return (
+          livro.trilha_id ===
+          filtroTrilha
+        );
+      })
+      .filter((livro) => {
+        if (filtroNivel === "todos") {
+          return true;
+        }
+
+        return (
+          livro.nivel_id ===
+          filtroNivel
+        );
+      })
+      .sort(
+        (a, b) =>
+          Number(a.ordem) -
+          Number(b.ordem)
       );
-    }, [niveis, filtroNivel]);
+  }, [
+    livros,
+    filtroTipo,
+    filtroTrilha,
+    filtroNivel,
+    trilhaJornada,
+  ]);
+
+  /* =======================================================
+     NÍVEIS DA TRILHA SELECIONADA NO FORMULÁRIO
+  ======================================================= */
+
+  const niveisDoFormulario = useMemo(() => {
+    if (!form.trilha_id) {
+      return [];
+    }
+
+    return niveis
+      .filter(
+        (nivel) =>
+          nivel.trilha_id ===
+          form.trilha_id
+      )
+      .sort(
+        (a, b) =>
+          Number(a.ordem) -
+          Number(b.ordem)
+      );
+  }, [niveis, form.trilha_id]);
 
   /* =======================================================
      ENVIO DE CAPA
   ======================================================= */
 
-  async function enviarCapa(
-    file: File
-  ) {
+  async function enviarCapa(file: File) {
     if (
       file.type !== "image/jpeg"
     ) {
-      throw new Error(
+      toast.error(
         "A capa deve estar em JPG ou JPEG."
       );
+      return;
     }
 
     if (
       file.size >
       5 * 1024 * 1024
     ) {
-      throw new Error(
+      toast.error(
         "A capa deve ter no máximo 5 MB."
       );
+      return;
     }
 
     setUploadingCapa(true);
@@ -459,7 +512,9 @@ function AdminLivrosPage() {
           );
 
       if (up.error) {
-        throw up.error;
+        throw new Error(
+          `Erro ao enviar capa: ${up.error.message}`
+        );
       }
 
       const {
@@ -469,8 +524,8 @@ function AdminLivrosPage() {
           .from("book-capas")
           .getPublicUrl(path);
 
-      setForm((f) => ({
-        ...f,
+      setForm((atual) => ({
+        ...atual,
         capa_url:
           data.publicUrl,
         imagem_url:
@@ -509,13 +564,20 @@ function AdminLivrosPage() {
         );
       }
 
+      const valor =
+        numeroMoeda(form.valor);
+
+      const vagas =
+        form.vagas.trim() === ""
+          ? 0
+          : Number(form.vagas);
+
       const payload = {
         trilha_id:
           form.trilha_id,
 
         nivel_id:
-          form.nivel_id ||
-          null,
+          form.nivel_id || null,
 
         titulo:
           form.titulo.trim(),
@@ -535,15 +597,9 @@ function AdminLivrosPage() {
           form.descricao.trim() ||
           null,
 
-        valor:
-          form.valor.trim() === ""
-            ? null
-            : Number(form.valor),
+        valor,
 
-        vagas:
-          form.vagas.trim() === ""
-            ? 0
-            : Number(form.vagas),
+        vagas,
 
         ano:
           form.ano.trim() === ""
@@ -603,7 +659,9 @@ function AdminLivrosPage() {
           );
 
         if (error) {
-          throw error;
+          throw new Error(
+            `Erro ao atualizar o curso: ${error.message}`
+          );
         }
       } else {
         const {
@@ -613,7 +671,9 @@ function AdminLivrosPage() {
           .insert(payload);
 
         if (error) {
-          throw error;
+          throw new Error(
+            `Erro ao cadastrar o curso: ${error.message}`
+          );
         }
       }
     },
@@ -634,9 +694,7 @@ function AdminLivrosPage() {
       });
     },
 
-    onError: (
-      e: unknown
-    ) => {
+    onError: (e: unknown) => {
       toast.error(
         e instanceof Error
           ? e.message
@@ -646,170 +704,137 @@ function AdminLivrosPage() {
   });
 
   /* =======================================================
-     CADASTRAR LIVRO DA HOME
-  ======================================================= */
-
-  const cadastrarHome =
-    useMutation({
-      mutationFn: async (
-        base: typeof HOME[number]
-      ) => {
-        if (porOrdem.has(base[0])) {
-          return;
-        }
-
-        const trilha =
-          trilhaJornada ??
-          trilhas[0];
-
-        if (!trilha) {
-          throw new Error(
-            "Nenhuma trilha cadastrada."
-          );
-        }
-
-        const {
-          error,
-        } = await supabase
-          .from("livros")
-          .insert({
-            trilha_id:
-              trilha.id,
-
-            nivel_id:
-              null,
-
-            titulo:
-              base[1],
-
-            autor:
-              base[2] ||
-              null,
-
-            ordem:
-              base[0],
-
-            categoria:
-              "Jornada",
-
-            vagas: 0,
-          });
-
-        if (error) {
-          throw error;
-        }
-      },
-
-      onSuccess:
-        async () => {
-          toast.success(
-            "Curso da Jornada cadastrado!"
-          );
-
-          await qc.invalidateQueries({
-            queryKey: [
-              "admin-livros",
-            ],
-          });
-        },
-
-      onError: (
-        e: unknown
-      ) =>
-        toast.error(
-          e instanceof Error
-            ? e.message
-            : "Não foi possível cadastrar o curso."
-        ),
-    });
-
-  /* =======================================================
-     NOVO NÍVEL
+     CADASTRAR NOVO NÍVEL
   ======================================================= */
 
   const cadastrarNivel =
     useMutation({
-      mutationFn:
-        async () => {
-          const nome =
-            novoNivelNome.trim();
+      mutationFn: async () => {
+        const nome =
+          novoNivelNome.trim();
 
-          if (!nome) {
-            throw new Error(
-              "Informe o nome do nível."
-            );
-          }
+        const trilhaId =
+          novoNivelTrilha;
 
-          if (
-            !novoNivelTrilha
-          ) {
-            throw new Error(
-              "Selecione a trilha do nível."
-            );
-          }
+        if (!nome) {
+          throw new Error(
+            "Informe o nome do nível."
+          );
+        }
 
-          const {
-            error,
-          } = await supabase
-            .from(
-              "niveis_trilha"
-            )
-            .insert({
-              nome,
-              trilha_id:
-                novoNivelTrilha,
-              ordem:
-                niveis.length +
-                1,
-            });
+        if (!trilhaId) {
+          throw new Error(
+            "Selecione a trilha do nível."
+          );
+        }
 
-          if (error) {
-            throw error;
-          }
-        },
-
-      onSuccess:
-        async () => {
-          toast.success(
-            "Nível cadastrado!"
+        /*
+         * Impede duplicidade dentro da mesma trilha.
+         */
+        const duplicado =
+          niveis.some(
+            (nivel) =>
+              nivel.trilha_id ===
+                trilhaId &&
+              nivel.nome
+                .trim()
+                .toLowerCase() ===
+                nome.toLowerCase()
           );
 
-          setNovoNivelNome("");
-          setNovoNivelTrilha(
-            trilhaJornada?.id ??
-              trilhas[0]?.id ??
-              ""
+        if (duplicado) {
+          throw new Error(
+            "Esse nível já está cadastrado nesta trilha."
+          );
+        }
+
+        /*
+         * Calcula a próxima ordem
+         * somente dentro da trilha.
+         */
+        const niveisDaTrilha =
+          niveis.filter(
+            (nivel) =>
+              nivel.trilha_id ===
+              trilhaId
           );
 
-          setNovoNivelAberto(
-            false
+        const maiorOrdem =
+          niveisDaTrilha.reduce(
+            (maior, nivel) =>
+              Math.max(
+                maior,
+                Number(nivel.ordem) || 0
+              ),
+            0
           );
 
-          await qc.invalidateQueries({
-            queryKey: [
-              "admin-niveis-trilha",
-            ],
+        const proximaOrdem =
+          maiorOrdem + 1;
+
+        const {
+          error,
+        } = await supabase
+          .from("niveis_trilha")
+          .insert({
+            nome,
+            trilha_id:
+              trilhaId,
+            ordem:
+              proximaOrdem,
           });
-        },
 
-      onError: (
-        e: unknown
-      ) =>
+        if (error) {
+          /*
+           * IMPORTANTE:
+           * mostra o erro REAL do Supabase.
+           */
+          throw new Error(
+            `Erro ao cadastrar nível: ${error.message}`
+          );
+        }
+      },
+
+      onSuccess: async () => {
+        toast.success(
+          "Nível cadastrado com sucesso!"
+        );
+
+        setNovoNivelNome("");
+
+        setNovoNivelTrilha(
+          trilhaJornada?.id ??
+            trilhas[0]?.id ??
+            ""
+        );
+
+        setNovoNivelAberto(
+          false
+        );
+
+        await qc.invalidateQueries({
+          queryKey: [
+            "admin-niveis-trilha",
+          ],
+        });
+      },
+
+      onError: (e: unknown) => {
         toast.error(
           e instanceof Error
             ? e.message
             : "Não foi possível cadastrar o nível."
-        ),
+        );
+      },
     });
 
   /* =======================================================
      EDITAR
   ======================================================= */
 
-  function editar(
-    livro: Livro
-  ) {
+  function editar(livro: Livro) {
     setCriando(false);
+
     setSelecionado(
       livro.id
     );
@@ -834,7 +859,7 @@ function AdminLivrosPage() {
       ordem:
         String(
           livro.ordem ??
-            1
+          1
         ),
 
       categoria:
@@ -850,13 +875,17 @@ function AdminLivrosPage() {
           ? ""
           : String(
               livro.valor
+            ).replace(
+              ".",
+              ","
             ),
 
       vagas:
-        String(
-          livro.vagas ??
-            0
-        ),
+        livro.vagas == null
+          ? ""
+          : String(
+              livro.vagas
+            ),
 
       ano:
         livro.ano == null
@@ -917,6 +946,7 @@ function AdminLivrosPage() {
       trilhas[0];
 
     setSelecionado(null);
+
     setCriando(true);
 
     setForm({
@@ -935,80 +965,48 @@ function AdminLivrosPage() {
   }
 
   /* =======================================================
+     NOVO NÍVEL
+  ======================================================= */
+
+  function abrirNovoNivel() {
+    setNovoNivelNome("");
+
+    setNovoNivelTrilha(
+      trilhaJornada?.id ??
+        trilhas[0]?.id ??
+        ""
+    );
+
+    setNovoNivelAberto(true);
+  }
+
+  /* =======================================================
      FECHAR
   ======================================================= */
 
   function fechar() {
     setSelecionado(null);
+
     setCriando(false);
+
     setForm({
       ...vazio,
     });
   }
 
   /* =======================================================
-     ALTERAR FORM
+     ALTERAR FORMULÁRIO
   ======================================================= */
 
   function set(
     key: keyof FormLivro,
     value: string
   ) {
-    setForm(
-      (atual) => ({
-        ...atual,
-        [key]: value,
-      })
-    );
+    setForm((atual) => ({
+      ...atual,
+      [key]: value,
+    }));
   }
-
-  /* =======================================================
-     CURSOS DA JORNADA
-  ======================================================= */
-
-  const livrosJornada =
-    livros
-      .filter(
-        (livro) =>
-          livro.trilha_id ===
-          trilhaJornada?.id
-      )
-      .filter(
-        (livro) =>
-          filtroNivel ===
-            "todos" ||
-          livro.nivel_id ===
-            filtroNivel
-      )
-      .sort(
-        (a, b) =>
-          Number(a.ordem) -
-          Number(b.ordem)
-      );
-
-  /* =======================================================
-     CURSOS COMPLEMENTARES
-  ======================================================= */
-
-  const livrosComplementares =
-    livros
-      .filter(
-        (livro) =>
-          livro.trilha_id !==
-            trilhaJornada?.id
-      )
-      .filter(
-        (livro) =>
-          filtroNivel ===
-            "todos" ||
-          livro.nivel_id ===
-            filtroNivel
-      )
-      .sort(
-        (a, b) =>
-          Number(a.ordem) -
-          Number(b.ordem)
-      );
 
   /* =======================================================
      NOME DO NÍVEL
@@ -1032,6 +1030,23 @@ function AdminLivrosPage() {
   }
 
   /* =======================================================
+     NOME DA TRILHA
+  ======================================================= */
+
+  function nomeTrilha(
+    trilhaId: string
+  ) {
+    return (
+      trilhas.find(
+        (trilha) =>
+          trilha.id ===
+          trilhaId
+      )?.nome ??
+      ""
+    );
+  }
+
+  /* =======================================================
      CARD DE CURSO
   ======================================================= */
 
@@ -1040,6 +1055,16 @@ function AdminLivrosPage() {
   }: {
     livro: Livro;
   }) {
+    const nivel =
+      nomeNivel(
+        livro.nivel_id
+      );
+
+    const trilha =
+      nomeTrilha(
+        livro.trilha_id
+      );
+
     return (
       <div
         className="flex min-w-0 cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors hover:border-primary hover:bg-secondary/50"
@@ -1048,7 +1073,9 @@ function AdminLivrosPage() {
         }
         role="button"
         tabIndex={0}
-        onKeyDown={(event) => {
+        onKeyDown={(
+          event
+        ) => {
           if (
             event.key ===
               "Enter" ||
@@ -1069,19 +1096,22 @@ function AdminLivrosPage() {
             {livro.titulo}
           </p>
 
-          <div className="mt-1 flex flex-wrap gap-2">
-            {nomeNivel(
-              livro.nivel_id
-            ) && (
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            {trilha && (
               <Badge
                 variant="outline"
                 className="text-[10px]"
               >
-                {
-                  nomeNivel(
-                    livro.nivel_id
-                  )
-                }
+                {trilha}
+              </Badge>
+            )}
+
+            {nivel && (
+              <Badge
+                variant="outline"
+                className="text-[10px]"
+              >
+                {nivel}
               </Badge>
             )}
 
@@ -1134,10 +1164,8 @@ function AdminLivrosPage() {
             type="button"
             variant="outline"
             className="w-full sm:w-auto"
-            onClick={() =>
-              setNovoNivelAberto(
-                true
-              )
+            onClick={
+              abrirNovoNivel
             }
           >
             <Plus className="mr-2 h-4 w-4" />
@@ -1158,22 +1186,116 @@ function AdminLivrosPage() {
         </div>
       </div>
 
-      {/* FILTRO */}
+      {/* ===================================================
+          FILTROS
+      =================================================== */}
 
       <Card>
-        <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <CardHeader>
+          <CardTitle className="text-lg">
+            Filtros
+          </CardTitle>
+        </CardHeader>
 
-          <div>
-            <p className="font-medium">
-              Filtrar cursos
-            </p>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
 
-            <p className="text-xs text-muted-foreground">
-              Selecione um nível para visualizar somente os cursos daquele nível.
-            </p>
+          {/* TIPO */}
+
+          <div className="space-y-1.5">
+            <Label>
+              Tipo de curso
+            </Label>
+
+            <Select
+              value={
+                filtroTipo
+              }
+              onValueChange={
+                (value) => {
+                  setFiltroTipo(
+                    value
+                  );
+
+                  /*
+                   * Quando muda o tipo,
+                   * limpa trilha para evitar
+                   * combinação confusa.
+                   */
+                  setFiltroTrilha(
+                    "todas"
+                  );
+                }
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="todos">
+                  Todos os cursos
+                </SelectItem>
+
+                <SelectItem value="jornada">
+                  Jornada
+                </SelectItem>
+
+                <SelectItem value="complementares">
+                  Cursos Complementares
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="w-full sm:w-80">
+          {/* TRILHA */}
+
+          <div className="space-y-1.5">
+            <Label>
+              Trilha
+            </Label>
+
+            <Select
+              value={
+                filtroTrilha
+              }
+              onValueChange={
+                setFiltroTrilha
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="todas">
+                  Todas as trilhas
+                </SelectItem>
+
+                {trilhas.map(
+                  (trilha) => (
+                    <SelectItem
+                      key={
+                        trilha.id
+                      }
+                      value={
+                        trilha.id
+                      }
+                    >
+                      {trilha.nome}
+                    </SelectItem>
+                  )
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* NÍVEL */}
+
+          <div className="space-y-1.5">
+            <Label>
+              Nível
+            </Label>
+
             <Select
               value={
                 filtroNivel
@@ -1213,80 +1335,40 @@ function AdminLivrosPage() {
       </Card>
 
       {/* ===================================================
-          LIVROS DA JORNADA
+          LISTA ÚNICA DE CURSOS
       =================================================== */}
 
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
-            Livros da Jornada
+            {filtroTipo ===
+            "jornada"
+              ? "Cursos da Jornada"
+              : filtroTipo ===
+                "complementares"
+              ? "Cursos Complementares"
+              : "Todos os cursos"}
           </CardTitle>
+
+          <p className="text-xs text-muted-foreground">
+            {cursosFiltrados.length}{" "}
+            {cursosFiltrados.length ===
+            1
+              ? "curso encontrado"
+              : "cursos encontrados"}
+          </p>
         </CardHeader>
 
         <CardContent className="space-y-2">
 
-          {livrosJornada.length ===
+          {cursosFiltrados.length ===
             0 && (
-            <p className="py-5 text-sm text-muted-foreground">
-              Nenhum curso da Jornada encontrado para este filtro.
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Nenhum curso encontrado para os filtros selecionados.
             </p>
           )}
 
-          {livrosJornada.map(
-            (livro) => (
-              <CursoCard
-                key={
-                  livro.id
-                }
-                livro={
-                  livro
-                }
-              />
-            )
-          )}
-
-        </CardContent>
-      </Card>
-
-      {/* ===================================================
-          CURSOS COMPLEMENTARES
-      =================================================== */}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            Cursos Complementares
-          </CardTitle>
-
-          {trilhasComplementares.length >
-            0 && (
-            <p className="text-xs text-muted-foreground">
-              {
-                trilhasComplementares
-                  .map(
-                    (
-                      trilha
-                    ) =>
-                      trilha.nome
-                  )
-                  .join(
-                    " · "
-                  )
-              }
-            </p>
-          )}
-        </CardHeader>
-
-        <CardContent className="space-y-2">
-
-          {livrosComplementares.length ===
-            0 && (
-            <p className="py-5 text-sm text-muted-foreground">
-              Nenhum curso complementar cadastrado para este filtro.
-            </p>
-          )}
-
-          {livrosComplementares.map(
+          {cursosFiltrados.map(
             (livro) => (
               <CursoCard
                 key={
@@ -1376,7 +1458,26 @@ function AdminLivrosPage() {
               </Select>
             </Field>
 
+            <div className="rounded-lg border border-border bg-secondary/30 p-3">
+              <p className="text-xs text-muted-foreground">
+                Exemplos de níveis:
+              </p>
+
+              <p className="mt-1 text-sm">
+                Curso Essencial
+              </p>
+
+              <p className="text-sm">
+                Curso Avançado I, II, III e IV
+              </p>
+
+              <p className="text-sm">
+                Masterclass I e II
+              </p>
+            </div>
+
             <div className="flex gap-2">
+
               <Button
                 type="button"
                 disabled={
@@ -1392,7 +1493,9 @@ function AdminLivrosPage() {
                   <Save className="mr-2 h-4 w-4" />
                 )}
 
-                Salvar nível
+                {cadastrarNivel.isPending
+                  ? "Salvando..."
+                  : "Salvar nível"}
               </Button>
 
               <Button
@@ -1407,9 +1510,11 @@ function AdminLivrosPage() {
                 <X className="mr-2 h-4 w-4" />
                 Cancelar
               </Button>
+
             </div>
 
           </div>
+
         </DialogContent>
       </Dialog>
 
@@ -1444,7 +1549,9 @@ function AdminLivrosPage() {
 
           <form
             className="space-y-4"
-            onSubmit={(event) => {
+            onSubmit={(
+              event
+            ) => {
               event.preventDefault();
               salvar.mutate();
             }}
@@ -1502,12 +1609,35 @@ function AdminLivrosPage() {
                   }
                   onValueChange={(
                     value
-                  ) =>
+                  ) => {
                     set(
                       "trilha_id",
                       value
-                    )
-                  }
+                    );
+
+                    /*
+                     * Ao trocar a trilha,
+                     * remove um nível que
+                     * pertencia à trilha anterior.
+                     */
+                    const nivelAtual =
+                      niveis.find(
+                        (nivel) =>
+                          nivel.id ===
+                          form.nivel_id
+                      );
+
+                    if (
+                      nivelAtual &&
+                      nivelAtual.trilha_id !==
+                        value
+                    ) {
+                      set(
+                        "nivel_id",
+                        ""
+                      );
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a trilha" />
@@ -1515,9 +1645,7 @@ function AdminLivrosPage() {
 
                   <SelectContent>
                     {trilhas.map(
-                      (
-                        trilha
-                      ) => (
+                      (trilha) => (
                         <SelectItem
                           key={
                             trilha.id
@@ -1566,34 +1694,22 @@ function AdminLivrosPage() {
                       Sem nível
                     </SelectItem>
 
-                    {niveis
-                      .filter(
-                        (
-                          nivel
-                        ) =>
-                          !form.trilha_id ||
-                          !nivel.trilha_id ||
-                          nivel.trilha_id ===
-                            form.trilha_id
+                    {niveisDoFormulario.map(
+                      (nivel) => (
+                        <SelectItem
+                          key={
+                            nivel.id
+                          }
+                          value={
+                            nivel.id
+                          }
+                        >
+                          {
+                            nivel.nome
+                          }
+                        </SelectItem>
                       )
-                      .map(
-                        (
-                          nivel
-                        ) => (
-                          <SelectItem
-                            key={
-                              nivel.id
-                            }
-                            value={
-                              nivel.id
-                            }
-                          >
-                            {
-                              nivel.nome
-                            }
-                          </SelectItem>
-                        )
-                      )}
+                    )}
 
                   </SelectContent>
                 </Select>
@@ -1613,8 +1729,11 @@ function AdminLivrosPage() {
                   ) =>
                     set(
                       "ordem",
-                      event.target
-                        .value
+                      somenteNumeros(
+                        event
+                          .target
+                          .value
+                      )
                     )
                   }
                 />
@@ -1641,27 +1760,35 @@ function AdminLivrosPage() {
 
               {/* VALOR */}
 
-              <Field label="Valor (R$)">
-                <Input
-                  type="text"
-                  inputMode="decimal"
-                  value={
-                    form.valor
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    set(
-                      "valor",
-                      event.target
-                        .value
-                    )
-                  }
-                  placeholder="0,00"
-                />
+              <Field label="Valor">
+                <div className="flex h-10 w-full items-center rounded-md border border-input bg-background px-3">
+                  <span className="mr-2 text-sm font-medium text-muted-foreground">
+                    R$
+                  </span>
+
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={
+                      form.valor
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      set(
+                        "valor",
+                        event.target
+                          .value
+                      )
+                    }
+                    placeholder="0,00"
+                    className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none"
+                  />
+                </div>
 
                 <p className="text-xs text-muted-foreground">
-                  Digite o valor, por exemplo: 250 ou 250,00
+                  Digite, por exemplo:
+                  250 ou 250,00
                 </p>
               </Field>
 
@@ -1679,8 +1806,11 @@ function AdminLivrosPage() {
                   ) =>
                     set(
                       "vagas",
-                      event.target
-                        .value
+                      somenteNumeros(
+                        event
+                          .target
+                          .value
+                      )
                     )
                   }
                   placeholder="0"
@@ -1721,8 +1851,11 @@ function AdminLivrosPage() {
                   ) =>
                     set(
                       "ano",
-                      event.target
-                        .value
+                      somenteNumeros(
+                        event
+                          .target
+                          .value
+                      )
                     )
                   }
                 />
@@ -1742,8 +1875,11 @@ function AdminLivrosPage() {
                   ) =>
                     set(
                       "qtd_encontros",
-                      event.target
-                        .value
+                      somenteNumeros(
+                        event
+                          .target
+                          .value
+                      )
                     )
                   }
                 />
@@ -1868,6 +2004,7 @@ function AdminLivrosPage() {
                   <p className="text-xs text-muted-foreground">
                     Máximo 5 MB.
                   </p>
+
                 </div>
               </Field>
 
@@ -1985,8 +2122,8 @@ function AdminLivrosPage() {
                 {salvar.isPending
                   ? "Salvando..."
                   : uploadingCapa
-                    ? "Enviando capa..."
-                    : "Salvar"}
+                  ? "Enviando capa..."
+                  : "Salvar"}
               </Button>
 
               <Button
@@ -2004,6 +2141,7 @@ function AdminLivrosPage() {
             </div>
 
           </form>
+
         </DialogContent>
       </Dialog>
 
