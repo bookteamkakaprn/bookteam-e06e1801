@@ -13,36 +13,54 @@ import { toast } from "sonner";
 import { Clock, Loader2, Upload } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/matricula/$inscricaoId")({
-  head: () => ({ meta: [{ title: "Matrícula — Book Team" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({
+    meta: [
+      { title: "Matrícula — Book Team" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
   component: MatriculaPage,
 });
 
 const MAX_SIZE = 10 * 1024 * 1024;
-const ALLOWED = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+
+const ALLOWED = [
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+];
 
 function MatriculaPage() {
   const { inscricaoId } = Route.useParams();
   const { user } = useAuth();
   const qc = useQueryClient();
+
   const [file, setFile] = useState<File | null>(null);
   const [obs, setObs] = useState("");
 
   const { data, isLoading } = useQuery({
     enabled: !!user,
     queryKey: ["matricula", inscricaoId],
+
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inscricoes")
-        .select("*, turmas(*, livros(titulo)), pagamentos(id, status, valor, created_at)")
+        .select(
+          "*, turmas(*, livros(titulo)), pagamentos(id, status, valor, created_at)"
+        )
         .eq("id", inscricaoId)
         .maybeSingle();
+
       if (error) throw error;
+
       return data;
     },
   });
 
   const { data: pix } = useQuery({
     queryKey: ["config-pagamento"],
+
     queryFn: async () => {
       const { data, error } = await supabase
         .from("configuracoes_pagamento")
@@ -50,51 +68,143 @@ function MatriculaPage() {
         .order("created_at")
         .limit(1)
         .maybeSingle();
+
       if (error) throw error;
+
       return data;
     },
   });
 
   const enviar = useMutation({
     mutationFn: async () => {
-      if (!user || !data) throw new Error("Matrícula não encontrada");
-      if (!file) throw new Error("Selecione o comprovante");
-      if (file.size > MAX_SIZE) throw new Error("Arquivo maior que 10 MB");
-      if (!ALLOWED.includes(file.type)) throw new Error("Formato inválido — use PDF, JPG, JPEG ou PNG");
+      if (!user || !data) {
+        throw new Error("Matrícula não encontrada");
+      }
 
-      const ext = (file.name.split(".").pop() ?? "bin").toLowerCase();
+      if (!file) {
+        throw new Error("Selecione o comprovante");
+      }
+
+      if (file.size > MAX_SIZE) {
+        throw new Error("Arquivo maior que 10 MB");
+      }
+
+      if (!ALLOWED.includes(file.type)) {
+        throw new Error(
+          "Formato inválido — use PDF, JPG, JPEG ou PNG"
+        );
+      }
+
+      const ext = (
+        file.name.split(".").pop() ?? "bin"
+      ).toLowerCase();
+
       const path = `${user.id}/${inscricaoId}/${Date.now()}.${ext}`;
+
+      /*
+       * 1. Envia o arquivo para o Storage privado
+       */
       const up = await supabase.storage
         .from("comprovantes")
-        .upload(path, file, { upsert: false, contentType: file.type });
-      if (up.error) throw up.error;
+        .upload(path, file, {
+          upsert: false,
+          contentType: file.type,
+        });
 
-      const { error } = await supabase.from("pagamentos").insert({
-        inscricao_id: inscricaoId,
-        participante_id: user.id,
-        turma_id: data.turma_id,
-        valor: Number(data.turmas?.valor ?? 0),
-        comprovante_url: path,
-        status: "aguardando",
-        observacao: obs || null,
-      });
-      if (error) throw error;
+      if (up.error) {
+        throw new Error(
+          `Erro ao enviar arquivo: ${up.error.message}`
+        );
+      }
+
+      /*
+       * 2. Verifica se já existe um pagamento
+       */
+      const pagamentoAtual = data.pagamentos?.[0];
+
+      /*
+       * 3. Se já existe pagamento, atualiza.
+       *    Isso evita criar vários pagamentos para a mesma matrícula.
+       */
+      if (pagamentoAtual) {
+        const { error } = await supabase
+          .from("pagamentos")
+          .update({
+            comprovante_url: path,
+            status: "aguardando",
+          })
+          .eq("id", pagamentoAtual.id);
+
+        if (error) {
+          throw new Error(
+            `Erro ao salvar comprovante: ${error.message}`
+          );
+        }
+      } else {
+        /*
+         * 4. Se ainda não existe pagamento, cria um novo.
+         */
+        const { error } = await supabase
+          .from("pagamentos")
+          .insert({
+            inscricao_id: inscricaoId,
+            valor: Number(data.turmas?.valor ?? 0),
+            comprovante_url: path,
+            status: "aguardando",
+          });
+
+        if (error) {
+          throw new Error(
+            `Erro ao registrar pagamento: ${error.message}`
+          );
+        }
+      }
     },
+
     onSuccess: () => {
-      toast.success("Comprovante enviado!");
+      toast.success("Comprovante enviado com sucesso!");
+
       setFile(null);
       setObs("");
-      qc.invalidateQueries({ queryKey: ["matricula", inscricaoId] });
+
+      qc.invalidateQueries({
+        queryKey: ["matricula", inscricaoId],
+      });
     },
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Erro ao enviar"),
+
+    onError: (e: unknown) => {
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : "Erro ao enviar comprovante"
+      );
+    },
   });
 
-  if (isLoading) return <p className="text-muted-foreground">Carregando…</p>;
+  if (isLoading) {
+    return (
+      <p className="text-muted-foreground">
+        Carregando…
+      </p>
+    );
+  }
+
   if (!data) {
     return (
       <div className="space-y-3">
-        <p className="text-muted-foreground">Matrícula não encontrada.</p>
-        <Button asChild variant="link" className="px-0"><Link to="/inicio">Voltar ao painel</Link></Button>
+        <p className="text-muted-foreground">
+          Matrícula não encontrada.
+        </p>
+
+        <Button
+          asChild
+          variant="link"
+          className="px-0"
+        >
+          <Link to="/inicio">
+            Voltar ao painel
+          </Link>
+        </Button>
       </div>
     );
   }
@@ -104,19 +214,40 @@ function MatriculaPage() {
 
   return (
     <div className="space-y-6">
+
+      {/* Cabeçalho da matrícula */}
       <div>
-        <h1 className="font-serif text-2xl font-semibold">{turma?.livros?.titulo ?? "Matrícula"}</h1>
+        <h1 className="font-serif text-2xl font-semibold">
+          {turma?.livros?.titulo ?? "Matrícula"}
+        </h1>
+
         <p className="text-sm text-muted-foreground">
-          {[turma?.nome, turma?.horario, turma?.sala].filter(Boolean).join(" · ")}
+          {[
+            turma?.nome,
+            turma?.horario,
+            turma?.sala,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         </p>
-        {data.codigo && <p className="mt-1 text-xs text-muted-foreground">Código: {data.codigo}</p>}
+
+        {data.codigo && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Código: {data.codigo}
+          </p>
+        )}
       </div>
 
+      {/* Status do pagamento */}
       {pagamento && (
         <Card>
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
+
             <div>
-              <p className="text-sm font-semibold">Status do pagamento</p>
+              <p className="text-sm font-semibold">
+                Status do pagamento
+              </p>
+
               <p className="text-sm text-muted-foreground">
                 {pagamento.status === "aprovado"
                   ? "Pagamento aprovado — inscrição confirmada."
@@ -125,86 +256,217 @@ function MatriculaPage() {
                     : "Aguardando validação financeira."}
               </p>
             </div>
-            <Badge variant={pagamento.status === "aprovado" ? "secondary" : "outline"} className="gap-1">
+
+            <Badge
+              variant={
+                pagamento.status === "aprovado"
+                  ? "secondary"
+                  : "outline"
+              }
+              className="gap-1"
+            >
               <Clock className="h-3.5 w-3.5" />
-              {pagamento.status === "aprovado" ? "Pago" : pagamento.status === "rejeitado" ? "Recusado" : "Pendente"}
+
+              {pagamento.status === "aprovado"
+                ? "Pago"
+                : pagamento.status === "rejeitado"
+                  ? "Recusado"
+                  : "Pendente"}
             </Badge>
+
           </CardContent>
         </Card>
       )}
 
-      {pix && (pix.pix_chave || pix.pix_copia_cola || pix.pix_qrcode_url) && (
-        <Card>
-          <CardHeader><CardTitle className="text-base">Dados para PIX</CardTitle></CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-start">
-            {pix.pix_qrcode_url && (
-              <img
-                src={pix.pix_qrcode_url}
-                alt="QR Code do PIX para pagamento"
-                loading="lazy"
-                className="h-40 w-40 rounded-md border border-border object-contain"
-              />
-            )}
-            <div className="space-y-1 text-sm">
-              {pix.beneficiario && <p><span className="text-muted-foreground">Beneficiário:</span> {pix.beneficiario}</p>}
-              {pix.banco && <p><span className="text-muted-foreground">Banco:</span> {pix.banco}</p>}
-              {pix.tipo_chave && <p><span className="text-muted-foreground">Tipo da chave:</span> {pix.tipo_chave}</p>}
-              {pix.pix_chave && <p className="break-all"><span className="text-muted-foreground">Chave:</span> {pix.pix_chave}</p>}
-              {pix.pix_copia_cola && (
-                <div className="space-y-1.5 pt-2">
-                  <p className="break-all rounded-md bg-muted p-2 text-xs">{pix.pix_copia_cola}</p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      navigator.clipboard.writeText(pix.pix_copia_cola!);
-                      toast.success("Código PIX copiado");
-                    }}
-                  >
-                    Copiar código PIX
-                  </Button>
-                </div>
+      {/* Dados do PIX */}
+      {pix &&
+        (pix.pix_chave ||
+          pix.pix_copia_cola ||
+          pix.pix_qrcode_url) && (
+          <Card>
+
+            <CardHeader>
+              <CardTitle className="text-base">
+                Dados para PIX
+              </CardTitle>
+            </CardHeader>
+
+            <CardContent className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-start">
+
+              {pix.pix_qrcode_url && (
+                <img
+                  src={pix.pix_qrcode_url}
+                  alt="QR Code do PIX para pagamento"
+                  loading="lazy"
+                  className="h-40 w-40 rounded-md border border-border object-contain"
+                />
               )}
-              {pix.instrucoes && <p className="pt-2 text-muted-foreground">{pix.instrucoes}</p>}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
+              <div className="space-y-1 text-sm">
+
+                {pix.beneficiario && (
+                  <p>
+                    <span className="text-muted-foreground">
+                      Beneficiário:
+                    </span>{" "}
+                    {pix.beneficiario}
+                  </p>
+                )}
+
+                {pix.banco && (
+                  <p>
+                    <span className="text-muted-foreground">
+                      Banco:
+                    </span>{" "}
+                    {pix.banco}
+                  </p>
+                )}
+
+                {pix.tipo_chave && (
+                  <p>
+                    <span className="text-muted-foreground">
+                      Tipo da chave:
+                    </span>{" "}
+                    {pix.tipo_chave}
+                  </p>
+                )}
+
+                {pix.pix_chave && (
+                  <p className="break-all">
+                    <span className="text-muted-foreground">
+                      Chave:
+                    </span>{" "}
+                    {pix.pix_chave}
+                  </p>
+                )}
+
+                {pix.pix_copia_cola && (
+                  <div className="space-y-1.5 pt-2">
+
+                    <p className="break-all rounded-md bg-muted p-2 text-xs">
+                      {pix.pix_copia_cola}
+                    </p>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(
+                          pix.pix_copia_cola!
+                        );
+
+                        toast.success(
+                          "Código PIX copiado"
+                        );
+                      }}
+                    >
+                      Copiar código PIX
+                    </Button>
+
+                  </div>
+                )}
+
+                {pix.instrucoes && (
+                  <p className="pt-2 text-muted-foreground">
+                    {pix.instrucoes}
+                  </p>
+                )}
+
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+      {/* Enviar comprovante */}
       <Card>
-        <CardHeader><CardTitle className="text-base">Enviar comprovante</CardTitle></CardHeader>
+
+        <CardHeader>
+          <CardTitle className="text-base">
+            Enviar comprovante
+          </CardTitle>
+        </CardHeader>
+
         <CardContent className="space-y-4">
+
           {turma?.valor != null && (
             <p className="text-sm text-muted-foreground">
               Valor:{" "}
               <span className="font-semibold text-foreground">
-                {Number(turma.valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                {Number(turma.valor).toLocaleString(
+                  "pt-BR",
+                  {
+                    style: "currency",
+                    currency: "BRL",
+                  }
+                )}
               </span>
             </p>
           )}
+
           <div className="space-y-1.5">
-            <Label htmlFor="arquivo">Arquivo (PDF, PNG, JPG ou JPEG — até 10 MB)</Label>
+
+            <Label htmlFor="arquivo">
+              Arquivo (PDF, PNG, JPG ou JPEG — até 10 MB)
+            </Label>
+
             <Input
               id="arquivo"
               type="file"
               accept=".pdf,.png,.jpg,.jpeg"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              onChange={(e) =>
+                setFile(
+                  e.target.files?.[0] ?? null
+                )
+              }
             />
+
+            {file && (
+              <p className="text-xs text-muted-foreground">
+                Arquivo selecionado:{" "}
+                <span className="font-medium text-foreground">
+                  {file.name}
+                </span>
+              </p>
+            )}
+
           </div>
+
           <div className="space-y-1.5">
-            <Label htmlFor="obs">Observação (opcional)</Label>
-            <Textarea id="obs" value={obs} onChange={(e) => setObs(e.target.value)} />
+
+            <Label htmlFor="obs">
+              Observação (opcional)
+            </Label>
+
+            <Textarea
+              id="obs"
+              value={obs}
+              onChange={(e) =>
+                setObs(e.target.value)
+              }
+              placeholder="Se necessário, escreva uma observação..."
+            />
+
           </div>
+
           <Button
             className="gap-2 bg-gold text-primary-foreground hover:bg-gold/90"
             disabled={enviar.isPending}
             onClick={() => enviar.mutate()}
           >
-            {enviar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            Enviar comprovante
+            {enviar.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Upload className="h-4 w-4" />
+            )}
+
+            {enviar.isPending
+              ? "Enviando..."
+              : "Enviar comprovante"}
           </Button>
+
         </CardContent>
       </Card>
+
     </div>
   );
 }
