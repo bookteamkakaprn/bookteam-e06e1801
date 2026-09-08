@@ -429,13 +429,17 @@ function SignUpForm() {
 
 
     /*
-     * IMPORTANTE:
+     * URL FIXA DE PRODUÇÃO:
      * Depois do cadastro, o Supabase enviará o usuário
      * para esta URL após confirmar o email.
+     *
+     * Não usamos window.location.origin porque o sistema
+     * pode estar sendo executado em localhost durante o
+     * desenvolvimento.
      */
 
     const emailRedirectTo =
-      `${window.location.origin}/inicio`;
+      "https://ministeriobookteam.com.br/inicio";
 
 
     const { error } =
@@ -724,14 +728,13 @@ function ForgotForm() {
 
 
     /*
-     * O usuário receberá o email de recuperação
-     * e será enviado para:
-     *
-     * /reset-password
+     * URL FIXA DE PRODUÇÃO:
+     * O link de recuperação deve voltar para o domínio
+     * oficial do Book Team, nunca para localhost.
      */
 
     const resetRedirectUrl =
-      `${window.location.origin}/reset-password`;
+      "https://ministeriobookteam.com.br/reset-password";
 
 
     const { error } =
