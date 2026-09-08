@@ -109,12 +109,22 @@ type Nivel = {
  * - não aparecerem setinhas;
  * - não perder o foco.
  */
+const CATEGORIAS = [
+  "Homens",
+  "Mulheres",
+  "Mulheres solteiras",
+  "Misto",
+  "Família",
+  "Ministério (Staff)",
+] as const;
+
 type FormLivro = {
   tipo_curso: "jornada" | "complementar";
   nivel_id: string;
 
   titulo: string;
   autor: string;
+  categoria: string;
 
   ordem: string;
   descricao: string;
@@ -130,9 +140,6 @@ type FormLivro = {
   datas_curriculo: string;
   data_curso: string;
 };
-
-/* =========================================================
-   LIVROS DA HOME};
 
 /* =========================================================
    LIVROS DA HOME / JORNADA
@@ -161,6 +168,7 @@ const vazio: FormLivro = {
 
   titulo: "",
   autor: "",
+  categoria: "",
 
   ordem: "1",
   descricao: "",
@@ -400,6 +408,10 @@ function AdminLivrosPage() {
         throw new Error("Informe o nome do curso.");
       }
 
+      if (!form.categoria) {
+        throw new Error("Selecione uma categoria.");
+      }
+
       const trilhaId =
         form.tipo_curso === "jornada"
           ? trilhaJornada?.id
@@ -419,6 +431,7 @@ function AdminLivrosPage() {
         nivel_id: form.nivel_id || null,
         titulo: form.titulo.trim(),
         autor: form.autor.trim() || null,
+        categoria: form.categoria || null,
         ordem: Number(form.ordem) || 1,
         descricao: form.descricao.trim() || null,
         valor:
@@ -517,7 +530,7 @@ function AdminLivrosPage() {
               base[0],
 
             categoria:
-              "Jornada",
+              null,
 
             vagas: 0,
           });
@@ -653,6 +666,7 @@ function AdminLivrosPage() {
       nivel_id: livro.nivel_id ?? "",
       titulo: livro.titulo ?? "",
       autor: livro.autor ?? "",
+      categoria: livro.categoria ?? "",
       ordem: String(livro.ordem ?? 1),
       descricao: livro.descricao ?? "",
       valor: livro.valor == null ? "" : String(livro.valor),
@@ -810,6 +824,15 @@ function AdminLivrosPage() {
                     livro.nivel_id
                   )
                 }
+              </Badge>
+            )}
+
+            {livro.categoria && (
+              <Badge
+                variant="secondary"
+                className="text-[10px]"
+              >
+                {livro.categoria}
               </Badge>
             )}
 
@@ -1166,6 +1189,32 @@ function AdminLivrosPage() {
                   <SelectContent>
                     <SelectItem value="jornada">Jornada</SelectItem>
                     <SelectItem value="complementar">Cursos Complementares</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              {/* CATEGORIA */}
+
+              <Field label="Categoria">
+                <Select
+                  value={form.categoria || "sem-categoria"}
+                  onValueChange={(value) =>
+                    set(
+                      "categoria",
+                      value === "sem-categoria" ? "" : value
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sem-categoria">Selecione</SelectItem>
+                    {CATEGORIAS.map((categoria) => (
+                      <SelectItem key={categoria} value={categoria}>
+                        {categoria}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </Field>
