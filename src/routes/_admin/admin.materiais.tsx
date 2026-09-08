@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,10 +28,13 @@ import {
   Upload,
   Loader2,
   FileText,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_admin/admin/materiais")({
+export const Route = createFileRoute(
+  "/_admin/admin/materiais"
+)({
   component: AdminMateriaisPage,
 });
 
@@ -48,15 +55,26 @@ type Material = {
   tamanho_bytes: number | null;
   mime_type: string | null;
   url: string;
+  created_at: string;
 };
 
 function AdminMateriaisPage() {
   const qc = useQueryClient();
 
+  // Curso usado para CADASTRAR um novo material
   const [livroId, setLivroId] = useState("");
+
+  // Curso usado SOMENTE para FILTRAR a lista
+  const [filtroLivroId, setFiltroLivroId] =
+    useState("");
+
   const [modulo, setModulo] = useState("1");
   const [titulo, setTitulo] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [file, setFile] =
+    useState<File | null>(null);
+
+  const [abrindo, setAbrindo] =
+    useState<string | null>(null);
 
   /*
    * LIVROS / CURSOS
@@ -81,21 +99,23 @@ function AdminMateriaisPage() {
   });
 
   /*
-   * MATERIAIS DO CURSO SELECIONADO
+   * BUSCA TODOS OS MATERIAIS
+   *
+   * IMPORTANTE:
+   * Não depende mais do curso selecionado no formulário.
    */
   const matQ = useQuery({
-    enabled: !!livroId,
-    queryKey: ["admin-materiais", livroId],
+    queryKey: ["admin-materiais-todos"],
 
     queryFn: async () => {
       const { data, error } = await supabase
         .from("materiais")
         .select(
-          "id,livro_id,modulo,titulo,descricao,arquivo_nome,tamanho_bytes,mime_type,url"
+          "id,livro_id,modulo,titulo,descricao,arquivo_nome,tamanho_bytes,mime_type,url,created_at"
         )
-        .eq("livro_id", livroId)
-        .order("modulo")
-        .order("created_at");
+        .order("created_at", {
+          ascending: false,
+        });
 
       if (error) {
         throw new Error(
@@ -108,23 +128,26 @@ function AdminMateriaisPage() {
   });
 
   /*
-   * ENVIO DO MATERIAL
+   * ENVIAR MATERIAL
    */
   const enviar = useMutation({
     mutationFn: async () => {
-      /*
-       * VALIDAÇÕES
-       */
       if (!livroId) {
-        throw new Error("Selecione o livro/curso.");
+        throw new Error(
+          "Selecione o livro/curso."
+        );
       }
 
       if (!modulo || Number(modulo) < 1) {
-        throw new Error("Informe um número de módulo válido.");
+        throw new Error(
+          "Informe um número de módulo válido."
+        );
       }
 
       if (!file) {
-        throw new Error("Selecione um arquivo.");
+        throw new Error(
+          "Selecione um arquivo."
+        );
       }
 
       if (file.size > MAX) {
@@ -133,57 +156,59 @@ function AdminMateriaisPage() {
         );
       }
 
-      /*
-       * CAMINHO DO ARQUIVO
-       */
       const ext = (
-        file.name.split(".").pop() || "bin"
+        file.name.split(".").pop() ||
+        "bin"
       ).toLowerCase();
 
-      const numeroModulo = Number(modulo) || 1;
+      const numeroModulo =
+        Number(modulo) || 1;
 
       const path =
         `${livroId}/modulo-${numeroModulo}/` +
         `${crypto.randomUUID()}.${ext}`;
 
       /*
-       * 1 — ENVIA ARQUIVO PARA O STORAGE
+       * ENVIA O ARQUIVO PARA O STORAGE
        */
-      const up = await supabase.storage
+      const upload = await supabase.storage
         .from("book-materiais")
-        .upload(path, file, {
-          upsert: false,
-          contentType:
-            file.type || "application/octet-stream",
-        });
+        .upload(
+          path,
+          file,
+          {
+            upsert: false,
+            contentType:
+              file.type ||
+              "application/octet-stream",
+          }
+        );
 
-      if (up.error) {
+      if (upload.error) {
         throw new Error(
-          `Erro ao enviar arquivo: ${up.error.message}`
+          `Erro ao enviar arquivo: ${upload.error.message}`
         );
       }
 
       /*
-       * 2 — SALVA O REGISTRO NA TABELA MATERIAIS
+       * SALVA O REGISTRO NO BANCO
        */
       const { error } = await supabase
         .from("materiais")
         .insert({
           livro_id: livroId,
           modulo: numeroModulo,
-          titulo: titulo.trim() || file.name,
+          titulo:
+            titulo.trim() || file.name,
           arquivo_nome: file.name,
           tamanho_bytes: file.size,
           mime_type:
-            file.type || "application/octet-stream",
+            file.type ||
+            "application/octet-stream",
           tipo: "arquivo",
           url: path,
         });
 
-      /*
-       * Se o banco rejeitar o registro,
-       * remove o arquivo que acabou de ser enviado.
-       */
       if (error) {
         await supabase.storage
           .from("book-materiais")
@@ -205,40 +230,103 @@ function AdminMateriaisPage() {
       setTitulo("");
       setFile(null);
 
-      const input = document.getElementById(
-        "material-file"
-      ) as HTMLInputElement | null;
+      const input =
+        document.getElementById(
+          "material-file"
+        ) as HTMLInputElement | null;
 
       if (input) {
         input.value = "";
       }
 
+      // Atualiza a lista de materiais
       qc.invalidateQueries({
-        queryKey: ["admin-materiais", livroId],
+        queryKey: [
+          "admin-materiais-todos",
+        ],
       });
     },
 
-    onError: (e: unknown) => {
+    onError: (error: unknown) => {
       toast.error(
-        e instanceof Error
-          ? e.message
+        error instanceof Error
+          ? error.message
           : "Não foi possível enviar o material."
       );
     },
   });
 
   /*
+   * ABRIR MATERIAL
+   */
+  async function abrirMaterial(
+    material: Material
+  ) {
+    try {
+      setAbrindo(material.id);
+
+      // Abre a aba imediatamente para evitar
+      // bloqueio de popup do navegador.
+      const novaAba = window.open(
+        "about:blank",
+        "_blank"
+      );
+
+      const {
+        data,
+        error,
+      } = await supabase.storage
+        .from("book-materiais")
+        .createSignedUrl(
+          material.url,
+          300
+        );
+
+      if (error) {
+        novaAba?.close();
+        throw new Error(error.message);
+      }
+
+      if (!data?.signedUrl) {
+        novaAba?.close();
+
+        throw new Error(
+          "Não foi possível gerar o acesso ao arquivo."
+        );
+      }
+
+      if (novaAba) {
+        novaAba.location.href =
+          data.signedUrl;
+      } else {
+        window.open(
+          data.signedUrl,
+          "_blank",
+          "noopener,noreferrer"
+        );
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? `Não foi possível abrir o material: ${error.message}`
+          : "Não foi possível abrir o material."
+      );
+    } finally {
+      setAbrindo(null);
+    }
+  }
+
+  /*
    * EXCLUIR MATERIAL
    */
   const excluir = useMutation({
-    mutationFn: async (m: Material) => {
-      /*
-       * Remove primeiro o registro do banco.
-       */
+    mutationFn: async (
+      material: Material
+    ) => {
       const { error } = await supabase
         .from("materiais")
         .delete()
-        .eq("id", m.id);
+        .eq("id", material.id);
 
       if (error) {
         throw new Error(
@@ -246,39 +334,78 @@ function AdminMateriaisPage() {
         );
       }
 
-      /*
-       * Depois remove o arquivo do Storage.
-       */
-      if (m.url) {
-        const { error: storageError } =
-          await supabase.storage
-            .from("book-materiais")
-            .remove([m.url]);
+      if (material.url) {
+        const {
+          error: storageError,
+        } = await supabase.storage
+          .from("book-materiais")
+          .remove([
+            material.url,
+          ]);
 
         if (storageError) {
           throw new Error(
-            `Material removido do banco, mas não foi possível remover o arquivo: ${storageError.message}`
+            `O cadastro foi removido, mas o arquivo não pôde ser removido: ${storageError.message}`
           );
         }
       }
     },
 
     onSuccess: () => {
-      toast.success("Material removido.");
+      toast.success(
+        "Material removido."
+      );
 
       qc.invalidateQueries({
-        queryKey: ["admin-materiais", livroId],
+        queryKey: [
+          "admin-materiais-todos",
+        ],
       });
     },
 
-    onError: (e: unknown) => {
+    onError: (error: unknown) => {
       toast.error(
-        e instanceof Error
-          ? e.message
+        error instanceof Error
+          ? error.message
           : "Não foi possível remover."
       );
     },
   });
+
+  /*
+   * TODOS OS MATERIAIS
+   */
+  const todosMateriais =
+    matQ.data ?? [];
+
+  /*
+   * APLICA O FILTRO
+   *
+   * Se estiver em "Todos os cursos",
+   * mostra tudo.
+   */
+  const materiaisFiltrados =
+    filtroLivroId
+      ? todosMateriais.filter(
+          (material) =>
+            material.livro_id ===
+            filtroLivroId
+        )
+      : todosMateriais;
+
+  /*
+   * NOME DO CURSO
+   */
+  function nomeLivro(
+    livroId: string
+  ) {
+    return (
+      livrosQ.data?.find(
+        (livro) =>
+          livro.id === livroId
+      )?.titulo ?? "Curso"
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -299,7 +426,9 @@ function AdminMateriaisPage() {
         </p>
       </div>
 
-      {/* NOVO MATERIAL */}
+      {/* ==========================================
+          NOVO MATERIAL
+          ========================================== */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">
@@ -309,7 +438,7 @@ function AdminMateriaisPage() {
 
         <CardContent className="grid gap-4 sm:grid-cols-2">
 
-          {/* LIVRO / CURSO */}
+          {/* CURSO DO NOVO MATERIAL */}
           <div className="space-y-1.5 sm:col-span-2">
             <Label>
               Livro / curso
@@ -317,19 +446,23 @@ function AdminMateriaisPage() {
 
             <Select
               value={livroId}
-              onValueChange={setLivroId}
+              onValueChange={
+                setLivroId
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o livro ou curso" />
               </SelectTrigger>
 
               <SelectContent>
-                {(livrosQ.data ?? []).map((l) => (
+                {(
+                  livrosQ.data ?? []
+                ).map((livro) => (
                   <SelectItem
-                    key={l.id}
-                    value={l.id}
+                    key={livro.id}
+                    value={livro.id}
                   >
-                    {l.titulo}
+                    {livro.titulo}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -346,8 +479,10 @@ function AdminMateriaisPage() {
               type="number"
               min="1"
               value={modulo}
-              onChange={(e) =>
-                setModulo(e.target.value)
+              onChange={(event) =>
+                setModulo(
+                  event.target.value
+                )
               }
             />
           </div>
@@ -360,8 +495,10 @@ function AdminMateriaisPage() {
 
             <Input
               value={titulo}
-              onChange={(e) =>
-                setTitulo(e.target.value)
+              onChange={(event) =>
+                setTitulo(
+                  event.target.value
+                )
               }
               placeholder="Ex.: Apostila do módulo 1"
             />
@@ -376,22 +513,29 @@ function AdminMateriaisPage() {
             <Input
               id="material-file"
               type="file"
-              onChange={(e) =>
+              onChange={(event) =>
                 setFile(
-                  e.target.files?.[0] ?? null
+                  event.target.files?.[0] ??
+                    null
                 )
               }
             />
 
             {file && (
               <p className="text-xs text-muted-foreground">
-                {file.name} ·{" "}
-                {(file.size / 1024 / 1024).toFixed(2)} MB
+                {file.name}
+                {" · "}
+                {(
+                  file.size /
+                  1024 /
+                  1024
+                ).toFixed(2)}{" "}
+                MB
               </p>
             )}
           </div>
 
-          {/* BOTÃO */}
+          {/* BOTÃO ENVIAR */}
           <div className="sm:col-span-2">
             <Button
               disabled={
@@ -399,7 +543,9 @@ function AdminMateriaisPage() {
                 !livroId ||
                 !file
               }
-              onClick={() => enviar.mutate()}
+              onClick={() =>
+                enviar.mutate()
+              }
             >
               {enviar.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -416,89 +562,232 @@ function AdminMateriaisPage() {
         </CardContent>
       </Card>
 
-      {/* MATERIAIS CADASTRADOS */}
-      {livroId && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              Materiais cadastrados
-            </CardTitle>
-          </CardHeader>
+      {/* ==========================================
+          MATERIAIS CADASTRADOS
+          ========================================== */}
+      <Card>
+        <CardHeader>
 
-          <CardContent className="space-y-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-            {matQ.isLoading && (
-              <p className="text-sm text-muted-foreground">
-                Carregando…
+            <div>
+              <CardTitle className="text-lg">
+                Materiais cadastrados
+              </CardTitle>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                {materiaisFiltrados.length}{" "}
+                {materiaisFiltrados.length ===
+                1
+                  ? "material"
+                  : "materiais"}
               </p>
-            )}
+            </div>
 
-            {matQ.error && (
-              <p className="text-sm text-destructive">
+            {/* FILTRO SEPARADO */}
+            <div className="w-full sm:w-80">
+
+              <Label className="mb-1.5 block text-xs">
+                Filtrar por curso
+              </Label>
+
+              <Select
+                value={
+                  filtroLivroId ||
+                  "todos"
+                }
+                onValueChange={(
+                  value
+                ) => {
+                  setFiltroLivroId(
+                    value ===
+                      "todos"
+                      ? ""
+                      : value
+                  );
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+
+                <SelectContent>
+
+                  <SelectItem value="todos">
+                    Todos os cursos
+                  </SelectItem>
+
+                  {(
+                    livrosQ.data ?? []
+                  ).map((livro) => (
+                    <SelectItem
+                      key={livro.id}
+                      value={livro.id}
+                    >
+                      {livro.titulo}
+                    </SelectItem>
+                  ))}
+
+                </SelectContent>
+              </Select>
+
+            </div>
+
+          </div>
+
+        </CardHeader>
+
+        <CardContent className="space-y-2">
+
+          {/* CARREGANDO */}
+          {matQ.isLoading && (
+            <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Carregando materiais…
+            </div>
+          )}
+
+          {/* ERRO */}
+          {matQ.error && (
+            <div className="rounded-lg border border-destructive/40 p-4">
+              <p className="font-medium text-destructive">
+                Não foi possível carregar os materiais.
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
                 {matQ.error instanceof Error
                   ? matQ.error.message
-                  : "Não foi possível carregar os materiais."}
+                  : "Erro desconhecido."}
               </p>
+            </div>
+          )}
+
+          {/* NENHUM MATERIAL */}
+          {!matQ.isLoading &&
+            !matQ.error &&
+            materiaisFiltrados.length ===
+              0 && (
+              <div className="flex min-h-40 flex-col items-center justify-center text-center">
+                <FileText className="mb-2 h-8 w-8 text-muted-foreground" />
+
+                <p className="font-medium">
+                  Nenhum material cadastrado
+                </p>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Os materiais cadastrados aparecerão aqui.
+                </p>
+              </div>
             )}
 
-            {!matQ.isLoading &&
-              !matQ.error &&
-              (matQ.data ?? []).length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Nenhum material cadastrado.
-                </p>
-              )}
-
-            {(matQ.data ?? []).map((m) => (
-              <div
-                key={m.id}
-                className="flex items-center gap-3 rounded-lg border p-3"
-              >
-                <FileText className="h-5 w-5 shrink-0 text-primary" />
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
-                    {m.titulo}
-                  </p>
-
-                  <p className="text-xs text-muted-foreground">
-                    Módulo {m.modulo}
-                    {" · "}
-                    {m.arquivo_nome || "Arquivo"}
-
-                    {m.tamanho_bytes
-                      ? ` · ${(m.tamanho_bytes / 1024 / 1024).toFixed(2)} MB`
-                      : ""}
-                  </p>
-                </div>
-
-                <Badge variant="outline">
-                  Módulo {m.modulo}
-                </Badge>
-
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  aria-label="Remover material"
-                  disabled={excluir.isPending}
-                  onClick={() => {
-                    if (
-                      confirm(
-                        "Remover este material?"
-                      )
-                    ) {
-                      excluir.mutate(m);
-                    }
-                  }}
+          {/* LISTA */}
+          {!matQ.isLoading &&
+            !matQ.error &&
+            materiaisFiltrados.map(
+              (material) => (
+                <div
+                  key={material.id}
+                  className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center"
                 >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
 
-          </CardContent>
-        </Card>
-      )}
+                  {/* ÍCONE */}
+                  <FileText className="h-5 w-5 shrink-0 text-primary" />
+
+                  {/* INFORMAÇÕES */}
+                  <div className="min-w-0 flex-1">
+
+                    <p className="truncate text-sm font-medium">
+                      {material.titulo}
+                    </p>
+
+                    <p className="text-xs text-muted-foreground">
+                      {nomeLivro(
+                        material.livro_id
+                      )}
+                      {" · "}
+                      Módulo{" "}
+                      {material.modulo}
+                      {" · "}
+                      {material.arquivo_nome ||
+                        "Arquivo"}
+
+                      {material.tamanho_bytes
+                        ? ` · ${(
+                            material.tamanho_bytes /
+                            1024 /
+                            1024
+                          ).toFixed(
+                            2
+                          )} MB`
+                        : ""}
+                    </p>
+
+                  </div>
+
+                  {/* MÓDULO */}
+                  <Badge
+                    variant="outline"
+                  >
+                    Módulo{" "}
+                    {material.modulo}
+                  </Badge>
+
+                  {/* ABRIR */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={
+                      abrindo ===
+                      material.id
+                    }
+                    onClick={() =>
+                      abrirMaterial(
+                        material
+                      )
+                    }
+                  >
+                    {abrindo ===
+                    material.id ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="mr-2 h-4 w-4" />
+                    )}
+
+                    {abrindo ===
+                    material.id
+                      ? "Abrindo..."
+                      : "Abrir"}
+                  </Button>
+
+                  {/* EXCLUIR */}
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Remover material"
+                    disabled={
+                      excluir.isPending
+                    }
+                    onClick={() => {
+                      if (
+                        confirm(
+                          `Remover o material "${material.titulo}"?`
+                        )
+                      ) {
+                        excluir.mutate(
+                          material
+                        );
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+
+                </div>
+              )
+            )}
+
+        </CardContent>
+      </Card>
 
     </div>
   );
