@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import {
   XCircle,
   FileText,
   Loader2,
+  Upload,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ type PagRow = {
   status: string;
   valor: number;
   comprovante_url: string | null;
+  comprovante_enviado_em: string | null;
   observacao: string | null;
   created_at: string;
   inscricao:
@@ -56,8 +58,11 @@ function PagPage() {
   const [abrindoComprovante, setAbrindoComprovante] = useState<string | null>(
     null
   );
+  const [uploadandoComprovante, setUploadandoComprovante] = useState<
+    string | null
+  >(null);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     enabled: !!user,
     queryKey: ["meus-pagamentos", user?.id],
 
@@ -80,7 +85,7 @@ function PagPage() {
       const pagamentosRes = await supabase
         .from("pagamentos")
         .select(
-          "id,status,valor,comprovante_url,observacao,created_at,inscricao:inscricoes(id,evento:eventos(id,titulo,data),livro:livros(titulo))"
+          "id,status,valor,comprovante_url,observacao,created_at,comprovante_enviado_em,inscricao:inscricoes(id,evento:eventos(id,titulo,data),livro:livros(titulo))"
         )
         .in("inscricao_id", ids)
         .order("created_at", { ascending: false });
@@ -90,6 +95,47 @@ function PagPage() {
       }
 
       return (pagamentosRes.data ?? []) as unknown as PagRow[];
+    },
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: async ({
+      pagamentoId,
+      file,
+    }: {
+      pagamentoId: string;
+      file: File;
+    }) => {
+      // 1. Upload do arquivo para Storage
+      const fileName = `${pagamentoId}-${Date.now()}-${file.name}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("comprovantes")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // 2. Atualizar pagamento com URL + timestamp
+      const { error: updateError } = await supabase
+        .from("pagamentos")
+        .update({
+          comprovante_url: uploadData.path,
+          comprovante_enviado_em: new Date().toISOString(),
+        })
+        .eq("id", pagamentoId);
+
+      if (updateError) throw updateError;
+
+      return uploadData;
+    },
+    onSuccess: () => {
+      toast.success("Comprovante enviado com sucesso! ✅");
+      refetch();
+    },
+    onError: (e: unknown) => {
+      const msg =
+        e instanceof Error ? e.message : "Erro ao enviar comprovante";
+      toast.error(`Erro: ${msg}`);
     },
   });
 
@@ -155,6 +201,35 @@ function PagPage() {
       );
     } finally {
       setAbrindoComprovante(null);
+    }
+  };
+
+  const handleUploadComprovante = async (
+    pagamentoId: string,
+    files: FileList | null
+  ) => {
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+
+    // Validações
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast.error("Arquivo muito grande. Máximo 5MB.");
+      return;
+    }
+
+    const tiposValidos = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!tiposValidos.includes(file.type)) {
+      toast.error("Tipo de arquivo inválido. Use JPG, PNG, WebP ou PDF.");
+      return;
+    }
+
+    setUploadandoComprovante(pagamentoId);
+    try {
+      await uploadMutation.mutateAsync({ pagamentoId, file });
+    } finally {
+      setUploadandoComprovante(null);
     }
   };
 
@@ -244,6 +319,44 @@ function PagPage() {
                     <p className="mt-1 text-sm text-destructive">
                       {p.observacao}
                     </p>
+                  </div>
+                )}
+
+                {p.status === "aguardando" && !p.comprovante_url && (
+                  <div className="mt-3 rounded-md border border-blue-300/30 bg-blue-50/50 p-3 dark:border-blue-600/30 dark:bg-blue-950/20">
+                    <p className="text-xs font-semibold text-blue-900 dark:text-blue-300">
+                      Enviar Comprovante de Pagamento
+                    </p>
+
+                    <div className="mt-2 space-y-2">
+                      <label
+                        htmlFor={`upload-${p.id}`}
+                        className="flex cursor-pointer items-center justify-center rounded-md border-2 border-dashed border-blue-300 p-3 text-center transition hover:border-blue-400 hover:bg-blue-100/30 dark:border-blue-600 dark:hover:border-blue-500 dark:hover:bg-blue-950/30"
+                      >
+                        <div className="flex flex-col items-center gap-1">
+                          <Upload className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <span className="text-xs text-blue-700 dark:text-blue-300">
+                            {uploadandoComprovante === p.id
+                              ? "Enviando..."
+                              : "Clique para selecionar arquivo"}
+                          </span>
+                          <span className="text-xs text-blue-600/60 dark:text-blue-400/60">
+                            PDF, JPG, PNG ou WebP (máx 5MB)
+                          </span>
+                        </div>
+
+                        <input
+                          id={`upload-${p.id}`}
+                          type="file"
+                          accept=".pdf,image/jpeg,image/png,image/webp"
+                          disabled={uploadandoComprovante === p.id}
+                          onChange={(e) =>
+                            handleUploadComprovante(p.id, e.target.files)
+                          }
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
                   </div>
                 )}
               </div>
