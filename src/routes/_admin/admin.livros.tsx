@@ -78,6 +78,7 @@ type Livro = {
   turma: string | null;
 
   capa_url: string | null;
+  imagem_url: string | null;
 
   status: string;
 };
@@ -118,11 +119,9 @@ type FormLivro = {
   valor: string;
   vagas: string;
 
-  ano: string;
   qtd_encontros: string;
 
   duracao: string;
-  turma: string;
 };
 
 /* =========================================================
@@ -159,11 +158,9 @@ const vazio: FormLivro = {
   valor: "",
   vagas: "0",
 
-  ano: "",
   qtd_encontros: "",
 
   duracao: "",
-  turma: "",
 };
 
 /* =========================================================
@@ -420,16 +417,11 @@ function AdminLivrosPage() {
           form.vagas.trim() === ""
             ? 0
             : Number(form.vagas),
-        ano:
-          form.ano.trim() === ""
-            ? null
-            : Number(form.ano),
         qtd_encontros:
           form.qtd_encontros.trim() === ""
             ? null
             : Number(form.qtd_encontros),
         duracao: form.duracao.trim() || null,
-        turma: form.turma.trim() || null,
       };
 
       let livroId = selecionado;
@@ -469,7 +461,10 @@ function AdminLivrosPage() {
 
         const { error: coverError } = await supabase
           .from("livros")
-          .update({ capa_url: publicUrl.publicUrl })
+          .update({
+            capa_url: publicUrl.publicUrl,
+            imagem_url: publicUrl.publicUrl,
+          })
           .eq("id", livroId);
 
         if (coverError) throw coverError;
@@ -677,13 +672,11 @@ function AdminLivrosPage() {
       descricao: livro.descricao ?? "",
       valor: livro.valor == null ? "" : String(livro.valor),
       vagas: String(livro.vagas ?? 0),
-      ano: livro.ano == null ? "" : String(livro.ano),
       qtd_encontros:
         livro.qtd_encontros == null
           ? ""
           : String(livro.qtd_encontros),
       duracao: livro.duracao ?? "",
-      turma: livro.turma ?? "",
     });
   }
 
@@ -1314,29 +1307,7 @@ function AdminLivrosPage() {
                   placeholder="0"
                 />
               </Field>
-
-              {/* ANO */}
-
-              <Field label="Ano">
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  value={
-                    form.ano
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    set(
-                      "ano",
-                      event.target
-                        .value
-                    )
-                  }
-                />
-              </Field>
-
-              {/* ENCONTROS */}
+{/* ENCONTROS */}
 
               <Field label="Quantidade de encontros">
                 <Input
@@ -1375,27 +1346,7 @@ function AdminLivrosPage() {
                   }
                 />
               </Field>
-
-              {/* TURMA */}
-
-              <Field label="Turma">
-                <Input
-                  value={
-                    form.turma
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    set(
-                      "turma",
-                      event.target
-                        .value
-                    )
-                  }
-                />
-              </Field>
-
-              {/* CAPA */}
+{/* CAPA */}
 
               <Field label="Capa do curso">
                 <Input
