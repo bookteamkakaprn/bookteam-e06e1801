@@ -42,6 +42,7 @@ type Pagamento = {
   status: StatusPagamento;
   valor: number;
   comprovante_url: string | null;
+  comprovante_enviado_em: string | null;
   observacao: string | null;
   created_at: string;
   inscricao: {
@@ -156,7 +157,7 @@ function AdminAprovacoes() {
       const { data, error } = await supabase
         .from("pagamentos")
         .select(
-          `id,status,valor,comprovante_url,observacao,created_at,
+          `id,status,valor,comprovante_url,comprovante_enviado_em,observacao,created_at,
            inscricao:inscricoes(
              id,status,
              participante:participantes(id,nome,email,status),
@@ -669,18 +670,28 @@ function AdminAprovacoes() {
                         </Badge>
 
                         {pagamento.comprovante_url && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              abrirComprovante(
-                                pagamento.comprovante_url!,
-                              )
-                            }
-                          >
-                            <ExternalLink className="mr-1 h-4 w-4" />
-                            Comprovante
-                          </Button>
+                          <div className="flex flex-col items-start gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                abrirComprovante(
+                                  pagamento.comprovante_url!,
+                                )
+                              }
+                            >
+                              <ExternalLink className="mr-1 h-4 w-4" />
+                              Comprovante
+                            </Button>
+                            {pagamento.comprovante_enviado_em && (
+                              <p className="text-xs text-muted-foreground">
+                                Enviado em{" "}
+                                {new Date(
+                                  pagamento.comprovante_enviado_em
+                                ).toLocaleString("pt-BR")}
+                              </p>
+                            )}
+                          </div>
                         )}
 
                         {pagamento.status === "aguardando" && (
