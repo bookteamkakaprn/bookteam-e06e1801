@@ -901,7 +901,7 @@ function AdminAprovacoes() {
 
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="secondary"
                           onClick={() => {
                             setEditandoPagamento(pagamento);
                             setNovoStatusPagamento(
@@ -1125,7 +1125,7 @@ function AdminAprovacoes() {
 
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="secondary"
                         onClick={() => {
                           setEditandoInscricao(inscricao);
                           setNovoStatusInscricao(
