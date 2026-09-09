@@ -1,18 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle2,
   Clock,
   XCircle,
   FileText,
   Loader2,
+  Upload,
+  Send,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/pagamentos")({
@@ -30,7 +33,10 @@ type PagRow = {
   status: string;
   valor: number;
   comprovante_url: string | null;
+  comprovante_enviado_em: string | null;
   created_at: string;
+  observacao: string | null;
+  resposta_aluno: string | null;
   inscricao:
     | {
         id: string;
@@ -52,9 +58,17 @@ type PagRow = {
 
 function PagPage() {
   const { user } = useAuth();
+  const qc = useQueryClient();
+
   const [abrindoComprovante, setAbrindoComprovante] = useState<string | null>(
     null
   );
+  const [enviando, setEnviando] = useState<string | null>(null);
+  const [respostas, setRespostas] = useState<Record<string, string>>({});
+  const [arquivoSelecionado, setArquivoSelecionado] = useState<
+    Record<string, File | null>
+  >({});
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const { data, isLoading, error } = useQuery({
     enabled: !!user,
@@ -79,7 +93,7 @@ function PagPage() {
       const pagamentosRes = await supabase
         .from("pagamentos")
         .select(
-          "id,status,valor,comprovante_url,created_at,inscricao:inscricoes(id,evento:eventos(id,titulo,data),livro:livros(titulo))"
+          "id,status,valor,comprovante_url,comprovante_enviado_em,created_at,observacao,resposta_aluno,inscricao:inscricoes(id,evento:eventos(id,titulo,data),livro:livros(titulo))"
         )
         .in("inscricao_id", ids)
         .order("created_at", { ascending: false });
@@ -122,7 +136,6 @@ function PagPage() {
   ) => {
     setAbrindoComprovante(pagamentoId);
 
-    // Abre a aba imediatamente para evitar bloqueio de pop-up
     const novaAba = window.open("about:blank", "_blank");
 
     try {
@@ -158,6 +171,102 @@ function PagPage() {
     }
   };
 
+  const reenviarComprovante = async (pagamento: PagRow) => {
+    const arquivo = arquivoSelecionado[pagamento.id];
+    const resposta = (respostas[pagamento.id] ?? "").trim();
+
+    if (!arquivo) {
+      toast.error("Selecione um novo comprovante.");
+      return;
+    }
+
+    if (arquivo.size > 5 * 1024 * 1024) {
+      toast.error("O comprovante deve ter no máximo 5 MB.");
+      return;
+    }
+
+    const tiposPermitidos = [
+      "image/jpeg",
+      "image/png",
+      "application/pdf",
+    ];
+
+    if (!tiposPermitidos.includes(arquivo.type)) {
+      toast.error("Envie JPG, PNG ou PDF.");
+      return;
+    }
+
+    setEnviando(pagamento.id);
+
+    try {
+      const extensao =
+        arquivo.name.split(".").pop()?.toLowerCase() || "bin";
+
+      const path = `${user!.id}/${pagamento.id}/${crypto.randomUUID()}.${extensao}`;
+
+      const upload = await supabase.storage
+        .from("comprovantes")
+        .upload(path, arquivo, {
+          upsert: false,
+          contentType: arquivo.type,
+        });
+
+      if (upload.error) {
+        throw new Error(
+          `Erro ao enviar comprovante: ${upload.error.message}`
+        );
+      }
+
+      const agora = new Date().toISOString();
+
+      const { error: pagamentoError } = await supabase
+        .from("pagamentos")
+        .update({
+          comprovante_url: path,
+          comprovante_enviado_em: agora,
+          status: "aguardando",
+          pago_em: null,
+          resposta_aluno: resposta || null,
+        })
+        .eq("id", pagamento.id);
+
+      if (pagamentoError) {
+        await supabase.storage.from("comprovantes").remove([path]);
+        throw new Error(
+          `Erro ao salvar comprovante: ${pagamentoError.message}`
+        );
+      }
+
+      toast.success("Novo comprovante enviado para análise.");
+
+      setArquivoSelecionado((estado) => ({
+        ...estado,
+        [pagamento.id]: null,
+      }));
+
+      setRespostas((estado) => ({
+        ...estado,
+        [pagamento.id]: "",
+      }));
+
+      if (inputRefs.current[pagamento.id]) {
+        inputRefs.current[pagamento.id]!.value = "";
+      }
+
+      await qc.invalidateQueries({
+        queryKey: ["meus-pagamentos", user?.id],
+      });
+    } catch (e: unknown) {
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : "Não foi possível reenviar o comprovante."
+      );
+    } finally {
+      setEnviando(null);
+    }
+  };
+
   const pagamentos = data ?? [];
 
   return (
@@ -165,9 +274,7 @@ function PagPage() {
       <h1 className="font-serif text-3xl font-bold">Pagamentos</h1>
 
       {isLoading && (
-        <p className="text-sm text-muted-foreground">
-          Carregando…
-        </p>
+        <p className="text-sm text-muted-foreground">Carregando…</p>
       )}
 
       {error && (
@@ -187,13 +294,15 @@ function PagPage() {
       {pagamentos.map((p) => {
         const b = badge(p.status);
         const Icon = b.Icon;
+        const recusado = p.status === "rejeitado";
+        const enviandoEste = enviando === p.id;
+        const resposta = respostas[p.id] ?? "";
+        const arquivo = arquivoSelecionado[p.id] ?? null;
 
         return (
           <Card key={p.id}>
-            <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
-
-              {/* Informações do pagamento */}
-              <div className="space-y-1">
+            <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-start md:justify-between">
+              <div className="min-w-0 space-y-1">
                 <p className="font-serif text-lg font-semibold">
                   {p.inscricao?.livro?.titulo ??
                     p.inscricao?.evento?.titulo ??
@@ -206,14 +315,46 @@ function PagPage() {
                   </p>
                 )}
 
-                <p className="text-xs text-muted-foreground">
-                  Enviado em{" "}
-                  {new Date(p.created_at).toLocaleString("pt-BR")}
-                </p>
+                {p.comprovante_url ? (
+                  <p className="text-xs text-muted-foreground">
+                    Comprovante enviado em{" "}
+                    <strong className="text-foreground">
+                      {new Date(
+                        p.comprovante_enviado_em ?? p.created_at
+                      ).toLocaleString("pt-BR")}
+                    </strong>
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Pagamento criado em{" "}
+                    {new Date(p.created_at).toLocaleString("pt-BR")}
+                  </p>
+                )}
 
-                {/* Comprovante */}
+                {recusado && p.observacao && (
+                  <div className="mt-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                    <p className="text-sm font-semibold text-destructive">
+                      Motivo da recusa
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {p.observacao}
+                    </p>
+                  </div>
+                )}
+
+                {p.resposta_aluno && (
+                  <div className="mt-3 rounded-lg border border-border/60 bg-card/50 p-3">
+                    <p className="text-sm font-semibold">
+                      Sua resposta
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {p.resposta_aluno}
+                    </p>
+                  </div>
+                )}
+
                 {p.comprovante_url && (
-                  <div className="flex items-center gap-2 pt-2">
+                  <div className="flex flex-wrap items-center gap-2 pt-2">
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
 
                     <span className="text-sm font-medium">
@@ -226,10 +367,7 @@ function PagPage() {
                       className="ml-1 gap-1"
                       disabled={abrindoComprovante === p.id}
                       onClick={() =>
-                        verComprovante(
-                          p.id,
-                          p.comprovante_url!
-                        )
+                        verComprovante(p.id, p.comprovante_url!)
                       }
                     >
                       {abrindoComprovante === p.id ? (
@@ -244,10 +382,88 @@ function PagPage() {
                     </Button>
                   </div>
                 )}
+
+                {recusado && (
+                  <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+                    <p className="text-sm font-semibold text-destructive">
+                      Corrigir e reenviar
+                    </p>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Responda à justificativa do ADM e envie um novo
+                      comprovante para nova análise.
+                    </p>
+
+                    <div className="mt-3 space-y-3">
+                      <div>
+                        <Label htmlFor={`resposta-${p.id}`}>
+                          Sua resposta
+                        </Label>
+
+                        <Textarea
+                          id={`resposta-${p.id}`}
+                          rows={3}
+                          value={resposta}
+                          placeholder="Explique a correção realizada ou responda ao motivo da recusa."
+                          onChange={(e) =>
+                            setRespostas((estado) => ({
+                              ...estado,
+                              [p.id]: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor={`arquivo-${p.id}`}>
+                          Novo comprovante
+                        </Label>
+
+                        <Input
+                          id={`arquivo-${p.id}`}
+                          ref={(element) => {
+                            inputRefs.current[p.id] = element;
+                          }}
+                          type="file"
+                          accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                          className="mt-1"
+                          onChange={(e) =>
+                            setArquivoSelecionado((estado) => ({
+                              ...estado,
+                              [p.id]: e.target.files?.[0] ?? null,
+                            }))
+                          }
+                        />
+
+                        {arquivo && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Selecionado: {arquivo.name}
+                          </p>
+                        )}
+                      </div>
+
+                      <Button
+                        type="button"
+                        disabled={enviandoEste}
+                        onClick={() => reenviarComprovante(p)}
+                        className="gap-2"
+                      >
+                        {enviandoEste ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
+
+                        {enviandoEste
+                          ? "Enviando..."
+                          : "Responder e enviar novo comprovante"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Valor e status */}
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex shrink-0 flex-wrap items-center gap-3">
                 <span className="font-serif text-lg">
                   {Number(p.valor).toLocaleString("pt-BR", {
                     style: "currency",
@@ -280,7 +496,6 @@ function PagPage() {
                   </Button>
                 )}
               </div>
-
             </CardContent>
           </Card>
         );
