@@ -1,19 +1,13 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  CheckCircle2,
-  XCircle,
-  Archive,
-  Clock,
-  Loader2,
-} from "lucide-react";
+import { Download, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/minhas-inscricoes")({
   head: () => ({
@@ -28,41 +22,35 @@ export const Route = createFileRoute("/_authenticated/minhas-inscricoes")({
 type Inscricao = {
   id: string;
   status: string;
-  motivo_rejeicao?: string | null;
-  motivo_cancelamento?: string | null;
-  cancelado_em?: string | null;
-  livro?: { titulo: string } | null;
-  turma?: {
-    nome: string;
-    data_inicio: string;
-    data_fim: string;
-    horario: string;
-  } | null;
-  evento?: { titulo: string; data: string } | null;
+  motivo_rejeicao: string | null;
+  motivo_cancelamento: string | null;
+  cancelado_em: string | null;
+  livro?: { titulo: string | null } | null;
+  turma?: { nome: string | null; data: string | null } | null;
   pagamentos?: Array<{
     id: string;
     status: string;
     valor: number;
-    observacao?: string | null;
-    comprovante_url?: string | null;
-    comprovante_enviado_em?: string | null;
+    observacao: string | null;
+    comprovante_url: string | null;
+    created_at: string;
   }>;
 };
 
 function MinhasInscricoesPage() {
   const { user } = useAuth();
-  const [abaInscricoes, setAbaInscricoes] = useState<string>("confirmadas");
-  const [abaPagamentos, setAbaPagamentos] = useState<string>("aprovados");
+  const [abaSelecionada, setAbaSelecionada] = useState<
+    "confirmadas" | "rejeitadas" | "canceladas" | "pagamentos-aprovados" | "pagamentos-rejeitados" | "estornos"
+  >("confirmadas");
 
-  const { data: inscricoes = [], isLoading } = useQuery({
+  const { data: inscricoes = [], isLoading: carregandoInscricoes } = useQuery({
     enabled: !!user,
     queryKey: ["minhas-inscricoes", user?.id],
-
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inscricoes")
         .select(
-          "id, status, motivo_rejeicao, motivo_cancelamento, cancelado_em, livro:livros(titulo), turma:turmas(nome,data_inicio,data_fim,horario), evento:eventos(titulo,data), pagamentos(id,status,valor,observacao,comprovante_url,comprovante_enviado_em)"
+          "id, status, motivo_rejeicao, motivo_cancelamento, cancelado_em, livro:livros(titulo), turma:turmas(nome, data), pagamentos(*)"
         )
         .eq("participante_id", user!.id)
         .order("created_at", { ascending: false });
@@ -72,304 +60,226 @@ function MinhasInscricoesPage() {
     },
   });
 
-  const inscricoesConfirmadas = inscricoes.filter((i) => i.status === "confirmada");
-  const inscricoesRejeitadas = inscricoes.filter((i) => i.status === "cancelada" && i.motivo_rejeicao);
-  const inscricoesCanceladas = inscricoes.filter((i) => i.status === "cancelada" && i.motivo_cancelamento);
+  const downloadComprovante = async (comprovantePath: string, nome: string) => {
+    try {
+      const { data: signedData, error } = await supabase.storage
+        .from("comprovantes")
+        .createSignedUrl(comprovantePath, 300);
 
-  const pagamentosAprovados = inscricoes
-    .flatMap((i) => (i.pagamentos ?? []).map((p) => ({ ...p, inscricao: i })))
-    .filter((p) => p.status === "aprovado");
+      if (error) throw error;
 
-  const pagamentosRejeitados = inscricoes
-    .flatMap((i) => (i.pagamentos ?? []).map((p) => ({ ...p, inscricao: i })))
-    .filter((p) => p.status === "rejeitado");
-
-  const pagamentosEstorno = inscricoes
-    .flatMap((i) => (i.pagamentos ?? []).map((p) => ({ ...p, inscricao: i })))
-    .filter((p) => p.status === "estorno");
-
-  const getNomeCurso = (insc: Inscricao) => {
-    return insc.livro?.titulo || insc.evento?.titulo || insc.turma?.nome || "Curso desconhecido";
+      if (signedData?.signedUrl) {
+        const link = document.createElement("a");
+        link.href = signedData.signedUrl;
+        link.download = nome;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Comprovante baixado!");
+      }
+    } catch (e) {
+      toast.error("Erro ao baixar comprovante");
+    }
   };
 
-  const getDataCurso = (insc: Inscricao) => {
-    if (insc.evento?.data) return insc.evento.data;
-    if (insc.turma?.data_inicio) return insc.turma.data_inicio;
-    return null;
+  // Filtrar inscrições por status
+  const confirmadasFiltradas = inscricoes.filter((i) => i.status === "confirmada");
+  const rejeitadasFiltradas = inscricoes.filter((i) => i.status === "cancelada" && i.motivo_rejeicao);
+  const canceladasFiltradas = inscricoes.filter((i) => i.status === "cancelada" && !i.motivo_rejeicao);
+
+  // Processar pagamentos
+  const pagamentosAprovados: Inscricao[] = [];
+  const pagamentosRejeitados: Inscricao[] = [];
+
+  inscricoes.forEach((insc) => {
+    insc.pagamentos?.forEach((pag) => {
+      if (pag.status === "aprovado") {
+        pagamentosAprovados.push({ ...insc, pagamentos: [pag] });
+      } else if (pag.status === "rejeitado") {
+        pagamentosRejeitados.push({ ...insc, pagamentos: [pag] });
+      }
+    });
+  });
+
+  // Abas
+  const abas = [
+    { id: "confirmadas", label: "Confirmadas", count: confirmadasFiltradas.length },
+    { id: "rejeitadas", label: "Rejeitadas", count: rejeitadasFiltradas.length },
+    { id: "canceladas", label: "Canceladas", count: canceladasFiltradas.length },
+    { id: "pagamentos-aprovados", label: "Pagamentos Aprovados", count: pagamentosAprovados.length },
+    { id: "pagamentos-rejeitados", label: "Pagamentos Rejeitados", count: pagamentosRejeitados.length },
+  ] as const;
+
+  const getDados = () => {
+    switch (abaSelecionada) {
+      case "confirmadas":
+        return confirmadasFiltradas;
+      case "rejeitadas":
+        return rejeitadasFiltradas;
+      case "canceladas":
+        return canceladasFiltradas;
+      case "pagamentos-aprovados":
+        return pagamentosAprovados;
+      case "pagamentos-rejeitados":
+        return pagamentosRejeitados;
+      default:
+        return [];
+    }
   };
+
+  const dados = getDados();
+  const temPagamento = abaSelecionada.includes("pagamentos");
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-3xl font-bold">Minhas inscrições</h1>
         <p className="text-sm text-muted-foreground">
-          Acompanhe suas inscrições em cursos, turmas e eventos.
+          Visualize seu histórico de inscrições, pagamentos e certificados.
         </p>
       </div>
 
-      {/* ABAS DE INSCRIÇÕES */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Inscrições em cursos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={abaInscricoes} onValueChange={setAbaInscricoes}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="confirmadas">
-                Confirmadas ({inscricoesConfirmadas.length})
-              </TabsTrigger>
-              <TabsTrigger value="rejeitadas">
-                Rejeitadas ({inscricoesRejeitadas.length})
-              </TabsTrigger>
-              <TabsTrigger value="canceladas">
-                Canceladas ({inscricoesCanceladas.length})
-              </TabsTrigger>
-            </TabsList>
+      {/* Abas */}
+      <div className="flex flex-wrap gap-2">
+        {abas.map(({ id, label, count }) => (
+          <Button
+            key={id}
+            variant={abaSelecionada === id ? "default" : "outline"}
+            onClick={() => setAbaSelecionada(id)}
+            className="gap-2"
+          >
+            {label}
+            <Badge variant="secondary" className="ml-1">
+              {count}
+            </Badge>
+          </Button>
+        ))}
+      </div>
 
-            <TabsContent value="confirmadas" className="space-y-3 mt-4">
-              {inscricoesConfirmadas.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma inscrição confirmada.
-                </p>
-              )}
-              {inscricoesConfirmadas.map((insc) => (
-                <div
-                  key={insc.id}
-                  className="rounded-lg border border-border/60 p-4"
-                >
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="font-semibold">{getNomeCurso(insc)}</p>
-                      {getDataCurso(insc) && (
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(getDataCurso(insc) + "T00:00:00").toLocaleDateString("pt-BR")}
-                        </p>
-                      )}
-                    </div>
-                    <Badge className="w-fit bg-green-500/20 text-green-700">
-                      <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Confirmada
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </TabsContent>
-
-            <TabsContent value="rejeitadas" className="space-y-3 mt-4">
-              {inscricoesRejeitadas.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma inscrição rejeitada.
-                </p>
-              )}
-              {inscricoesRejeitadas.map((insc) => (
-                <div
-                  key={insc.id}
-                  className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-2"
-                >
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold">{getNomeCurso(insc)}</p>
-                      {getDataCurso(insc) && (
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(getDataCurso(insc) + "T00:00:00").toLocaleDateString("pt-BR")}
-                        </p>
-                      )}
-                    </div>
-                    <Badge variant="destructive" className="w-fit">
-                      <XCircle className="mr-1 h-3.5 w-3.5" /> Rejeitada
-                    </Badge>
-                  </div>
-                  {insc.motivo_rejeicao && (
-                    <div className="text-sm text-destructive">
-                      <p className="font-semibold">Motivo:</p>
-                      <p>{insc.motivo_rejeicao}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </TabsContent>
-
-            <TabsContent value="canceladas" className="space-y-3 mt-4">
-              {inscricoesCanceladas.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Nenhuma inscrição cancelada.
-                </p>
-              )}
-              {inscricoesCanceladas.map((insc) => (
-                <div
-                  key={insc.id}
-                  className="rounded-lg border border-border/60 p-4 space-y-2"
-                >
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold">{getNomeCurso(insc)}</p>
-                      {getDataCurso(insc) && (
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(getDataCurso(insc) + "T00:00:00").toLocaleDateString("pt-BR")}
-                        </p>
-                      )}
-                    </div>
-                    <Badge variant="secondary" className="w-fit">
-                      <Archive className="mr-1 h-3.5 w-3.5" /> Cancelada
-                    </Badge>
-                  </div>
-                  {insc.motivo_cancelamento && (
-                    <div className="text-sm text-muted-foreground">
-                      <p className="font-semibold">Motivo:</p>
-                      <p>{insc.motivo_cancelamento}</p>
-                    </div>
-                  )}
-                  {insc.cancelado_em && (
-                    <p className="text-xs text-muted-foreground">
-                      Cancelado em {new Date(insc.cancelado_em).toLocaleDateString("pt-BR")}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-
-      {/* ABAS DE PAGAMENTOS */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Pagamentos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={abaPagamentos} onValueChange={setAbaPagamentos}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="aprovados">
-                Aprovados ({pagamentosAprovados.length})
-              </TabsTrigger>
-              <TabsTrigger value="rejeitados">
-                Rejeitados ({pagamentosRejeitados.length})
-              </TabsTrigger>
-              <TabsTrigger value="estornos">
-                Estornos ({pagamentosEstorno.length})
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="aprovados" className="space-y-3 mt-4">
-              {pagamentosAprovados.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Nenhum pagamento aprovado.
-                </p>
-              )}
-              {pagamentosAprovados.map((pag) => (
-                <div
-                  key={pag.id}
-                  className="rounded-lg border border-green-500/30 bg-green-500/5 p-4"
-                >
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold">
-                        {getNomeCurso(pag.inscricao)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {Number(pag.valor).toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                      </p>
-                      {pag.comprovante_enviado_em && (
-                        <p className="text-xs text-muted-foreground">
-                          Enviado em{" "}
-                          {new Date(pag.comprovante_enviado_em).toLocaleString(
-                            "pt-BR"
-                          )}
-                        </p>
-                      )}
-                    </div>
-                    <Badge className="w-fit bg-green-500/20 text-green-700">
-                      <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Aprovado
-                    </Badge>
-                  </div>
-                  {pag.comprovante_url && (
-                    <Button size="sm" variant="outline" className="mt-2">
-                      <Archive className="mr-1 h-3.5 w-3.5" /> Arquivar
-                      comprovante
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </TabsContent>
-
-            <TabsContent value="rejeitados" className="space-y-3 mt-4">
-              {pagamentosRejeitados.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Nenhum pagamento rejeitado.
-                </p>
-              )}
-              {pagamentosRejeitados.map((pag) => (
-                <div
-                  key={pag.id}
-                  className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 space-y-2"
-                >
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold">
-                        {getNomeCurso(pag.inscricao)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {Number(pag.valor).toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                      </p>
-                    </div>
-                    <Badge variant="destructive" className="w-fit">
-                      <XCircle className="mr-1 h-3.5 w-3.5" /> Rejeitado
-                    </Badge>
-                  </div>
-                  {pag.observacao && (
-                    <div className="text-sm text-destructive">
-                      <p className="font-semibold">Motivo:</p>
-                      <p>{pag.observacao}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </TabsContent>
-
-            <TabsContent value="estornos" className="space-y-3 mt-4">
-              {pagamentosEstorno.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  Nenhum estorno.
-                </p>
-              )}
-              {pagamentosEstorno.map((pag) => (
-                <div
-                  key={pag.id}
-                  className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4"
-                >
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div className="flex-1">
-                      <p className="font-semibold">
-                        {getNomeCurso(pag.inscricao)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {Number(pag.valor).toLocaleString("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        })}
-                      </p>
-                    </div>
-                    <Badge className="w-fit bg-blue-500/20 text-blue-700">
-                      <Clock className="mr-1 h-3.5 w-3.5" /> Estorno
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-
-      {isLoading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+      {/* Conteúdo */}
+      {carregandoInscricoes && (
+        <p className="text-sm text-muted-foreground">Carregando inscrições…</p>
       )}
+
+      {!carregandoInscricoes && dados.length === 0 && (
+        <Card>
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Nenhuma inscrição nesta categoria.
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-3">
+        {dados.map((inscricao) => {
+          const pag = temPagamento ? inscricao.pagamentos?.[0] : null;
+          const titulo = inscricao.livro?.titulo || inscricao.turma?.nome || "Curso não informado";
+          const data = inscricao.turma?.data;
+
+          return (
+            <Card key={`${inscricao.id}-${temPagamento ? pag?.id : "insc"}`}>
+              <CardContent className="space-y-3 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="font-serif text-lg font-semibold truncate">{titulo}</p>
+                    {data && (
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(data).toLocaleDateString("pt-BR")}
+                      </p>
+                    )}
+
+                    {/* Status com motivo */}
+                    <div className="mt-2 flex items-center gap-2">
+                      {temPagamento ? (
+                        <>
+                          {pag?.status === "aprovado" && (
+                            <Badge className="gap-1 bg-green-500">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Aprovado
+                            </Badge>
+                          )}
+                          {pag?.status === "rejeitado" && (
+                            <Badge variant="destructive" className="gap-1">
+                              <XCircle className="h-3 w-3" />
+                              Rejeitado
+                            </Badge>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          {inscricao.status === "confirmada" && (
+                            <Badge className="gap-1 bg-green-500">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Confirmada
+                            </Badge>
+                          )}
+                          {inscricao.status === "cancelada" && inscricao.motivo_rejeicao && (
+                            <Badge variant="destructive" className="gap-1">
+                              <XCircle className="h-3 w-3" />
+                              Rejeitada
+                            </Badge>
+                          )}
+                          {inscricao.status === "cancelada" && !inscricao.motivo_rejeicao && (
+                            <Badge variant="secondary">
+                              <AlertCircle className="mr-1 h-3 w-3" />
+                              Cancelada
+                            </Badge>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Motivo */}
+                    {inscricao.motivo_rejeicao && (
+                      <div className="mt-2 rounded-md border border-destructive/30 bg-destructive/5 p-2">
+                        <p className="text-xs font-semibold text-destructive">Motivo da recusa:</p>
+                        <p className="text-xs text-destructive">{inscricao.motivo_rejeicao}</p>
+                      </div>
+                    )}
+
+                    {inscricao.motivo_cancelamento && (
+                      <div className="mt-2 rounded-md border border-yellow-500/30 bg-yellow-500/5 p-2">
+                        <p className="text-xs font-semibold text-yellow-600">Motivo do cancelamento:</p>
+                        <p className="text-xs text-yellow-600">{inscricao.motivo_cancelamento}</p>
+                      </div>
+                    )}
+
+                    {pag?.observacao && (
+                      <div className="mt-2 rounded-md border border-destructive/30 bg-destructive/5 p-2">
+                        <p className="text-xs font-semibold text-destructive">Observação do admin:</p>
+                        <p className="text-xs text-destructive">{pag.observacao}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {temPagamento && pag && (
+                      <>
+                        <span className="font-serif text-lg font-semibold">
+                          {Number(pag.valor).toLocaleString("pt-BR", {
+                            style: "currency",
+                            currency: "BRL",
+                          })}
+                        </span>
+                        {pag.comprovante_url && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => downloadComprovante(pag.comprovante_url!, "comprovante")}
+                            className="gap-1"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            Comprovante
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
     </div>
   );
 }
