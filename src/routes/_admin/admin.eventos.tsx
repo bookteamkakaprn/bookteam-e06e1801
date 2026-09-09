@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,26 +8,479 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Loader2, Plus, Save, Trash2 } from "lucide-react";
 
-export const Route = createFileRoute("/_admin/admin/eventos")({ component: AdminEventosPage });
-type Evento={id:string;titulo:string;descricao:string|null;data:string;hora:string|null;local:string|null;cidade:string|null;valor:number;vagas:number;livro_id:string|null;status:string};
-type Livro={id:string;titulo:string;ordem:number};
-const DIAS=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
-const MESES=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const iso=(d:Date)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-function AdminEventosPage(){
- const qc=useQueryClient(); const hoje=new Date(); const [mes,setMes]=useState(()=>new Date(hoje.getFullYear(),hoje.getMonth(),1)); const [editando,setEditando]=useState<Partial<Evento>|null>(null);
- const inicio=iso(new Date(mes.getFullYear(),mes.getMonth(),1)); const fim=iso(new Date(mes.getFullYear(),mes.getMonth()+1,0));
- const livrosQ=useQuery({queryKey:["admin-livros-min"],queryFn:async()=>{const {data,error}=await supabase.from("livros").select("id,titulo,ordem").order("ordem");if(error)throw error;return(data??[]) as Livro[]}});
- const eventosQ=useQuery({queryKey:["admin-eventos",inicio],queryFn:async()=>{const {data,error}=await supabase.from("eventos").select("id,titulo,descricao,data,hora,local,cidade,valor,vagas,livro_id,status").gte("data",inicio).lte("data",fim).order("data").order("hora");if(error)throw error;return(data??[]) as Evento[]}});
- const eventos=eventosQ.data??[]; const porDia=useMemo(()=>{const m:Record<string,Evento[]>={};for(const e of eventos)(m[e.data]??=[]).push(e);return m},[eventos]);
- const celulas=useMemo(()=>{const p=new Date(mes.getFullYear(),mes.getMonth(),1);const n=new Date(mes.getFullYear(),mes.getMonth()+1,0).getDate();return[...Array.from({length:p.getDay()},()=>null),...Array.from({length:n},(_,i)=>new Date(mes.getFullYear(),mes.getMonth(),i+1))]},[mes]);
- const salvar=useMutation({mutationFn:async(e:Partial<Evento>)=>{if(!e.titulo?.trim())throw new Error("Informe o título do encontro.");if(!e.data)throw new Error("Informe a data do encontro.");const payload={titulo:e.titulo.trim(),livro_id:e.livro_id||null,data:e.data,hora:e.hora||null,local:e.local||null,cidade:e.cidade||null,descricao:e.descricao||null,valor:Number(e.valor??0),vagas:Number(e.vagas??0)};const r=e.id?await supabase.from("eventos").update(payload).eq("id",e.id):await supabase.from("eventos").insert(payload);if(r.error)throw r.error},onSuccess:()=>{toast.success("Encontro salvo!");setEditando(null);qc.invalidateQueries({queryKey:["admin-eventos"]})},onError:(e:unknown)=>toast.error(e instanceof Error?e.message:"Erro ao salvar encontro.")});
- const excluir=useMutation({mutationFn:async(id:string)=>{const {error}=await supabase.from("eventos").delete().eq("id",id);if(error)throw error},onSuccess:()=>{toast.success("Encontro removido.");setEditando(null);qc.invalidateQueries({queryKey:["admin-eventos"]})},onError:(e:unknown)=>toast.error(e instanceof Error?e.message:"Erro ao remover encontro.")});
- return <div className="space-y-6"><div className="flex flex-wrap items-end justify-between gap-4"><div><h1 className="font-serif text-2xl font-semibold">Calendário de encontros</h1><p className="text-sm text-muted-foreground">As programações cadastradas aparecem aqui. Clique em uma data para criar ou editar.</p></div><Button type="button" className="gap-2" onClick={()=>setEditando({data:iso(hoje),hora:"19:00",valor:0,vagas:0})}><Plus className="h-4 w-4"/>Novo encontro</Button></div>
- <Card><CardContent className="p-4"><div className="mb-3 flex items-center justify-between"><Button type="button" size="icon" variant="ghost" onClick={()=>setMes(new Date(mes.getFullYear(),mes.getMonth()-1,1))}><ChevronLeft className="h-4 w-4"/></Button><p className="font-serif text-lg font-semibold">{MESES[mes.getMonth()]} {mes.getFullYear()}</p><Button type="button" size="icon" variant="ghost" onClick={()=>setMes(new Date(mes.getFullYear(),mes.getMonth()+1,1))}><ChevronRight className="h-4 w-4"/></Button></div><div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold uppercase text-muted-foreground">{DIAS.map(d=><div key={d} className="py-1">{d}</div>)}</div><div className="grid grid-cols-7 gap-1">{celulas.map((d,i)=>!d?<div key={`v${i}`} className="min-h-20"/>:<button key={iso(d)} type="button" onClick={()=>setEditando({data:iso(d),hora:"19:00",valor:0,vagas:0})} className="min-h-20 rounded-md border border-border p-1 text-left hover:bg-secondary"><span className="text-xs font-semibold text-muted-foreground">{d.getDate()}</span><div className="mt-1 space-y-1">{(porDia[iso(d)]??[]).map(e=><span key={e.id} onClick={ev=>{ev.stopPropagation();setEditando(e)}} className="block truncate rounded bg-primary px-1 py-0.5 text-[11px] text-primary-foreground">{e.hora?`${e.hora.slice(0,5)} `:""}{e.titulo}</span>)}</div></button>)}</div>{eventosQ.isLoading&&<p className="mt-3 text-sm text-muted-foreground"><Loader2 className="mr-1 inline h-4 w-4 animate-spin"/>Carregando programações…</p>}</CardContent></Card>
- <div className="space-y-2">{eventos.map(e=><Card key={e.id}><CardContent className="flex flex-wrap items-center justify-between gap-3 p-4"><div><p className="font-serif font-semibold">{e.titulo}</p><p className="text-xs text-muted-foreground">{new Date(e.data+"T00:00:00").toLocaleDateString("pt-BR")} {e.hora?.slice(0,5)??""}{e.local?` · ${e.local}`:""}{e.cidade?` · ${e.cidade}`:""}</p></div><Button type="button" size="sm" variant="outline" onClick={()=>setEditando(e)}>Editar</Button></CardContent></Card>)}</div>
- <Dialog open={!!editando} onOpenChange={o=>!o&&setEditando(null)}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg"><DialogHeader><DialogTitle>{editando?.id?"Editar encontro":"Novo encontro"}</DialogTitle></DialogHeader>{editando&&<form className="space-y-4" onSubmit={e=>{e.preventDefault();salvar.mutate(editando)}}><div className="space-y-1.5"><Label>Título</Label><Input value={editando.titulo??""} onChange={e=>setEditando(s=>({...s,titulo:e.target.value}))}/></div><div className="space-y-1.5"><Label>Livro / curso</Label><select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={editando.livro_id??""} onChange={e=>setEditando(s=>({...s,livro_id:e.target.value||null}))}><option value="">— sem livro / curso —</option>{(livrosQ.data??[]).map(l=><option key={l.id} value={l.id}>{l.ordem}. {l.titulo}</option>)}</select></div><div className="grid gap-4 sm:grid-cols-2"><div className="space-y-1.5"><Label>Data</Label><Input type="date" value={editando.data??""} onChange={e=>setEditando(s=>({...s,data:e.target.value}))}/></div><div className="space-y-1.5"><Label>Horário</Label><Input type="time" value={(editando.hora??"").slice(0,5)} onChange={e=>setEditando(s=>({...s,hora:e.target.value}))}/></div><div className="space-y-1.5"><Label>Local</Label><Input value={editando.local??""} onChange={e=>setEditando(s=>({...s,local:e.target.value}))}/></div><div className="space-y-1.5"><Label>Cidade</Label><Input value={editando.cidade??""} onChange={e=>setEditando(s=>({...s,cidade:e.target.value}))}/></div><div className="space-y-1.5"><Label>Valor (R$)</Label><Input type="number" step="0.01" value={editando.valor??0} onChange={e=>setEditando(s=>({...s,valor:Number(e.target.value)}))}/></div><div className="space-y-1.5"><Label>Vagas</Label><Input type="number" value={editando.vagas??0} onChange={e=>setEditando(s=>({...s,vagas:Number(e.target.value)}))}/></div></div><div className="space-y-1.5"><Label>Descrição</Label><TextareaFallback value={editando.descricao??""} onChange={v=>setEditando(s=>({...s,descricao:v}))}/></div><div className="flex flex-wrap gap-2"><Button type="submit" disabled={salvar.isPending} className="gap-2">{salvar.isPending?<Loader2 className="h-4 w-4 animate-spin"/>:<Save className="h-4 w-4"/>}Salvar</Button>{editando.id&&<Button type="button" variant="ghost" onClick={()=>excluir.mutate(editando.id)}><Trash2 className="mr-1 h-4 w-4"/>Excluir</Button>}</div></form>}</DialogContent></Dialog></div>
+export const Route = createFileRoute("/_admin/admin/eventos")({
+  component: AdminEventosPage,
+});
+
+type Categoria =
+  | "Homens"
+  | "Mulheres"
+  | "Mulheres solteiras"
+  | "Misto"
+  | "Família"
+  | "Ministério (Staff)";
+
+type Evento = {
+  id: string;
+  titulo: string;
+  descricao: string | null;
+  categoria: Categoria | null;
+  data: string;
+  hora: string | null;
+  local: string | null;
+  cidade: string | null;
+  valor: number;
+  vagas: number;
+  livro_id: string | null;
+  status: string;
+};
+
+const CATEGORIAS: Categoria[] = [
+  "Homens",
+  "Mulheres",
+  "Mulheres solteiras",
+  "Misto",
+  "Família",
+  "Ministério (Staff)",
+];
+
+function AdminEventosPage() {
+  const qc = useQueryClient();
+  const [editando, setEditando] = useState<Partial<Evento> | null>(null);
+  const [filtroCategoria, setFiltroCategoria] = useState("todas");
+
+  const eventosQ = useQuery({
+    queryKey: ["admin-eventos-todos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("eventos")
+        .select(
+          "id,titulo,descricao,categoria,data,hora,local,cidade,valor,vagas,livro_id,status",
+        )
+        .is("livro_id", null)
+        .order("data")
+        .order("hora");
+
+      if (error) throw error;
+      return (data ?? []) as Evento[];
+    },
+  });
+
+  const eventos = eventosQ.data ?? [];
+
+  const eventosFiltrados = eventos.filter(
+    (evento) =>
+      filtroCategoria === "todas" || evento.categoria === filtroCategoria,
+  );
+
+  const salvar = useMutation({
+    mutationFn: async (evento: Partial<Evento>) => {
+      if (!evento.titulo?.trim()) {
+        throw new Error("Informe o título do encontro.");
+      }
+
+      if (!evento.data) {
+        throw new Error("Informe a data do encontro.");
+      }
+
+      if (!evento.categoria) {
+        throw new Error("Selecione a categoria.");
+      }
+
+      // Eventos desta tela nunca são vinculados a cursos.
+      const payload = {
+        titulo: evento.titulo.trim(),
+        livro_id: null,
+        categoria: evento.categoria,
+        data: evento.data,
+        hora: evento.hora || null,
+        local: evento.local?.trim() || null,
+        cidade: evento.cidade?.trim() || null,
+        descricao: evento.descricao?.trim() || null,
+        valor: Number(evento.valor ?? 0),
+        vagas: Number(evento.vagas ?? 0),
+      };
+
+      const response = evento.id
+        ? await supabase.from("eventos").update(payload).eq("id", evento.id)
+        : await supabase.from("eventos").insert(payload);
+
+      if (response.error) throw response.error;
+    },
+    onSuccess: () => {
+      toast.success("Evento salvo!");
+      setEditando(null);
+      qc.invalidateQueries({ queryKey: ["admin-eventos-todos"] });
+      qc.invalidateQueries({ queryKey: ["admin-eventos"] });
+    },
+    onError: (e: unknown) =>
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível salvar o evento.",
+      ),
+  });
+
+  const excluir = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("eventos").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Evento excluído.");
+      setEditando(null);
+      qc.invalidateQueries({ queryKey: ["admin-eventos-todos"] });
+      qc.invalidateQueries({ queryKey: ["admin-eventos"] });
+    },
+    onError: (e: unknown) =>
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível excluir o evento.",
+      ),
+  });
+
+  const novoEvento = () => {
+    const hoje = new Date();
+    setEditando({
+      titulo: "",
+      data: `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(
+        2,
+        "0",
+      )}-${String(hoje.getDate()).padStart(2, "0")}`,
+      hora: "19:00",
+      categoria: "Misto",
+      valor: 0,
+      vagas: 0,
+      livro_id: null,
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+            Cadastro
+          </p>
+          <h1 className="font-serif text-2xl font-semibold">Eventos</h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Cadastre, edite e exclua somente os eventos. O calendário geral fica
+            em uma aba separada.
+          </p>
+        </div>
+
+        <Button type="button" className="gap-2" onClick={novoEvento}>
+          <Plus className="h-4 w-4" />
+          Novo evento
+        </Button>
+      </div>
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="filtro-categoria">Categoria</Label>
+              <select
+                id="filtro-categoria"
+                className="h-10 min-w-[230px] rounded-md border border-input bg-background px-3 text-sm"
+                value={filtroCategoria}
+                onChange={(e) => setFiltroCategoria(e.target.value)}
+              >
+                <option value="todas">Todas as categorias</option>
+                {CATEGORIAS.map((categoria) => (
+                  <option key={categoria} value={categoria}>
+                    {categoria}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              {eventosFiltrados.length}{" "}
+              {eventosFiltrados.length === 1
+                ? "evento cadastrado"
+                : "eventos cadastrados"}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {eventosQ.isLoading && (
+        <p className="text-sm text-muted-foreground">
+          <Loader2 className="mr-1 inline h-4 w-4 animate-spin" />
+          Carregando eventos…
+        </p>
+      )}
+
+      {!eventosQ.isLoading && eventosFiltrados.length === 0 && (
+        <Card>
+          <CardContent className="p-5 text-sm text-muted-foreground">
+            Nenhum evento encontrado.
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-3">
+        {eventosFiltrados.map((evento) => (
+          <Card key={evento.id}>
+            <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-serif text-lg font-semibold">
+                    {evento.titulo}
+                  </p>
+
+                  {evento.categoria && (
+                    <span className="rounded-full border border-gold/30 px-2 py-0.5 text-[10px] font-semibold text-gold">
+                      {evento.categoria}
+                    </span>
+                  )}
+                </div>
+
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {new Date(
+                    `${evento.data}T00:00:00`,
+                  ).toLocaleDateString("pt-BR")}
+                  {evento.hora ? ` · ${evento.hora.slice(0, 5)}` : ""}
+                  {evento.local ? ` · ${evento.local}` : ""}
+                  {evento.cidade ? ` · ${evento.cidade}` : ""}
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditando(evento)}
+                >
+                  Editar
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Excluir o evento "${evento.titulo}"?\n\nEssa ação não poderá ser desfeita.`,
+                      )
+                    ) {
+                      excluir.mutate(evento.id);
+                    }
+                  }}
+                  disabled={excluir.isPending}
+                  title="Excluir evento"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Dialog
+        open={!!editando}
+        onOpenChange={(aberto) => !aberto && setEditando(null)}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editando?.id ? "Editar evento" : "Novo evento"}
+            </DialogTitle>
+          </DialogHeader>
+
+          {editando && (
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                salvar.mutate(editando);
+              }}
+            >
+              <div className="space-y-1.5">
+                <Label>Título</Label>
+                <Input
+                  value={editando.titulo ?? ""}
+                  onChange={(e) =>
+                    setEditando((estado) => ({
+                      ...estado,
+                      titulo: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Categoria</Label>
+                <select
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={String(editando.categoria ?? "")}
+                  onChange={(e) =>
+                    setEditando((estado) => ({
+                      ...estado,
+                      categoria: (e.target.value || null) as Categoria | null,
+                    }))
+                  }
+                >
+                  <option value="">Selecione a categoria</option>
+                  {CATEGORIAS.map((categoria) => (
+                    <option key={categoria} value={categoria}>
+                      {categoria}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>Data</Label>
+                  <Input
+                    type="date"
+                    value={editando.data ?? ""}
+                    onChange={(e) =>
+                      setEditando((estado) => ({
+                        ...estado,
+                        data: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Horário</Label>
+                  <Input
+                    type="time"
+                    value={(editando.hora ?? "").slice(0, 5)}
+                    onChange={(e) =>
+                      setEditando((estado) => ({
+                        ...estado,
+                        hora: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Local</Label>
+                  <Input
+                    value={editando.local ?? ""}
+                    onChange={(e) =>
+                      setEditando((estado) => ({
+                        ...estado,
+                        local: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Cidade</Label>
+                  <Input
+                    value={editando.cidade ?? ""}
+                    onChange={(e) =>
+                      setEditando((estado) => ({
+                        ...estado,
+                        cidade: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Valor (R$)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={editando.valor ?? 0}
+                    onChange={(e) =>
+                      setEditando((estado) => ({
+                        ...estado,
+                        valor: Number(e.target.value),
+                      }))
+                    }
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Vagas</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={editando.vagas ?? 0}
+                    onChange={(e) =>
+                      setEditando((estado) => ({
+                        ...estado,
+                        vagas: Number(e.target.value),
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Descrição</Label>
+                <textarea
+                  rows={5}
+                  value={editando.descricao ?? ""}
+                  onChange={(e) =>
+                    setEditando((estado) => ({
+                      ...estado,
+                      descricao: e.target.value,
+                    }))
+                  }
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="submit"
+                  disabled={salvar.isPending}
+                  className="gap-2"
+                >
+                  {salvar.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Salvar
+                </Button>
+
+                {editando.id && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      if (
+                        window.confirm(
+                          `Excluir o evento "${editando.titulo}"?\n\nEssa ação não poderá ser desfeita.`,
+                        )
+                      ) {
+                        excluir.mutate(editando.id);
+                      }
+                    }}
+                    disabled={excluir.isPending}
+                  >
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Excluir
+                  </Button>
+                )}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditando(null)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
 }
-function TextareaFallback({value,onChange}:{value:string;onChange:(v:string)=>void}){return <textarea rows={4} value={value} onChange={e=>onChange(e.target.value)} className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"/>}
