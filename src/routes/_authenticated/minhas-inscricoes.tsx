@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, AlertCircle, CheckCircle2, XCircle, Archive } from "lucide-react";
+import { Download, AlertCircle, CheckCircle2, XCircle, Archive, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/minhas-inscricoes")({
@@ -45,7 +45,7 @@ function MinhasInscricoesPage() {
   >("confirmadas");
   const [mostrarArquivados, setMostrarArquivados] = useState(false);
 
-  const { data: inscricoes = [], isLoading: carregandoInscricoes } = useQuery({
+  const { data: inscricoes = [], isLoading: carregandoInscricoes, refetch } = useQuery({
     enabled: !!user,
     queryKey: ["minhas-inscricoes", user?.id],
     queryFn: async () => {
@@ -59,6 +59,24 @@ function MinhasInscricoesPage() {
 
       if (error) throw error;
       return (data ?? []) as unknown as Inscricao[];
+    },
+  });
+
+  const desinscrever = useMutation({
+    mutationFn: async (inscricaoId: string) => {
+      const { error } = await supabase
+        .from("inscricoes")
+        .update({ status: "cancelada", cancelado_em: new Date().toISOString() })
+        .eq("id", inscricaoId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Você foi desinscrito do curso!");
+      refetch();
+    },
+    onError: (e: Error) => {
+      toast.error(e.message || "Erro ao desinscrever");
     },
   });
 
@@ -336,6 +354,22 @@ function MinhasInscricoesPage() {
                           </Button>
                         )}
                       </>
+                    )}
+                    {!temPagamento && inscricao.status === "confirmada" && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          if (window.confirm("Tem certeza que deseja desinscrever deste curso?")) {
+                            desinscrever.mutate(inscricao.id);
+                          }
+                        }}
+                        disabled={desinscrever.isPending}
+                        className="gap-1"
+                      >
+                        <LogOut className="h-3.5 w-3.5" />
+                        {desinscrever.isPending ? "Desinscrevi..." : "Desinscrever"}
+                      </Button>
                     )}
                   </div>
                 </div>
