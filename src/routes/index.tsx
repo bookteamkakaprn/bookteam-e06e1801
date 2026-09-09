@@ -75,6 +75,7 @@ function LandingPage() {
 
       <HowItWorks />
       <JornadaLivros />
+      <LivrosComplementares />
 
       <EventosEspeciais />
       <Testimonials />
@@ -451,13 +452,8 @@ function JornadaLivros() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-2xl">
             <h2 className="font-serif text-2xl font-semibold md:text-3xl">
-              Uma jornada em livros
+              JORNADA BOOK TEAM
             </h2>
-            <p className="mt-4 text-[15px] leading-relaxed text-foreground/70">
-              Cada trilha segue uma ordem — para começar o próximo livro, é
-              preciso concluir o anterior. Seu histórico registra todo o
-              caminho percorrido.
-            </p>
           </div>
 
           <div className="flex gap-2">
@@ -704,6 +700,143 @@ function HowItWorks() {
 
 
 /* ———————————————— ENCONTROS ———————————————— */
+
+/* ———————————————— LIVROS COMPLEMENTARES ———————————————— */
+
+function LivrosComplementares() {
+  const { data: livros = [], isLoading } = useQuery({
+    queryKey: ["livros-complementares"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("livros")
+        .select("id, titulo, autor, imagem_url, capa_url")
+        .is("categoria", null)  // Apenas livros que não têm categoria "Jornada"
+        .order("titulo", { ascending: true })
+        .limit(20);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const scrollerRef = useRef<HTMLDivElement>(null);
+
+  const scrollBy = (dir: 1 | -1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: "smooth" });
+  };
+
+  return (
+    <section className="relative border-t border-border/40 bg-gradient-to-b from-background via-card/30 to-background py-16 md:py-20">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="max-w-2xl">
+            <h2 className="font-serif text-2xl font-semibold md:text-3xl">
+              LIVROS COMPLEMENTARES
+            </h2>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => scrollBy(-1)}
+              aria-label="Anterior"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border/60 bg-card/60 text-foreground/80 backdrop-blur transition-all hover:border-gold/40 hover:text-gold"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              onClick={() => scrollBy(1)}
+              aria-label="Próximo"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border/60 bg-card/60 text-foreground/80 backdrop-blur transition-all hover:border-gold/40 hover:text-gold"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        {isLoading && (
+          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-5">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div
+                key={i}
+                className="aspect-[2/3] animate-pulse rounded-r-2xl rounded-l-md bg-gradient-to-br from-white/10 to-white/5"
+              />
+            ))}
+          </div>
+        )}
+
+        {!isLoading && livros.length === 0 && (
+          <p className="mt-6 text-sm text-muted-foreground">
+            Livros complementares em breve.
+          </p>
+        )}
+      </div>
+
+      <div
+        ref={scrollerRef}
+        className="scrollbar-hidden mt-8 flex touch-pan-x snap-x snap-proximity gap-4 scroll-pl-4 overflow-x-auto overscroll-x-contain px-4 pb-4 [-webkit-overflow-scrolling:touch] md:scroll-pl-8 md:gap-8 md:px-8"
+      >
+        {!isLoading &&
+          livros.map((livro) => (
+            <Link
+              key={livro.id}
+              to="/livros/$id"
+              params={{ id: livro.id }}
+              className="shrink-0 snap-start rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold/70"
+              aria-label={`Abrir ${livro.titulo}`}
+            >
+              <LivroComplementarCard livro={livro} />
+            </Link>
+          ))}
+        <div className="shrink-0 pr-4 md:pr-8" />
+      </div>
+    </section>
+  );
+}
+
+function LivroComplementarCard({
+  livro,
+}: {
+  livro: { id: string; titulo: string; autor: string | null; imagem_url: string | null; capa_url: string | null };
+}) {
+  const capa = livro.imagem_url || livro.capa_url;
+
+  return (
+    <article className="group poster-hover relative aspect-[2/3] w-[58vw] max-w-[240px] shrink-0 snap-start overflow-hidden rounded-r-2xl rounded-l-md bg-gradient-to-br from-[oklch(0.4_0.12_25)] to-[oklch(0.22_0.06_25)] shadow-book transition-transform duration-300 hover:-translate-y-1 hover:shadow-premium sm:w-[200px] md:w-[240px] lg:w-[280px]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_60%)]" />
+
+      {capa ? (
+        <img
+          src={capa}
+          alt={livro.titulo}
+          loading="lazy"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-black/10 via-white/[0.03] to-black/30 px-5 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-gold/30 bg-black/20 shadow-inner">
+            <BookOpen className="h-9 w-9 text-gold/80" />
+          </div>
+          <p className="mt-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold/80">
+            Capa em breve
+          </p>
+        </div>
+      )}
+
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+
+      <div className="absolute inset-0 flex flex-col justify-end p-4 text-white">
+        <h3 className="text-sm font-semibold line-clamp-2">{livro.titulo}</h3>
+        {livro.autor && (
+          <p className="mt-1 text-[11px] text-white/70 line-clamp-1">{livro.autor}</p>
+        )}
+      </div>
+    </article>
+  );
+}
 
 /* ———————————————— EVENTOS ESPECIAIS ———————————————— */
 
