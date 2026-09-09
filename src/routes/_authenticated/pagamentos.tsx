@@ -37,6 +37,10 @@ type PagRow = {
   created_at: string;
   observacao: string | null;
   resposta_aluno: string | null;
+  cancelamento_status: string | null;
+  cancelamento_motivo: string | null;
+  estorno_comprovante_url: string | null;
+  estorno_enviado_em: string | null;
   inscricao:
     | {
         id: string;
@@ -67,6 +71,12 @@ function PagPage() {
   const [respostas, setRespostas] = useState<Record<string, string>>({});
   const [arquivoSelecionado, setArquivoSelecionado] = useState<
     Record<string, File | null>
+  >({});
+  const [pedindoCancelamento, setPedindoCancelamento] = useState<string | null>(
+    null
+  );
+  const [motivosCancelamento, setMotivosCancelamento] = useState<
+    Record<string, string>
   >({});
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -267,6 +277,40 @@ function PagPage() {
     }
   };
 
+  const pedirCancelamento = async (pagamento: PagRow) => {
+    const motivo = (motivosCancelamento[pagamento.id] ?? "").trim();
+
+    if (!motivo) {
+      toast.error("Informe o motivo do pedido de cancelamento.");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("pagamentos")
+        .update({
+          cancelamento_status: "solicitado",
+          cancelamento_motivo: motivo,
+        })
+        .eq("id", pagamento.id);
+
+      if (error) throw error;
+
+      toast.success("Pedido de cancelamento enviado para análise.");
+      setPedindoCancelamento(null);
+
+      await qc.invalidateQueries({
+        queryKey: ["meus-pagamentos", user?.id],
+      });
+    } catch (e: unknown) {
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : "Não foi possível enviar o pedido de cancelamento."
+      );
+    }
+  };
+
   const pagamentos = data ?? [];
 
   return (
@@ -329,6 +373,52 @@ function PagPage() {
                     Pagamento criado em{" "}
                     {new Date(p.created_at).toLocaleString("pt-BR")}
                   </p>
+                )}
+
+                {p.cancelamento_status === "solicitado" && (
+                  <div className="mt-3 rounded-lg border border-gold/30 bg-gold/5 p-3">
+                    <p className="text-sm font-semibold text-gold">
+                      Cancelamento solicitado
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Motivo: {p.cancelamento_motivo || "Não informado"}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Aguardando análise do ADM.
+                    </p>
+                  </div>
+                )}
+
+                {p.cancelamento_status === "aprovado" && (
+                  <div className="mt-3 rounded-lg border border-border/60 bg-card/50 p-3">
+                    <p className="text-sm font-semibold">
+                      Cancelamento aprovado
+                    </p>
+                    {p.estorno_enviado_em && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Estorno enviado em{" "}
+                        <strong className="text-foreground">
+                          {new Date(p.estorno_enviado_em).toLocaleString("pt-BR")}
+                        </strong>
+                      </p>
+                    )}
+                    {p.estorno_comprovante_url && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-2 gap-1"
+                        onClick={() =>
+                          verComprovante(
+                            p.id,
+                            p.estorno_comprovante_url!
+                          )
+                        }
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        Ver comprovante de estorno
+                      </Button>
+                    )}
+                  </div>
                 )}
 
                 {recusado && p.observacao && (
@@ -462,6 +552,70 @@ function PagPage() {
                   </div>
                 )}
               </div>
+
+              {p.status !== "rejeitado" &&
+                p.cancelamento_status !== "solicitado" &&
+                p.cancelamento_status !== "aprovado" && (
+                  <div className="mt-4">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setPedindoCancelamento(p.id);
+                        setMotivosCancelamento((estado) => ({
+                          ...estado,
+                          [p.id]: "",
+                        }));
+                      }}
+                    >
+                      Pedir cancelamento
+                    </Button>
+
+                    {pedindoCancelamento === p.id && (
+                      <div className="mt-3 rounded-xl border border-border/60 bg-card/50 p-4">
+                        <p className="text-sm font-semibold">
+                          Solicitar cancelamento
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Informe o motivo. O pedido será analisado pelo ADM.
+                        </p>
+
+                        <Textarea
+                          rows={3}
+                          className="mt-3"
+                          placeholder="Motivo do cancelamento..."
+                          value={motivosCancelamento[p.id] ?? ""}
+                          onChange={(e) =>
+                            setMotivosCancelamento((estado) => ({
+                              ...estado,
+                              [p.id]: e.target.value,
+                            }))
+                          }
+                        />
+
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => pedirCancelamento(p)}
+                          >
+                            Enviar pedido
+                          </Button>
+
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setPedindoCancelamento(null)}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
               <div className="flex shrink-0 flex-wrap items-center gap-3">
                 <span className="font-serif text-lg">
