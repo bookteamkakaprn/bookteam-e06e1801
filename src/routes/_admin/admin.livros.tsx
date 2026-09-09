@@ -37,6 +37,7 @@ import {
 
 import {
   Check,
+  List,
   Loader2,
   Plus,
   Save,
@@ -233,6 +234,11 @@ function AdminLivrosPage() {
     filtroNivel,
     setFiltroNivel,
   ] = useState("todos");
+
+  const [
+    niveisAberto,
+    setNiveisAberto,
+  ] = useState(false);
 
   const [
     novoNivelAberto,
@@ -963,14 +969,10 @@ function AdminLivrosPage() {
             type="button"
             variant="outline"
             className="w-full sm:w-auto"
-            onClick={() =>
-              setNovoNivelAberto(
-                true
-              )
-            }
+            onClick={() => setNiveisAberto(true)}
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Novo nível
+            <List className="mr-2 h-4 w-4" />
+            Níveis
           </Button>
 
           <Button
@@ -1035,95 +1037,6 @@ function AdminLivrosPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Níveis cadastrados</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {niveisDoFiltro.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Nenhum nível cadastrado para este tipo de curso.
-            </p>
-          ) : (
-            niveisDoFiltro.map((nivel) => (
-              <div
-                key={nivel.id}
-                className="flex items-center gap-3 rounded-lg border p-3"
-              >
-                <div className="min-w-0 flex-1">
-                  {nivelEditando === nivel.id ? (
-                    <Input
-                      autoFocus
-                      value={nivelEditNome}
-                      onChange={(event) => setNivelEditNome(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") salvarNivel.mutate();
-                        if (event.key === "Escape") {
-                          setNivelEditando(null);
-                          setNivelEditNome("");
-                        }
-                      }}
-                    />
-                  ) : (
-                    <p className="text-sm font-medium">{nivel.nome}</p>
-                  )}
-                </div>
-
-                <div className="flex shrink-0 gap-2">
-                  {nivelEditando === nivel.id ? (
-                    <>
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={salvarNivel.isPending}
-                        onClick={() => salvarNivel.mutate()}
-                      >
-                        {salvarNivel.isPending ? "Salvando..." : "Salvar"}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setNivelEditando(null);
-                          setNivelEditNome("");
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setNivelEditando(nivel.id);
-                          setNivelEditNome(nivel.nome);
-                        }}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="destructive"
-                        disabled={excluirNivel.isPending}
-                        onClick={() => excluirNivel.mutate(nivel)}
-                        title="Excluir nível"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle className="text-lg">
             {filtroTipo === "jornada"
               ? "Cursos da Jornada"
@@ -1149,41 +1062,143 @@ function AdminLivrosPage() {
       </Card>
 
       {/* ===================================================
+          MODAL GERENCIAR NÍVEIS
+      =================================================== */}
+      <Dialog open={niveisAberto} onOpenChange={setNiveisAberto}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Gerenciar níveis</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                Cadastre, edite ou exclua os níveis dos cursos.
+              </p>
+
+              <Button
+                type="button"
+                onClick={() => {
+                  setNovoNivelNome("");
+                  setNovoNivelTipo("jornada");
+                  setNovoNivelAberto(true);
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Novo nível
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              {niveis.length === 0 ? (
+                <p className="py-5 text-sm text-muted-foreground">
+                  Nenhum nível cadastrado.
+                </p>
+              ) : (
+                niveis.map((nivel) => (
+                  <div
+                    key={nivel.id}
+                    className="flex items-center gap-3 rounded-lg border p-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      {nivelEditando === nivel.id ? (
+                        <Input
+                          autoFocus
+                          value={nivelEditNome}
+                          onChange={(event) =>
+                            setNivelEditNome(event.target.value)
+                          }
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") salvarNivel.mutate();
+                            if (event.key === "Escape") {
+                              setNivelEditando(null);
+                              setNivelEditNome("");
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div>
+                          <p className="text-sm font-medium">{nivel.nome}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {trilhas.find((trilha) => trilha.id === nivel.trilha_id)?.nome ??
+                              "Sem tipo de curso"}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex shrink-0 gap-2">
+                      {nivelEditando === nivel.id ? (
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            disabled={salvarNivel.isPending}
+                            onClick={() => salvarNivel.mutate()}
+                          >
+                            {salvarNivel.isPending ? "Salvando..." : "Salvar"}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setNivelEditando(null);
+                              setNivelEditNome("");
+                            }}
+                          >
+                            Cancelar
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setNivelEditando(nivel.id);
+                              setNivelEditNome(nivel.nome);
+                            }}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="destructive"
+                            disabled={excluirNivel.isPending}
+                            onClick={() => excluirNivel.mutate(nivel)}
+                            title="Excluir nível"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===================================================
           MODAL NOVO NÍVEL
       =================================================== */}
-
-      <Dialog
-        open={
-          novoNivelAberto
-        }
-        onOpenChange={
-          setNovoNivelAberto
-        }
-      >
+      <Dialog open={novoNivelAberto} onOpenChange={setNovoNivelAberto}>
         <DialogContent className="sm:max-w-lg">
-
           <DialogHeader>
-            <DialogTitle>
-              Cadastrar novo nível
-            </DialogTitle>
+            <DialogTitle>Cadastrar novo nível</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
-
             <Field label="Nome do nível">
               <Input
                 autoFocus
-                value={
-                  novoNivelNome
-                }
-                onChange={(
-                  event
-                ) =>
-                  setNovoNivelNome(
-                    event.target
-                      .value
-                  )
-                }
+                value={novoNivelNome}
+                onChange={(event) => setNovoNivelNome(event.target.value)}
                 placeholder="Ex.: Curso Essencial"
               />
             </Field>
@@ -1200,7 +1215,9 @@ function AdminLivrosPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="jornada">Jornada</SelectItem>
-                  <SelectItem value="complementar">Cursos Complementares</SelectItem>
+                  <SelectItem value="complementar">
+                    Cursos Complementares
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </Field>
@@ -1208,36 +1225,26 @@ function AdminLivrosPage() {
             <div className="flex gap-2">
               <Button
                 type="button"
-                disabled={
-                  cadastrarNivel.isPending
-                }
-                onClick={() =>
-                  cadastrarNivel.mutate()
-                }
+                disabled={cadastrarNivel.isPending}
+                onClick={() => cadastrarNivel.mutate()}
               >
                 {cadastrarNivel.isPending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
                   <Save className="mr-2 h-4 w-4" />
                 )}
-
                 Salvar nível
               </Button>
 
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  setNovoNivelAberto(
-                    false
-                  )
-                }
+                onClick={() => setNovoNivelAberto(false)}
               >
                 <X className="mr-2 h-4 w-4" />
                 Cancelar
               </Button>
             </div>
-
           </div>
         </DialogContent>
       </Dialog>
