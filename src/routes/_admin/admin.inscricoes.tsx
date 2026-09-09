@@ -32,8 +32,6 @@ type Inscricao = {
   id: string;
   status: string;
   created_at: string;
-  motivo_rejeicao: string | null;
-  motivo_cancelamento: string | null;
   participante:
     | {
         id: string;
@@ -78,12 +76,12 @@ function AdminInscricoes() {
   const [motivo, setMotivo] = useState("");
 
   const query = useQuery({
-    queryKey: ["admin-inscricoes"],
+    queryKey: ["admin-inscricoes", filtro],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inscricoes")
         .select(
-          `id,status,created_at,motivo_rejeicao,motivo_cancelamento,
+          `id,status,created_at,
            participante:participantes(id,nome,email,status),
            livro:livros(titulo,autor),
            turma:turmas(nome,data_inicio,data_fim),
@@ -223,12 +221,22 @@ function AdminInscricoes() {
         .from("inscricoes")
         .update({
           status: "cancelada",
-          motivo_rejeicao: texto,
-          motivo_cancelamento: texto,
         })
         .eq("id", inscricao.id);
 
       if (error) throw error;
+
+      // Registra a justificativa no pagamento relacionado, quando houver,
+      // usando o campo observacao que já existe no schema.
+      const pagamento = inscricao.pagamentos?.[0];
+      if (pagamento?.id) {
+        const { error: pagamentoError } = await supabase
+          .from("pagamentos")
+          .update({ observacao: texto })
+          .eq("id", pagamento.id);
+
+        if (pagamentoError) throw pagamentoError;
+      }
 
       const participanteId = inscricao.participante?.id;
 
@@ -420,12 +428,6 @@ function AdminInscricoes() {
                       {aluno?.email ?? ""}
                     </p>
 
-                    {inscricao.motivo_rejeicao && (
-                      <p className="mt-2 rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive">
-                        <strong>Motivo da rejeição:</strong>{" "}
-                        {inscricao.motivo_rejeicao}
-                      </p>
-                    )}
                   </div>
 
                   <div className="flex flex-wrap gap-2 sm:justify-end">
