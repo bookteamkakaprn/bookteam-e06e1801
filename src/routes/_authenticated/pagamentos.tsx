@@ -30,6 +30,7 @@ type PagRow = {
   status: string;
   valor: number;
   comprovante_url: string | null;
+  observacao: string | null;
   created_at: string;
   inscricao:
     | {
@@ -79,7 +80,7 @@ function PagPage() {
       const pagamentosRes = await supabase
         .from("pagamentos")
         .select(
-          "id,status,valor,comprovante_url,created_at,inscricao:inscricoes(id,evento:eventos(id,titulo,data),livro:livros(titulo))"
+          "id,status,valor,comprovante_url,observacao,created_at,inscricao:inscricoes(id,evento:eventos(id,titulo,data),livro:livros(titulo))"
         )
         .in("inscricao_id", ids)
         .order("created_at", { ascending: false });
@@ -232,6 +233,17 @@ function PagPage() {
                         ? "Abrindo..."
                         : "Ver comprovante"}
                     </Button>
+                  </div>
+                )}
+
+                {p.status === "rejeitado" && p.observacao && (
+                  <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                    <p className="text-xs font-semibold text-destructive">
+                      Motivo da recusa:
+                    </p>
+                    <p className="mt-1 text-sm text-destructive">
+                      {p.observacao}
+                    </p>
                   </div>
                 )}
               </div>
