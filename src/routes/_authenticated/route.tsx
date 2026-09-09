@@ -10,7 +10,8 @@ import {
 import { LogOut, LayoutDashboard, Menu } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import bookTeamLogo from "@/assets/book-team-logo.png";
+// Logo agora está em public/book-team-logo.png (caminho público)
+const bookTeamLogo = "/book-team-logo.png";
 import { StudentSidebar } from "@/components/student-sidebar";
 import { useState } from "react";
 

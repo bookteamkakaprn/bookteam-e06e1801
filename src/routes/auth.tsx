@@ -11,7 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import bookTeamLogo from "@/assets/book-team-logo.png";
+// Logo agora está em public/book-team-logo.png (caminho público)
+const bookTeamLogo = "/book-team-logo.png";
 
 const searchSchema = z.object({
   mode: z.enum(["signin", "signup", "forgot"]).optional(),
