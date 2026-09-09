@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,23 +29,23 @@ export const Route = createFileRoute("/_admin/admin/inscricoes")({
   component: AdminAprovacoes,
 });
 
-type Aba = "pagamentos" | "inscricoes";
 type StatusPagamento = "aguardando" | "aprovado" | "rejeitado";
+type Aba = "pagamentos" | "inscricoes";
 
-type Pagamento = {
+type PagamentoRow = {
   id: string;
+  inscricao_id: string;
   status: StatusPagamento;
   valor: number;
   comprovante_url: string | null;
   observacao: string | null;
   created_at: string;
-  inscricao_id: string;
-  inscricao: InscricaoBase | null;
 };
 
-type InscricaoBase = {
+type InscricaoRow = {
   id: string;
   status: string;
+  created_at: string;
   participante_id: string | null;
   livro_id: string | null;
   turma_id: string | null;
@@ -73,21 +73,6 @@ type Turma = {
   vagas_restantes: number | null;
 };
 
-type Inscricao = {
-  id: string;
-  status: string;
-  created_at: string;
-  participante: Participante | null;
-  livro: Livro | null;
-  turma: Turma | null;
-  pagamentos: {
-    id: string;
-    status: StatusPagamento;
-    valor: number;
-    observacao: string | null;
-  }[];
-};
-
 function moeda(v: number) {
   return Number(v).toLocaleString("pt-BR", {
     style: "currency",
@@ -99,187 +84,233 @@ function dataBR(v: string | null) {
   return v ? new Date(`${v}T00:00:00`).toLocaleDateString("pt-BR") : "—";
 }
 
-async function carregarRelacionamentos(
-  inscricoesBase: InscricaoBase[],
-) {
-  const participanteIds = [...new Set(inscricoesBase.map((x) => x.participante_id).filter(Boolean))] as string[];
-  const livroIds = [...new Set(inscricoesBase.map((x) => x.livro_id).filter(Boolean))] as string[];
-  const turmaIds = [...new Set(inscricoesBase.map((x) => x.turma_id).filter(Boolean))] as string[];
-
-  const [participantesQ, livrosQ, turmasQ] = await Promise.all([
-    participanteIds.length
-      ? supabase.from("participantes").select("id,nome,email,status").in("id", participanteIds)
-      : Promise.resolve({ data: [], error: null }),
-    livroIds.length
-      ? supabase.from("livros").select("id,titulo,autor").in("id", livroIds)
-      : Promise.resolve({ data: [], error: null }),
-    turmaIds.length
-      ? supabase.from("turmas").select("id,nome,data_inicio,data_fim,vagas_max,vagas_restantes").in("id", turmaIds)
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-
-  if (participantesQ.error) throw participantesQ.error;
-  if (livrosQ.error) throw livrosQ.error;
-  if (turmasQ.error) throw turmasQ.error;
-
-  const participantes = new Map(
-    (participantesQ.data ?? []).map((x) => [x.id, x as Participante]),
-  );
-  const livros = new Map(
-    (livrosQ.data ?? []).map((x) => [x.id, x as Livro]),
-  );
-  const turmas = new Map(
-    (turmasQ.data ?? []).map((x) => [x.id, x as Turma]),
-  );
-
-  return { participantes, livros, turmas };
-}
-
 function AdminAprovacoes() {
   const qc = useQueryClient();
-
   const [aba, setAba] = useState<Aba>("pagamentos");
-  const [filtroPagamento, setFiltroPagamento] = useState<StatusPagamento>("aguardando");
-  const [recusandoPagamento, setRecusandoPagamento] = useState<Pagamento | null>(null);
+  const [filtroPagamento, setFiltroPagamento] =
+    useState<StatusPagamento>("aguardando");
+  const [recusandoPagamento, setRecusandoPagamento] =
+    useState<PagamentoRow | null>(null);
   const [motivoPagamento, setMotivoPagamento] = useState("");
-  const [recusandoInscricao, setRecusandoInscricao] = useState<Inscricao | null>(null);
+  const [recusandoInscricao, setRecusandoInscricao] =
+    useState<InscricaoRow | null>(null);
   const [motivoInscricao, setMotivoInscricao] = useState("");
 
-  const baseQ = useQuery({
-    queryKey: ["admin-aprovacoes-base"],
+  const pagamentosQ = useQuery({
+    queryKey: ["admin-aprovacoes-pagamentos-v3"],
     queryFn: async () => {
-      const [{ data: pagamentosBase, error: pagamentosError }, { data: inscricoesBase, error: inscricoesError }] =
-        await Promise.all([
-          supabase
-            .from("pagamentos")
-            .select("id,status,valor,comprovante_url,observacao,created_at,inscricao_id")
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("inscricoes")
-            .select("id,status,created_at,participante_id,livro_id,turma_id")
-            .order("created_at", { ascending: false }),
-        ]);
+      const { data, error } = await supabase
+        .from("pagamentos")
+        .select("id,inscricao_id,status,valor,comprovante_url,observacao,created_at")
+        .order("created_at", { ascending: false });
 
-      if (pagamentosError) throw pagamentosError;
-      if (inscricoesError) throw inscricoesError;
-
-      const inscricoesRows = (inscricoesBase ?? []) as InscricaoBase[];
-      const relacionamentos = await carregarRelacionamentos(inscricoesRows);
-
-      const inscricoesMap = new Map(inscricoesRows.map((x) => [x.id, x]));
-
-      const pagamentos = (pagamentosBase ?? []).map((p) => {
-        const i = inscricoesMap.get(p.inscricao_id) ?? null;
-        return {
-          ...(p as Omit<Pagamento, "inscricao">),
-          inscricao_id: p.inscricao_id,
-          inscricao: i,
-        } as Pagamento;
-      });
-
-      const pagamentosPorInscricao = new Map<string, Pagamento[]>();
-      for (const pagamento of pagamentos) {
-        const lista = pagamentosPorInscricao.get(pagamento.inscricao_id) ?? [];
-        lista.push(pagamento);
-        pagamentosPorInscricao.set(pagamento.inscricao_id, lista);
-      }
-
-      const inscricoes: Inscricao[] = inscricoesRows.map((i) => ({
-        ...i,
-        participante: i.participante_id ? relacionamentos.participantes.get(i.participante_id) ?? null : null,
-        livro: i.livro_id ? relacionamentos.livros.get(i.livro_id) ?? null : null,
-        turma: i.turma_id ? relacionamentos.turmas.get(i.turma_id) ?? null : null,
-        pagamentos: (pagamentosPorInscricao.get(i.id) ?? []).map((p) => ({
-          id: p.id,
-          status: p.status,
-          valor: p.valor,
-          observacao: p.observacao,
-        })),
-      }));
-
-      return { pagamentos, inscricoes };
+      if (error) throw error;
+      return (data ?? []) as PagamentoRow[];
     },
   });
 
-  const dados = baseQ.data ?? { pagamentos: [], inscricoes: [] };
+  const inscricoesQ = useQuery({
+    queryKey: ["admin-aprovacoes-inscricoes-v3"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inscricoes")
+        .select("id,status,created_at,participante_id,livro_id,turma_id")
+        .order("created_at", { ascending: false });
 
-  const decidirPagamento = useMutation({
-    mutationFn: async ({
-      pagamento,
-      status,
-      observacao,
-    }: {
-      pagamento: Pagamento;
-      status: "aprovado" | "rejeitado";
-      observacao: string | null;
-    }) => {
+      if (error) throw error;
+      return (data ?? []) as InscricaoRow[];
+    },
+  });
+
+  const participantesQ = useQuery({
+    queryKey: ["admin-aprovacoes-participantes-v3"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("participantes")
+        .select("id,nome,email,status")
+        .order("nome");
+
+      if (error) throw error;
+      return (data ?? []) as Participante[];
+    },
+  });
+
+  const livrosQ = useQuery({
+    queryKey: ["admin-aprovacoes-livros-v3"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("livros")
+        .select("id,titulo,autor")
+        .order("ordem");
+
+      if (error) throw error;
+      return (data ?? []) as Livro[];
+    },
+  });
+
+  const turmasQ = useQuery({
+    queryKey: ["admin-aprovacoes-turmas-v3"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("turmas")
+        .select("id,nome,data_inicio,data_fim,vagas_max,vagas_restantes")
+        .order("data_inicio");
+
+      if (error) throw error;
+      return (data ?? []) as Turma[];
+    },
+  });
+
+  const pagamentos = pagamentosQ.data ?? [];
+  const inscricoes = inscricoesQ.data ?? [];
+  const participantes = participantesQ.data ?? [];
+  const livros = livrosQ.data ?? [];
+  const turmas = turmasQ.data ?? [];
+
+  const participantesMap = useMemo(
+    () => new Map(participantes.map((item) => [item.id, item])),
+    [participantes],
+  );
+  const livrosMap = useMemo(
+    () => new Map(livros.map((item) => [item.id, item])),
+    [livros],
+  );
+  const turmasMap = useMemo(
+    () => new Map(turmas.map((item) => [item.id, item])),
+    [turmas],
+  );
+  const inscricoesMap = useMemo(
+    () => new Map(inscricoes.map((item) => [item.id, item])),
+    [inscricoes],
+  );
+
+  const pagamentosFiltrados = pagamentos.filter(
+    (item) => item.status === filtroPagamento,
+  );
+
+  const inscricoesComDados = useMemo(
+    () =>
+      inscricoes.map((inscricao) => ({
+        ...inscricao,
+        participante: inscricao.participante_id
+          ? participantesMap.get(inscricao.participante_id) ?? null
+          : null,
+        livro: inscricao.livro_id
+          ? livrosMap.get(inscricao.livro_id) ?? null
+          : null,
+        turma: inscricao.turma_id
+          ? turmasMap.get(inscricao.turma_id) ?? null
+          : null,
+        pagamentos: pagamentos.filter(
+          (pagamento) => pagamento.inscricao_id === inscricao.id,
+        ),
+      })),
+    [inscricoes, participantesMap, livrosMap, turmasMap, pagamentos],
+  );
+
+  const inscricoesPendentes = inscricoesComDados.filter((inscricao) => {
+    const pagamentoAprovado = inscricao.pagamentos.some(
+      (pagamento) => pagamento.status === "aprovado",
+    );
+
+    return (
+      pagamentoAprovado &&
+      inscricao.status !== "confirmada" &&
+      inscricao.status !== "cancelada"
+    );
+  });
+
+  const inscricoesAprovadas = inscricoesComDados.filter(
+    (inscricao) => inscricao.status === "confirmada",
+  );
+
+  const inscricoesRejeitadas = inscricoesComDados.filter(
+    (inscricao) => inscricao.status === "cancelada",
+  );
+
+  const aprovarPagamento = useMutation({
+    mutationFn: async (pagamento: PagamentoRow) => {
       const { data: usuario } = await supabase.auth.getUser();
 
       const { error } = await supabase
         .from("pagamentos")
         .update({
-          status,
-          observacao,
-          aprovado_em: status === "aprovado" ? new Date().toISOString() : null,
-          aprovado_por: status === "aprovado" ? usuario.user?.id ?? null : null,
+          status: "aprovado",
+          pago_em: new Date().toISOString(),
+          aprovado_em: new Date().toISOString(),
+          aprovado_por: usuario.user?.id ?? null,
+          observacao: null,
         })
         .eq("id", pagamento.id);
 
       if (error) throw error;
-
-      const participanteId = pagamento.inscricao?.participante_id ?? pagamento.inscricao?.id
-        ? dados.inscricoes.find((i) => i.id === pagamento.inscricao_id)?.participante?.id
-        : null;
-
-      if (participanteId) {
-        const curso =
-          pagamento.inscricao
-            ? dados.inscricoes.find((i) => i.id === pagamento.inscricao_id)?.livro?.titulo
-            : null;
-
-        const mensagem =
-          status === "aprovado"
-            ? `Seu pagamento foi aprovado para ${curso ?? "seu curso"}. Sua inscrição agora aguarda a confirmação da vaga pela equipe.`
-            : `Seu pagamento não foi aprovado para ${curso ?? "seu curso"}. Motivo: ${observacao || "Comprovante não validado."} Acesse sua área do aluno para regularizar.`;
-
-        const emailRes = await supabase.functions.invoke(
-          "bookteam-send-notification-email",
-          {
-            body: {
-              participante_id: participanteId,
-              assunto:
-                status === "aprovado"
-                  ? "Pagamento aprovado — Book Team"
-                  : "Pagamento não aprovado — Book Team",
-              mensagem,
-            },
-          },
-        );
-
-        if (emailRes.error) {
-          console.warn("E-mail de status não enviado:", emailRes.error.message);
-        }
-      }
     },
-    onSuccess: (_, vars) => {
-      toast.success(
-        vars.status === "aprovado"
-          ? "Pagamento aprovado. Agora verifique a vaga na aba Aprovar inscrições."
-          : "Pagamento recusado. O motivo foi registrado.",
-      );
-      setRecusandoPagamento(null);
-      setMotivoPagamento("");
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-base"] });
-      qc.invalidateQueries({ queryKey: ["admin-inscricoes"] });
+    onSuccess: () => {
+      toast.success("Pagamento aprovado.");
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-pagamentos-v3"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-inscricoes-v3"],
+      });
       qc.invalidateQueries({ queryKey: ["meus-pagamentos"] });
     },
     onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Não foi possível atualizar o pagamento."),
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível aprovar o pagamento.",
+      ),
   });
 
-  const excluirAprovacaoPagamento = useMutation({
-    mutationFn: async (pagamento: Pagamento) => {
-      if (!window.confirm(`Excluir a aprovação do pagamento? O pagamento voltará para Pendentes.`)) {
+  const recusarPagamento = useMutation({
+    mutationFn: async ({
+      pagamento,
+      motivo,
+    }: {
+      pagamento: PagamentoRow;
+      motivo: string;
+    }) => {
+      const texto = motivo.trim();
+
+      if (!texto) throw new Error("Informe o motivo da recusa.");
+
+      const { error } = await supabase
+        .from("pagamentos")
+        .update({
+          status: "rejeitado",
+          pago_em: null,
+          aprovado_em: null,
+          aprovado_por: null,
+          observacao: texto,
+        })
+        .eq("id", pagamento.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Pagamento recusado.");
+      setRecusandoPagamento(null);
+      setMotivoPagamento("");
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-pagamentos-v3"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-inscricoes-v3"],
+      });
+      qc.invalidateQueries({ queryKey: ["meus-pagamentos"] });
+    },
+    onError: (e: unknown) =>
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível recusar o pagamento.",
+      ),
+  });
+
+  const excluirAprovacao = useMutation({
+    mutationFn: async (pagamento: PagamentoRow) => {
+      if (
+        !window.confirm(
+          "Excluir a aprovação deste pagamento? Ele voltará para Pendentes.",
+        )
+      ) {
         return false;
       }
 
@@ -287,6 +318,7 @@ function AdminAprovacoes() {
         .from("pagamentos")
         .update({
           status: "aguardando",
+          pago_em: null,
           aprovado_em: null,
           aprovado_por: null,
         })
@@ -295,20 +327,42 @@ function AdminAprovacoes() {
       if (error) throw error;
       return true;
     },
-    onSuccess: (alterado) => {
-      if (!alterado) return;
-      toast.success("Aprovação excluída. O pagamento voltou para Pendentes.");
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-base"] });
-      qc.invalidateQueries({ queryKey: ["admin-inscricoes"] });
+    onSuccess: (ok) => {
+      if (!ok) return;
+
+      toast.success("Aprovação excluída.");
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-pagamentos-v3"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-inscricoes-v3"],
+      });
     },
     onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Não foi possível excluir a aprovação."),
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : "Não foi possível excluir a aprovação.",
+      ),
   });
 
   const aprovarInscricao = useMutation({
-    mutationFn: async (inscricao: Inscricao) => {
-      const pagamentoAprovado = inscricao.pagamentos.some((p) => p.status === "aprovado");
-      if (!pagamentoAprovado) throw new Error("A inscrição só pode ser aprovada depois do pagamento aprovado.");
+    mutationFn: async (inscricaoId: string) => {
+      const inscricao = inscricoesComDados.find(
+        (item) => item.id === inscricaoId,
+      );
+
+      if (!inscricao) throw new Error("Inscrição não encontrada.");
+
+      const pagamentoAprovado = inscricao.pagamentos.some(
+        (pagamento) => pagamento.status === "aprovado",
+      );
+
+      if (!pagamentoAprovado) {
+        throw new Error(
+          "A inscrição só pode ser aprovada depois do pagamento aprovado.",
+        );
+      }
 
       const vagasMax = inscricao.turma?.vagas_max ?? 0;
       const vagasRestantes = inscricao.turma?.vagas_restantes ?? 0;
@@ -320,22 +374,36 @@ function AdminAprovacoes() {
       const { error } = await supabase
         .from("inscricoes")
         .update({ status: "confirmada" })
-        .eq("id", inscricao.id);
+        .eq("id", inscricaoId);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Inscrição aprovada e confirmada.");
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-base"] });
+      toast.success("Inscrição aprovada.");
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-inscricoes-v3"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-pagamentos-v3"],
+      });
       qc.invalidateQueries({ queryKey: ["admin-inscricoes"] });
     },
     onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Não foi possível aprovar a inscrição."),
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível aprovar a inscrição.",
+      ),
   });
 
   const recusarInscricao = useMutation({
-    mutationFn: async ({ inscricao, motivo }: { inscricao: Inscricao; motivo: string }) => {
+    mutationFn: async ({
+      inscricao,
+      motivo,
+    }: {
+      inscricao: InscricaoRow;
+      motivo: string;
+    }) => {
       const texto = motivo.trim();
+
       if (!texto) throw new Error("Informe o motivo da rejeição.");
 
       const { error } = await supabase
@@ -345,32 +413,50 @@ function AdminAprovacoes() {
 
       if (error) throw error;
 
-      const pagamento = inscricao.pagamentos[0];
-      if (pagamento?.id) {
+      const pagamento = pagamentos.find(
+        (item) => item.inscricao_id === inscricao.id,
+      );
+
+      if (pagamento) {
         const { error: pagamentoError } = await supabase
           .from("pagamentos")
-          .update({ observacao: `Rejeição da inscrição: ${texto}` })
+          .update({
+            observacao: `Rejeição da inscrição: ${texto}`,
+          })
           .eq("id", pagamento.id);
 
         if (pagamentoError) throw pagamentoError;
       }
     },
     onSuccess: () => {
-      toast.success("Inscrição rejeitada. O motivo foi registrado.");
+      toast.success("Inscrição rejeitada.");
       setRecusandoInscricao(null);
       setMotivoInscricao("");
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-base"] });
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-inscricoes-v3"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-pagamentos-v3"],
+      });
       qc.invalidateQueries({ queryKey: ["admin-inscricoes"] });
     },
     onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Não foi possível rejeitar a inscrição."),
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível rejeitar a inscrição.",
+      ),
   });
 
   const liberarInicio = useMutation({
-    mutationFn: async (inscricao: Inscricao) => {
+    mutationFn: async (inscricaoId: string) => {
+      const inscricao = inscricoesComDados.find(
+        (item) => item.id === inscricaoId,
+      );
+
+      if (!inscricao) throw new Error("Inscrição não encontrada.");
+
       const participanteId = inscricao.participante?.id;
+
       if (!participanteId) throw new Error("Aluno não encontrado.");
-      if (inscricao.status !== "confirmada") throw new Error("A inscrição ainda não está confirmada.");
 
       const { error } = await supabase
         .from("participantes")
@@ -378,27 +464,46 @@ function AdminAprovacoes() {
         .eq("id", participanteId);
 
       if (error) throw error;
-      toast.success("Aluno liberado para iniciar.");
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-aprovacoes-base"] }),
+    onSuccess: () => {
+      toast.success("Aluno liberado para iniciar.");
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-inscricoes-v3"],
+      });
+      qc.invalidateQueries({ queryKey: ["admin-alunos"] });
+    },
+    onError: (e: unknown) =>
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível liberar o início.",
+      ),
   });
 
-  const pagamentosFiltrados = dados.pagamentos.filter(
-    (p) => p.status === filtroPagamento,
-  );
+  const carregando =
+    pagamentosQ.isLoading ||
+    inscricoesQ.isLoading ||
+    participantesQ.isLoading ||
+    livrosQ.isLoading ||
+    turmasQ.isLoading;
 
-  const inscricoesPendentes = dados.inscricoes.filter((i) => {
-    const pagamentoAprovado = i.pagamentos.some((p) => p.status === "aprovado");
-    return pagamentoAprovado && i.status !== "confirmada" && i.status !== "cancelada";
-  });
+  const erro =
+    pagamentosQ.error ||
+    inscricoesQ.error ||
+    participantesQ.error ||
+    livrosQ.error ||
+    turmasQ.error;
 
-  const inscricoesAprovadas = dados.inscricoes.filter(
-    (i) => i.status === "confirmada",
-  );
+  async function abrirComprovante(url: string) {
+    const { data, error } = await supabase.storage
+      .from("comprovantes")
+      .createSignedUrl(url, 300);
 
-  const inscricoesRejeitadas = dados.inscricoes.filter(
-    (i) => i.status === "cancelada",
-  );
+    if (error || !data?.signedUrl) {
+      toast.error("Não foi possível abrir o comprovante.");
+      return;
+    }
+
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
 
   return (
     <div className="space-y-5">
@@ -428,24 +533,35 @@ function AdminAprovacoes() {
         >
           <CheckCircle2 className="mr-2 h-4 w-4" />
           Aprovar inscrições
-          {inscricoesPendentes.length > 0 ? ` (${inscricoesPendentes.length})` : ""}
+          {inscricoesPendentes.length > 0
+            ? ` (${inscricoesPendentes.length})`
+            : ""}
         </Button>
       </div>
 
-      {baseQ.isLoading && (
+      {carregando && (
         <p className="text-sm text-muted-foreground">
           <Loader2 className="mr-1 inline h-4 w-4 animate-spin" />
           Carregando…
         </p>
       )}
 
-      {baseQ.isError && (
-        <p className="text-sm text-destructive">
-          Erro ao carregar os dados de aprovação. Verifique os relacionamentos das tabelas no Supabase.
-        </p>
+      {erro && (
+        <Card>
+          <CardContent className="space-y-2 p-5">
+            <p className="font-semibold text-destructive">
+              Não foi possível carregar os dados.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {erro instanceof Error
+                ? erro.message
+                : "Verifique o acesso às tabelas do Supabase."}
+            </p>
+          </CardContent>
+        </Card>
       )}
 
-      {!baseQ.isLoading && !baseQ.isError && aba === "pagamentos" && (
+      {!carregando && !erro && aba === "pagamentos" && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-1">
             {[
@@ -456,8 +572,12 @@ function AdminAprovacoes() {
               <Button
                 key={value}
                 size="sm"
-                variant={filtroPagamento === value ? "default" : "outline"}
-                onClick={() => setFiltroPagamento(value as StatusPagamento)}
+                variant={
+                  filtroPagamento === value ? "default" : "outline"
+                }
+                onClick={() =>
+                  setFiltroPagamento(value as StatusPagamento)
+                }
               >
                 {label}
               </Button>
@@ -474,9 +594,16 @@ function AdminAprovacoes() {
 
           <div className="space-y-3">
             {pagamentosFiltrados.map((pagamento) => {
-              const inscricao = dados.inscricoes.find((i) => i.id === pagamento.inscricao_id);
-              const aluno = inscricao?.participante;
-              const turma = inscricao?.turma;
+              const inscricao = inscricoesMap.get(pagamento.inscricao_id);
+              const aluno = inscricao?.participante_id
+                ? participantesMap.get(inscricao.participante_id)
+                : null;
+              const livro = inscricao?.livro_id
+                ? livrosMap.get(inscricao.livro_id)
+                : null;
+              const turma = inscricao?.turma_id
+                ? turmasMap.get(inscricao.turma_id)
+                : null;
               const recusando = recusandoPagamento?.id === pagamento.id;
 
               return (
@@ -488,23 +615,34 @@ function AdminAprovacoes() {
                           {aluno?.nome ?? "Aluno"}
                         </p>
                         <p className="text-sm">
-                          {inscricao?.livro?.titulo ?? "Curso não informado"}
+                          {livro?.titulo ?? "Curso não informado"}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {turma?.nome ?? "Turma não informada"}
-                          {turma?.data_inicio ? ` • ${dataBR(turma.data_inicio)}` : ""}
-                          {turma?.data_fim ? ` até ${dataBR(turma.data_fim)}` : ""}
+                          {turma?.data_inicio
+                            ? ` • ${dataBR(turma.data_inicio)}`
+                            : ""}
+                          {turma?.data_fim
+                            ? ` até ${dataBR(turma.data_fim)}`
+                            : ""}
                         </p>
-                        <p className="text-xs text-muted-foreground">{aluno?.email ?? ""}</p>
-                        {pagamento.status === "rejeitado" && pagamento.observacao && (
-                          <p className="mt-2 rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive">
-                            <strong>Motivo:</strong> {pagamento.observacao}
-                          </p>
-                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {aluno?.email ?? ""}
+                        </p>
+
+                        {pagamento.status === "rejeitado" &&
+                          pagamento.observacao && (
+                            <p className="mt-2 rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive">
+                              <strong>Motivo:</strong>{" "}
+                              {pagamento.observacao}
+                            </p>
+                          )}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-serif text-lg">{moeda(pagamento.valor)}</span>
+                        <span className="font-serif text-lg">
+                          {moeda(pagamento.valor)}
+                        </span>
 
                         <Badge
                           variant={
@@ -514,15 +652,7 @@ function AdminAprovacoes() {
                                 ? "destructive"
                                 : "secondary"
                           }
-                          className="gap-1"
                         >
-                          {pagamento.status === "aprovado" ? (
-                            <CheckCircle2 className="h-3 w-3" />
-                          ) : pagamento.status === "rejeitado" ? (
-                            <XCircle className="h-3 w-3" />
-                          ) : (
-                            <Clock className="h-3 w-3" />
-                          )}
                           {pagamento.status === "aprovado"
                             ? "Aprovado"
                             : pagamento.status === "rejeitado"
@@ -534,7 +664,11 @@ function AdminAprovacoes() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => abrirComprovante(pagamento.comprovante_url!)}
+                            onClick={() =>
+                              abrirComprovante(
+                                pagamento.comprovante_url!,
+                              )
+                            }
                           >
                             <ExternalLink className="mr-1 h-4 w-4" />
                             Comprovante
@@ -545,13 +679,9 @@ function AdminAprovacoes() {
                           <>
                             <Button
                               size="sm"
-                              disabled={decidirPagamento.isPending}
+                              disabled={aprovarPagamento.isPending}
                               onClick={() =>
-                                decidirPagamento.mutate({
-                                  pagamento,
-                                  status: "aprovado",
-                                  observacao: null,
-                                })
+                                aprovarPagamento.mutate(pagamento)
                               }
                             >
                               Aprovar pagamento
@@ -560,7 +690,7 @@ function AdminAprovacoes() {
                             <Button
                               size="sm"
                               variant="destructive"
-                              disabled={decidirPagamento.isPending}
+                              disabled={recusarPagamento.isPending}
                               onClick={() => {
                                 setRecusandoPagamento(pagamento);
                                 setMotivoPagamento("");
@@ -575,8 +705,10 @@ function AdminAprovacoes() {
                           <Button
                             size="sm"
                             variant="outline"
-                            disabled={excluirAprovacaoPagamento.isPending}
-                            onClick={() => excluirAprovacaoPagamento.mutate(pagamento)}
+                            disabled={excluirAprovacao.isPending}
+                            onClick={() =>
+                              excluirAprovacao.mutate(pagamento)
+                            }
                           >
                             Excluir aprovação
                           </Button>
@@ -586,7 +718,9 @@ function AdminAprovacoes() {
 
                     {recusando && (
                       <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
-                        <Label htmlFor={`motivo-pagamento-${pagamento.id}`}>
+                        <Label
+                          htmlFor={`motivo-pagamento-${pagamento.id}`}
+                        >
                           Motivo da recusa
                         </Label>
 
@@ -594,26 +728,22 @@ function AdminAprovacoes() {
                           <Input
                             id={`motivo-pagamento-${pagamento.id}`}
                             value={motivoPagamento}
-                            onChange={(e) => setMotivoPagamento(e.target.value)}
+                            onChange={(e) =>
+                              setMotivoPagamento(e.target.value)
+                            }
                             placeholder="Ex.: comprovante ilegível, valor divergente..."
                           />
 
                           <Button
                             type="button"
                             variant="destructive"
-                            disabled={decidirPagamento.isPending}
-                            onClick={() => {
-                              const texto = motivoPagamento.trim();
-                              if (!texto) {
-                                toast.error("Informe o motivo da recusa.");
-                                return;
-                              }
-                              decidirPagamento.mutate({
+                            disabled={recusarPagamento.isPending}
+                            onClick={() =>
+                              recusarPagamento.mutate({
                                 pagamento,
-                                status: "rejeitado",
-                                observacao: texto,
-                              });
-                            }}
+                                motivo: motivoPagamento,
+                              })
+                            }
                           >
                             Confirmar recusa
                           </Button>
@@ -639,7 +769,7 @@ function AdminAprovacoes() {
         </div>
       )}
 
-      {!baseQ.isLoading && !baseQ.isError && aba === "inscricoes" && (
+      {!carregando && !erro && aba === "inscricoes" && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">
@@ -663,9 +793,10 @@ function AdminAprovacoes() {
 
           <div className="space-y-3">
             {inscricoesPendentes.map((inscricao) => {
-              const vagasRestantes = inscricao.turma?.vagas_restantes ?? 0;
+              const turma = inscricao.turma;
+              const vagasRestantes = turma?.vagas_restantes ?? 0;
               const semVaga =
-                (inscricao.turma?.vagas_max ?? 0) > 0 && vagasRestantes <= 0;
+                (turma?.vagas_max ?? 0) > 0 && vagasRestantes <= 0;
 
               return (
                 <Card key={inscricao.id}>
@@ -674,28 +805,46 @@ function AdminAprovacoes() {
                       <p className="font-serif text-lg font-semibold">
                         {inscricao.participante?.nome ?? "Aluno"}
                       </p>
-                      <p className="text-sm">{inscricao.livro?.titulo ?? "Curso não informado"}</p>
+                      <p className="text-sm">
+                        {inscricao.livro?.titulo ?? "Curso não informado"}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {inscricao.turma?.nome ?? "Turma não informada"}
-                        {inscricao.turma?.data_inicio
-                          ? ` • ${dataBR(inscricao.turma.data_inicio)}`
+                        {turma?.data_inicio
+                          ? ` • ${dataBR(turma.data_inicio)}`
+                          : ""}
+                        {turma?.data_fim
+                          ? ` até ${dataBR(turma.data_fim)}`
                           : ""}
                       </p>
+
                       <div className="mt-2 flex flex-wrap gap-2">
                         <Badge>
                           <CheckCircle2 className="mr-1 h-3 w-3" />
                           Pagamento aprovado
                         </Badge>
-                        <Badge variant={semVaga ? "destructive" : "secondary"}>
-                          {semVaga ? "Sem vagas" : `${vagasRestantes} vagas restantes`}
+                        <Badge
+                          variant={semVaga ? "destructive" : "secondary"}
+                        >
+                          {semVaga
+                            ? "Sem vagas"
+                            : `${vagasRestantes} vaga${
+                                vagasRestantes === 1 ? "" : "s"
+                              } restante${
+                                vagasRestantes === 1 ? "" : "s"
+                              }`}
                         </Badge>
                       </div>
                     </div>
 
                     <div className="flex flex-wrap gap-2">
                       <Button
-                        disabled={aprovarInscricao.isPending || semVaga}
-                        onClick={() => aprovarInscricao.mutate(inscricao)}
+                        disabled={
+                          aprovarInscricao.isPending || semVaga
+                        }
+                        onClick={() =>
+                          aprovarInscricao.mutate(inscricao.id)
+                        }
                       >
                         <CheckCircle2 className="mr-1 h-4 w-4" />
                         Aprovar inscrição
@@ -722,7 +871,10 @@ function AdminAprovacoes() {
           {inscricoesAprovadas.length > 0 && (
             <Card>
               <CardContent className="space-y-3 p-4">
-                <h2 className="font-serif text-lg font-semibold">Inscrições aprovadas</h2>
+                <h2 className="font-serif text-lg font-semibold">
+                  Inscrições aprovadas
+                </h2>
+
                 {inscricoesAprovadas.map((inscricao) => (
                   <div
                     key={inscricao.id}
@@ -734,13 +886,18 @@ function AdminAprovacoes() {
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {inscricao.livro?.titulo ?? "Curso não informado"}
-                        {inscricao.turma?.nome ? ` · ${inscricao.turma.nome}` : ""}
+                        {inscricao.turma?.nome
+                          ? ` · ${inscricao.turma.nome}`
+                          : ""}
                       </p>
                     </div>
+
                     <Button
                       size="sm"
                       disabled={liberarInicio.isPending}
-                      onClick={() => liberarInicio.mutate(inscricao)}
+                      onClick={() =>
+                        liberarInicio.mutate(inscricao.id)
+                      }
                     >
                       <PlayCircle className="mr-1 h-4 w-4" />
                       Liberar início
@@ -754,7 +911,10 @@ function AdminAprovacoes() {
           {inscricoesRejeitadas.length > 0 && (
             <Card>
               <CardContent className="space-y-3 p-4">
-                <h2 className="font-serif text-lg font-semibold">Inscrições rejeitadas</h2>
+                <h2 className="font-serif text-lg font-semibold">
+                  Inscrições rejeitadas
+                </h2>
+
                 {inscricoesRejeitadas.map((inscricao) => {
                   const pagamento = inscricao.pagamentos[0];
 
@@ -809,16 +969,18 @@ function AdminAprovacoes() {
               }}
             >
               <div>
-                <p className="font-medium">
-                  {recusandoInscricao.participante?.nome ?? "Aluno"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {recusandoInscricao.livro?.titulo ?? "Curso não informado"}
+                <p className="font-medium">Aluno</p>
+                <p className="text-sm text-muted-foreground">
+                  {inscricoesComDados.find(
+                    (item) => item.id === recusandoInscricao.id,
+                  )?.participante?.nome ?? "Aluno"}
                 </p>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="motivo-inscricao">Justificativa da rejeição</Label>
+                <Label htmlFor="motivo-inscricao">
+                  Justificativa da rejeição
+                </Label>
                 <Input
                   id="motivo-inscricao"
                   placeholder="Digite o motivo da rejeição..."
@@ -843,9 +1005,13 @@ function AdminAprovacoes() {
                 <Button
                   type="submit"
                   variant="destructive"
-                  disabled={recusarInscricao.isPending || !motivoInscricao.trim()}
+                  disabled={
+                    recusarInscricao.isPending || !motivoInscricao.trim()
+                  }
                 >
-                  {recusarInscricao.isPending ? "Salvando..." : "Confirmar rejeição"}
+                  {recusarInscricao.isPending
+                    ? "Salvando..."
+                    : "Confirmar rejeição"}
                 </Button>
               </div>
             </form>
@@ -854,17 +1020,4 @@ function AdminAprovacoes() {
       </Dialog>
     </div>
   );
-}
-
-async function abrirComprovante(url: string) {
-  const { data, error } = await supabase.storage
-    .from("comprovantes")
-    .createSignedUrl(url, 300);
-
-  if (error || !data?.signedUrl) {
-    toast.error("Não foi possível abrir o comprovante.");
-    return;
-  }
-
-  window.open(data.signedUrl, "_blank", "noopener,noreferrer");
 }
