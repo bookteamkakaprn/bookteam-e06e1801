@@ -32,7 +32,6 @@ const navItems: NavItem[] = [
     to: "/minhas-inscricoes",
     label: "Minhas inscrições",
     icon: BookOpen,
-    disabled: true,
   },
   {
     to: "/cursos",
