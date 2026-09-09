@@ -42,7 +42,6 @@ const navItems: NavItem[] = [
     to: "/turmas",
     label: "Turmas",
     icon: Clock,
-    disabled: true,
   },
   {
     to: "/eventos",
