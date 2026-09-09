@@ -18,13 +18,14 @@ export const Route = createFileRoute("/_authenticated/turmas")({
 type Turma = {
   id: string;
   nome: string | null;
-  data: string | null;
+  data_inicio: string | null;
   data_fim: string | null;
   horario: string | null;
   sala: string | null;
   categoria: string | null;
   valor: number | null;
   vagas: number | null;
+  ativo: boolean;
   livro?: { titulo: string | null } | null;
 };
 
@@ -34,9 +35,10 @@ function TurmasPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("turmas")
-        .select("id, nome, data, data_fim, horario, sala, categoria, valor, vagas, livro:livros(titulo)")
+        .select("id, nome, data_inicio, data_fim, horario, sala, categoria, valor, vagas, ativo, livro:livros(titulo)")
         .gt("vagas", 0)
-        .order("data");
+        .eq("ativo", true)
+        .order("data_inicio");
 
       if (error) throw error;
       return (data ?? []) as unknown as Turma[];
@@ -112,11 +114,11 @@ function TurmasPage() {
 
                   {/* Detalhes */}
                   <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
-                    {turma.data && (
+                    {turma.data_inicio && (
                       <span className="inline-flex items-center gap-1">
                         <Calendar className="h-3.5 w-3.5" />
-                        {fmtData(turma.data)}
-                        {turma.data_fim && turma.data_fim !== turma.data && (
+                        {fmtData(turma.data_inicio)}
+                        {turma.data_fim && turma.data_fim !== turma.data_inicio && (
                           <>
                             {" → "}
                             {fmtData(turma.data_fim)}
