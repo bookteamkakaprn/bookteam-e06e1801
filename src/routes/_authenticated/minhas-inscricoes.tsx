@@ -26,7 +26,8 @@ type Inscricao = {
   motivo_cancelamento: string | null;
   cancelado_em: string | null;
   livro?: { titulo: string | null } | null;
-  turma?: { nome: string | null; data: string | null } | null;
+  turma?: { nome: string | null; data_inicio: string | null } | null;
+  evento?: { titulo: string | null; data: string | null } | null;
   pagamentos?: Array<{
     id: string;
     status: string;
@@ -52,7 +53,7 @@ function MinhasInscricoesPage() {
       const { data, error } = await supabase
         .from("inscricoes")
         .select(
-          "id, status, motivo_rejeicao, motivo_cancelamento, cancelado_em, livro:livros(titulo), turma:turmas(nome, data), pagamentos(*)"
+          "id, status, motivo_rejeicao, motivo_cancelamento, cancelado_em, livro:livros(titulo), turma:turmas(nome, data_inicio), evento:eventos(titulo, data), pagamentos(*)"
         )
         .eq("participante_id", user!.id)
         .order("created_at", { ascending: false });
@@ -226,8 +227,8 @@ function MinhasInscricoesPage() {
       <div className="space-y-3">
         {dados.map((inscricao) => {
           const pag = temPagamento ? inscricao.pagamentos?.[0] : null;
-          const titulo = inscricao.livro?.titulo || inscricao.turma?.nome || "Curso não informado";
-          const data = inscricao.turma?.data;
+          const titulo = inscricao.evento?.titulo || inscricao.livro?.titulo || inscricao.turma?.nome || "Inscrição não informada";
+          const data = inscricao.evento?.data || inscricao.turma?.data_inicio;
 
           return (
             <Card key={`${inscricao.id}-${temPagamento ? pag?.id : "insc"}`}>
