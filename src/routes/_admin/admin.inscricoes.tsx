@@ -39,44 +39,47 @@ type Pagamento = {
   comprovante_url: string | null;
   observacao: string | null;
   created_at: string;
-  inscricao: {
-    id: string;
-    status: string;
-    participante: {
-      id: string;
-      nome: string | null;
-      email: string | null;
-    } | null;
-    livro: { titulo: string | null; autor: string | null } | null;
-    turma: {
-      nome: string | null;
-      data_inicio: string | null;
-      data_fim: string | null;
-      vagas_max: number | null;
-      vagas_restantes: number | null;
-    } | null;
-  } | null;
+  inscricao_id: string;
+  inscricao: InscricaoBase | null;
+};
+
+type InscricaoBase = {
+  id: string;
+  status: string;
+  participante_id: string | null;
+  livro_id: string | null;
+  turma_id: string | null;
+};
+
+type Participante = {
+  id: string;
+  nome: string | null;
+  email: string | null;
+  status: string | null;
+};
+
+type Livro = {
+  id: string;
+  titulo: string | null;
+  autor: string | null;
+};
+
+type Turma = {
+  id: string;
+  nome: string | null;
+  data_inicio: string | null;
+  data_fim: string | null;
+  vagas_max: number | null;
+  vagas_restantes: number | null;
 };
 
 type Inscricao = {
   id: string;
   status: string;
   created_at: string;
-  participante: {
-    id: string;
-    nome: string | null;
-    email: string | null;
-    status: string;
-  } | null;
-  livro: { titulo: string | null; autor: string | null } | null;
-  turma: {
-    id: string;
-    nome: string | null;
-    data_inicio: string | null;
-    data_fim: string | null;
-    vagas_max: number | null;
-    vagas_restantes: number | null;
-  } | null;
+  participante: Participante | null;
+  livro: Livro | null;
+  turma: Turma | null;
   pagamentos: {
     id: string;
     status: StatusPagamento;
@@ -96,8 +99,45 @@ function dataBR(v: string | null) {
   return v ? new Date(`${v}T00:00:00`).toLocaleDateString("pt-BR") : "—";
 }
 
+async function carregarRelacionamentos(
+  inscricoesBase: InscricaoBase[],
+) {
+  const participanteIds = [...new Set(inscricoesBase.map((x) => x.participante_id).filter(Boolean))] as string[];
+  const livroIds = [...new Set(inscricoesBase.map((x) => x.livro_id).filter(Boolean))] as string[];
+  const turmaIds = [...new Set(inscricoesBase.map((x) => x.turma_id).filter(Boolean))] as string[];
+
+  const [participantesQ, livrosQ, turmasQ] = await Promise.all([
+    participanteIds.length
+      ? supabase.from("participantes").select("id,nome,email,status").in("id", participanteIds)
+      : Promise.resolve({ data: [], error: null }),
+    livroIds.length
+      ? supabase.from("livros").select("id,titulo,autor").in("id", livroIds)
+      : Promise.resolve({ data: [], error: null }),
+    turmaIds.length
+      ? supabase.from("turmas").select("id,nome,data_inicio,data_fim,vagas_max,vagas_restantes").in("id", turmaIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (participantesQ.error) throw participantesQ.error;
+  if (livrosQ.error) throw livrosQ.error;
+  if (turmasQ.error) throw turmasQ.error;
+
+  const participantes = new Map(
+    (participantesQ.data ?? []).map((x) => [x.id, x as Participante]),
+  );
+  const livros = new Map(
+    (livrosQ.data ?? []).map((x) => [x.id, x as Livro]),
+  );
+  const turmas = new Map(
+    (turmasQ.data ?? []).map((x) => [x.id, x as Turma]),
+  );
+
+  return { participantes, livros, turmas };
+}
+
 function AdminAprovacoes() {
   const qc = useQueryClient();
+
   const [aba, setAba] = useState<Aba>("pagamentos");
   const [filtroPagamento, setFiltroPagamento] = useState<StatusPagamento>("aguardando");
   const [recusandoPagamento, setRecusandoPagamento] = useState<Pagamento | null>(null);
@@ -105,39 +145,63 @@ function AdminAprovacoes() {
   const [recusandoInscricao, setRecusandoInscricao] = useState<Inscricao | null>(null);
   const [motivoInscricao, setMotivoInscricao] = useState("");
 
-  const pagamentosQ = useQuery({
-    queryKey: ["admin-aprovacoes-pagamentos"],
+  const baseQ = useQuery({
+    queryKey: ["admin-aprovacoes-base"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("pagamentos")
-        .select(`id,status,valor,comprovante_url,observacao,created_at,
-          inscricao:inscricoes(
-            id,status,
-            participante:participantes(id,nome,email),
-            livro:livros(titulo,autor),
-            turma:turmas(nome,data_inicio,data_fim,vagas_max,vagas_restantes)
-          )`)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as unknown as Pagamento[];
+      const [{ data: pagamentosBase, error: pagamentosError }, { data: inscricoesBase, error: inscricoesError }] =
+        await Promise.all([
+          supabase
+            .from("pagamentos")
+            .select("id,status,valor,comprovante_url,observacao,created_at,inscricao_id")
+            .order("created_at", { ascending: false }),
+          supabase
+            .from("inscricoes")
+            .select("id,status,created_at,participante_id,livro_id,turma_id")
+            .order("created_at", { ascending: false }),
+        ]);
+
+      if (pagamentosError) throw pagamentosError;
+      if (inscricoesError) throw inscricoesError;
+
+      const inscricoesRows = (inscricoesBase ?? []) as InscricaoBase[];
+      const relacionamentos = await carregarRelacionamentos(inscricoesRows);
+
+      const inscricoesMap = new Map(inscricoesRows.map((x) => [x.id, x]));
+
+      const pagamentos = (pagamentosBase ?? []).map((p) => {
+        const i = inscricoesMap.get(p.inscricao_id) ?? null;
+        return {
+          ...(p as Omit<Pagamento, "inscricao">),
+          inscricao_id: p.inscricao_id,
+          inscricao: i,
+        } as Pagamento;
+      });
+
+      const pagamentosPorInscricao = new Map<string, Pagamento[]>();
+      for (const pagamento of pagamentos) {
+        const lista = pagamentosPorInscricao.get(pagamento.inscricao_id) ?? [];
+        lista.push(pagamento);
+        pagamentosPorInscricao.set(pagamento.inscricao_id, lista);
+      }
+
+      const inscricoes: Inscricao[] = inscricoesRows.map((i) => ({
+        ...i,
+        participante: i.participante_id ? relacionamentos.participantes.get(i.participante_id) ?? null : null,
+        livro: i.livro_id ? relacionamentos.livros.get(i.livro_id) ?? null : null,
+        turma: i.turma_id ? relacionamentos.turmas.get(i.turma_id) ?? null : null,
+        pagamentos: (pagamentosPorInscricao.get(i.id) ?? []).map((p) => ({
+          id: p.id,
+          status: p.status,
+          valor: p.valor,
+          observacao: p.observacao,
+        })),
+      }));
+
+      return { pagamentos, inscricoes };
     },
   });
 
-  const inscricoesQ = useQuery({
-    queryKey: ["admin-aprovacoes-inscricoes"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("inscricoes")
-        .select(`id,status,created_at,
-          participante:participantes(id,nome,email,status),
-          livro:livros(titulo,autor),
-          turma:turmas(id,nome,data_inicio,data_fim,vagas_max,vagas_restantes),
-          pagamentos(id,status,valor,observacao)`)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as unknown as Inscricao[];
-    },
-  });
+  const dados = baseQ.data ?? { pagamentos: [], inscricoes: [] };
 
   const decidirPagamento = useMutation({
     mutationFn: async ({
@@ -150,6 +214,7 @@ function AdminAprovacoes() {
       observacao: string | null;
     }) => {
       const { data: usuario } = await supabase.auth.getUser();
+
       const { error } = await supabase
         .from("pagamentos")
         .update({
@@ -159,23 +224,41 @@ function AdminAprovacoes() {
           aprovado_por: status === "aprovado" ? usuario.user?.id ?? null : null,
         })
         .eq("id", pagamento.id);
+
       if (error) throw error;
 
-      const participanteId = pagamento.inscricao?.participante?.id;
+      const participanteId = pagamento.inscricao?.participante_id ?? pagamento.inscricao?.id
+        ? dados.inscricoes.find((i) => i.id === pagamento.inscricao_id)?.participante?.id
+        : null;
+
       if (participanteId) {
-        const curso = pagamento.inscricao?.livro?.titulo ?? "Book Team";
+        const curso =
+          pagamento.inscricao
+            ? dados.inscricoes.find((i) => i.id === pagamento.inscricao_id)?.livro?.titulo
+            : null;
+
         const mensagem =
           status === "aprovado"
-            ? `Seu pagamento foi aprovado para ${curso}. Sua inscrição agora aguarda a confirmação da vaga pela equipe.`
-            : `Seu pagamento não foi aprovado para ${curso}. Motivo: ${observacao || "Comprovante não validado."} Acesse sua área do aluno para regularizar.`;
-        const emailRes = await supabase.functions.invoke("bookteam-send-notification-email", {
-          body: {
-            participante_id: participanteId,
-            assunto: status === "aprovado" ? "Pagamento aprovado — Book Team" : "Pagamento não aprovado — Book Team",
-            mensagem,
+            ? `Seu pagamento foi aprovado para ${curso ?? "seu curso"}. Sua inscrição agora aguarda a confirmação da vaga pela equipe.`
+            : `Seu pagamento não foi aprovado para ${curso ?? "seu curso"}. Motivo: ${observacao || "Comprovante não validado."} Acesse sua área do aluno para regularizar.`;
+
+        const emailRes = await supabase.functions.invoke(
+          "bookteam-send-notification-email",
+          {
+            body: {
+              participante_id: participanteId,
+              assunto:
+                status === "aprovado"
+                  ? "Pagamento aprovado — Book Team"
+                  : "Pagamento não aprovado — Book Team",
+              mensagem,
+            },
           },
-        });
-        if (emailRes.error) console.warn("E-mail de status não enviado:", emailRes.error.message);
+        );
+
+        if (emailRes.error) {
+          console.warn("E-mail de status não enviado:", emailRes.error.message);
+        }
       }
     },
     onSuccess: (_, vars) => {
@@ -186,8 +269,7 @@ function AdminAprovacoes() {
       );
       setRecusandoPagamento(null);
       setMotivoPagamento("");
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-pagamentos"] });
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-inscricoes"] });
+      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-base"] });
       qc.invalidateQueries({ queryKey: ["admin-inscricoes"] });
       qc.invalidateQueries({ queryKey: ["meus-pagamentos"] });
     },
@@ -197,21 +279,26 @@ function AdminAprovacoes() {
 
   const excluirAprovacaoPagamento = useMutation({
     mutationFn: async (pagamento: Pagamento) => {
-      if (!window.confirm(`Excluir a aprovação do pagamento de "${pagamento.inscricao?.participante?.nome ?? "Aluno"}"?\n\nO pagamento voltará para Pendentes.`)) {
+      if (!window.confirm(`Excluir a aprovação do pagamento? O pagamento voltará para Pendentes.`)) {
         return false;
       }
+
       const { error } = await supabase
         .from("pagamentos")
-        .update({ status: "aguardando", aprovado_em: null, aprovado_por: null, observacao: null })
+        .update({
+          status: "aguardando",
+          aprovado_em: null,
+          aprovado_por: null,
+        })
         .eq("id", pagamento.id);
+
       if (error) throw error;
       return true;
     },
     onSuccess: (alterado) => {
       if (!alterado) return;
       toast.success("Aprovação excluída. O pagamento voltou para Pendentes.");
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-pagamentos"] });
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-inscricoes"] });
+      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-base"] });
       qc.invalidateQueries({ queryKey: ["admin-inscricoes"] });
     },
     onError: (e: unknown) =>
@@ -220,41 +307,27 @@ function AdminAprovacoes() {
 
   const aprovarInscricao = useMutation({
     mutationFn: async (inscricao: Inscricao) => {
-      const pagamentoAprovado = inscricao.pagamentos?.some((p) => p.status === "aprovado");
-      if (!pagamentoAprovado) {
-        throw new Error("A inscrição só pode ser aprovada depois do pagamento aprovado.");
-      }
+      const pagamentoAprovado = inscricao.pagamentos.some((p) => p.status === "aprovado");
+      if (!pagamentoAprovado) throw new Error("A inscrição só pode ser aprovada depois do pagamento aprovado.");
 
       const vagasMax = inscricao.turma?.vagas_max ?? 0;
       const vagasRestantes = inscricao.turma?.vagas_restantes ?? 0;
+
       if (vagasMax > 0 && vagasRestantes <= 0) {
-        throw new Error("Não há vagas disponíveis nesta turma. A inscrição não pode ser confirmada.");
+        throw new Error("Não há vagas disponíveis nesta turma.");
       }
 
       const { error } = await supabase
         .from("inscricoes")
         .update({ status: "confirmada" })
         .eq("id", inscricao.id);
-      if (error) throw error;
 
-      const participanteId = inscricao.participante?.id;
-      if (participanteId) {
-        const curso = inscricao.livro?.titulo ?? "Book Team";
-        const { error: notificacaoError } = await supabase.from("notificacoes").insert({
-          participante_id: participanteId,
-          titulo: "Inscrição aprovada — Book Team",
-          mensagem: `Sua inscrição em ${curso} foi confirmada e a vaga foi reservada.`,
-          lida: false,
-        });
-        if (notificacaoError) console.warn("Notificação não criada:", notificacaoError.message);
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Inscrição aprovada e confirmada.");
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-inscricoes"] });
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-pagamentos"] });
+      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-base"] });
       qc.invalidateQueries({ queryKey: ["admin-inscricoes"] });
-      qc.invalidateQueries({ queryKey: ["admin-alunos"] });
     },
     onError: (e: unknown) =>
       toast.error(e instanceof Error ? e.message : "Não foi possível aprovar a inscrição."),
@@ -269,38 +342,25 @@ function AdminAprovacoes() {
         .from("inscricoes")
         .update({ status: "cancelada" })
         .eq("id", inscricao.id);
+
       if (error) throw error;
 
-      const pagamento = inscricao.pagamentos?.[0];
+      const pagamento = inscricao.pagamentos[0];
       if (pagamento?.id) {
         const { error: pagamentoError } = await supabase
           .from("pagamentos")
           .update({ observacao: `Rejeição da inscrição: ${texto}` })
           .eq("id", pagamento.id);
-        if (pagamentoError) throw pagamentoError;
-      }
 
-      const participanteId = inscricao.participante?.id;
-      if (participanteId) {
-        const curso = inscricao.livro?.titulo ?? "Book Team";
-        const emailRes = await supabase.functions.invoke("bookteam-send-notification-email", {
-          body: {
-            participante_id: participanteId,
-            assunto: "Inscrição não aprovada — Book Team",
-            mensagem: `Sua inscrição em ${curso} não foi aprovada. Motivo: ${texto}. Acesse sua área do aluno para verificar a situação.`,
-          },
-        });
-        if (emailRes.error) console.warn("E-mail de rejeição não enviado:", emailRes.error.message);
+        if (pagamentoError) throw pagamentoError;
       }
     },
     onSuccess: () => {
       toast.success("Inscrição rejeitada. O motivo foi registrado.");
       setRecusandoInscricao(null);
       setMotivoInscricao("");
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-inscricoes"] });
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-pagamentos"] });
+      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-base"] });
       qc.invalidateQueries({ queryKey: ["admin-inscricoes"] });
-      qc.invalidateQueries({ queryKey: ["admin-alunos"] });
     },
     onError: (e: unknown) =>
       toast.error(e instanceof Error ? e.message : "Não foi possível rejeitar a inscrição."),
@@ -316,68 +376,76 @@ function AdminAprovacoes() {
         .from("participantes")
         .update({ status: "participando" })
         .eq("id", participanteId);
-      if (error) throw error;
 
-      const curso = inscricao.livro?.titulo ?? "Book Team";
-      const { error: notificacaoError } = await supabase.from("notificacoes").insert({
-        participante_id: participanteId,
-        titulo: "Você pode iniciar sua jornada!",
-        mensagem: `Sua inscrição em ${curso} está confirmada e você já pode iniciar sua jornada.`,
-        lida: false,
-      });
-      if (notificacaoError) console.warn("Notificação de liberação não criada:", notificacaoError.message);
-    },
-    onSuccess: () => {
+      if (error) throw error;
       toast.success("Aluno liberado para iniciar.");
-      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-inscricoes"] });
-      qc.invalidateQueries({ queryKey: ["admin-alunos"] });
     },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Não foi possível liberar o início."),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["admin-aprovacoes-base"] }),
   });
 
-  async function abrirComprovante(url: string) {
-    const { data, error } = await supabase.storage.from("comprovantes").createSignedUrl(url, 300);
-    if (error || !data?.signedUrl) {
-      toast.error("Não foi possível abrir o comprovante.");
-      return;
-    }
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-  }
+  const pagamentosFiltrados = dados.pagamentos.filter(
+    (p) => p.status === filtroPagamento,
+  );
 
-  const pagamentos = pagamentosQ.data ?? [];
-  const pagamentosFiltrados = pagamentos.filter((p) => p.status === filtroPagamento);
-
-  const inscricoes = inscricoesQ.data ?? [];
-  const inscricoesPendentes = inscricoes.filter((i) => {
-    const pagamentoAprovado = i.pagamentos?.some((p) => p.status === "aprovado");
+  const inscricoesPendentes = dados.inscricoes.filter((i) => {
+    const pagamentoAprovado = i.pagamentos.some((p) => p.status === "aprovado");
     return pagamentoAprovado && i.status !== "confirmada" && i.status !== "cancelada";
   });
-  const inscricoesAprovadas = inscricoes.filter((i) => i.status === "confirmada");
-  const inscricoesRejeitadas = inscricoes.filter((i) => i.status === "cancelada");
+
+  const inscricoesAprovadas = dados.inscricoes.filter(
+    (i) => i.status === "confirmada",
+  );
+
+  const inscricoesRejeitadas = dados.inscricoes.filter(
+    (i) => i.status === "cancelada",
+  );
 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-serif text-3xl font-bold">Aprovar inscrições e pagamentos</h1>
+        <h1 className="font-serif text-3xl font-bold">
+          Aprovar inscrições e pagamentos
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Primeiro aprove o pagamento. Depois confirme a inscrição conforme a disponibilidade de vagas.
         </p>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant={aba === "pagamentos" ? "default" : "outline"} onClick={() => setAba("pagamentos")} className="gap-2">
-          <CreditCard className="h-4 w-4" />
+        <Button
+          size="sm"
+          variant={aba === "pagamentos" ? "default" : "outline"}
+          onClick={() => setAba("pagamentos")}
+        >
+          <CreditCard className="mr-2 h-4 w-4" />
           Aprovar pagamentos
         </Button>
-        <Button size="sm" variant={aba === "inscricoes" ? "default" : "outline"} onClick={() => setAba("inscricoes")} className="gap-2">
-          <CheckCircle2 className="h-4 w-4" />
+
+        <Button
+          size="sm"
+          variant={aba === "inscricoes" ? "default" : "outline"}
+          onClick={() => setAba("inscricoes")}
+        >
+          <CheckCircle2 className="mr-2 h-4 w-4" />
           Aprovar inscrições
           {inscricoesPendentes.length > 0 ? ` (${inscricoesPendentes.length})` : ""}
         </Button>
       </div>
 
-      {aba === "pagamentos" && (
+      {baseQ.isLoading && (
+        <p className="text-sm text-muted-foreground">
+          <Loader2 className="mr-1 inline h-4 w-4 animate-spin" />
+          Carregando…
+        </p>
+      )}
+
+      {baseQ.isError && (
+        <p className="text-sm text-destructive">
+          Erro ao carregar os dados de aprovação. Verifique os relacionamentos das tabelas no Supabase.
+        </p>
+      )}
+
+      {!baseQ.isLoading && !baseQ.isError && aba === "pagamentos" && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-1">
             {[
@@ -396,15 +464,7 @@ function AdminAprovacoes() {
             ))}
           </div>
 
-          {pagamentosQ.isLoading && (
-            <p className="text-sm text-muted-foreground">
-              <Loader2 className="mr-1 inline h-4 w-4 animate-spin" />Carregando pagamentos…
-            </p>
-          )}
-          {pagamentosQ.isError && (
-            <p className="text-sm text-destructive">Não foi possível carregar os pagamentos.</p>
-          )}
-          {!pagamentosQ.isLoading && !pagamentosQ.isError && !pagamentosFiltrados.length && (
+          {!pagamentosFiltrados.length && (
             <Card>
               <CardContent className="p-6 text-sm text-muted-foreground">
                 Nenhum pagamento nesta situação.
@@ -414,17 +474,22 @@ function AdminAprovacoes() {
 
           <div className="space-y-3">
             {pagamentosFiltrados.map((pagamento) => {
-              const aluno = pagamento.inscricao?.participante;
-              const turma = pagamento.inscricao?.turma;
+              const inscricao = dados.inscricoes.find((i) => i.id === pagamento.inscricao_id);
+              const aluno = inscricao?.participante;
+              const turma = inscricao?.turma;
               const recusando = recusandoPagamento?.id === pagamento.id;
 
               return (
                 <Card key={pagamento.id}>
                   <CardContent className="space-y-4 p-4">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0">
-                        <p className="font-serif text-lg font-semibold">{aluno?.nome ?? "Aluno"}</p>
-                        <p className="text-sm">{pagamento.inscricao?.livro?.titulo ?? "Curso não informado"}</p>
+                      <div>
+                        <p className="font-serif text-lg font-semibold">
+                          {aluno?.nome ?? "Aluno"}
+                        </p>
+                        <p className="text-sm">
+                          {inscricao?.livro?.titulo ?? "Curso não informado"}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {turma?.nome ?? "Turma não informada"}
                           {turma?.data_inicio ? ` • ${dataBR(turma.data_inicio)}` : ""}
@@ -438,19 +503,41 @@ function AdminAprovacoes() {
                         )}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="font-serif text-lg">{moeda(pagamento.valor)}</span>
+
                         <Badge
-                          variant={pagamento.status === "aprovado" ? "default" : pagamento.status === "rejeitado" ? "destructive" : "secondary"}
-                          className="inline-flex items-center gap-1"
+                          variant={
+                            pagamento.status === "aprovado"
+                              ? "default"
+                              : pagamento.status === "rejeitado"
+                                ? "destructive"
+                                : "secondary"
+                          }
+                          className="gap-1"
                         >
-                          {pagamento.status === "aprovado" ? <CheckCircle2 className="h-3 w-3" /> : pagamento.status === "rejeitado" ? <XCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                          {pagamento.status === "aprovado" ? "Aprovado" : pagamento.status === "rejeitado" ? "Recusado" : "Pendente"}
+                          {pagamento.status === "aprovado" ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : pagamento.status === "rejeitado" ? (
+                            <XCircle className="h-3 w-3" />
+                          ) : (
+                            <Clock className="h-3 w-3" />
+                          )}
+                          {pagamento.status === "aprovado"
+                            ? "Aprovado"
+                            : pagamento.status === "rejeitado"
+                              ? "Recusado"
+                              : "Pendente"}
                         </Badge>
 
                         {pagamento.comprovante_url && (
-                          <Button size="sm" variant="outline" onClick={() => abrirComprovante(pagamento.comprovante_url!)}>
-                            <ExternalLink className="mr-1 h-4 w-4" />Comprovante
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => abrirComprovante(pagamento.comprovante_url!)}
+                          >
+                            <ExternalLink className="mr-1 h-4 w-4" />
+                            Comprovante
                           </Button>
                         )}
 
@@ -459,10 +546,17 @@ function AdminAprovacoes() {
                             <Button
                               size="sm"
                               disabled={decidirPagamento.isPending}
-                              onClick={() => decidirPagamento.mutate({ pagamento, status: "aprovado", observacao: null })}
+                              onClick={() =>
+                                decidirPagamento.mutate({
+                                  pagamento,
+                                  status: "aprovado",
+                                  observacao: null,
+                                })
+                              }
                             >
                               Aprovar pagamento
                             </Button>
+
                             <Button
                               size="sm"
                               variant="destructive"
@@ -492,16 +586,18 @@ function AdminAprovacoes() {
 
                     {recusando && (
                       <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
-                        <Label htmlFor={`motivo-pagamento-${pagamento.id}`} className="text-sm font-semibold">
+                        <Label htmlFor={`motivo-pagamento-${pagamento.id}`}>
                           Motivo da recusa
                         </Label>
+
                         <div className="mt-2 flex flex-col gap-2 sm:flex-row">
                           <Input
                             id={`motivo-pagamento-${pagamento.id}`}
-                            placeholder="Ex.: comprovante ilegível, valor divergente..."
                             value={motivoPagamento}
                             onChange={(e) => setMotivoPagamento(e.target.value)}
+                            placeholder="Ex.: comprovante ilegível, valor divergente..."
                           />
+
                           <Button
                             type="button"
                             variant="destructive"
@@ -521,10 +617,15 @@ function AdminAprovacoes() {
                           >
                             Confirmar recusa
                           </Button>
-                          <Button type="button" variant="ghost" onClick={() => {
-                            setRecusandoPagamento(null);
-                            setMotivoPagamento("");
-                          }}>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => {
+                              setRecusandoPagamento(null);
+                              setMotivoPagamento("");
+                            }}
+                          >
                             Cancelar
                           </Button>
                         </div>
@@ -538,24 +639,21 @@ function AdminAprovacoes() {
         </div>
       )}
 
-      {aba === "inscricoes" && (
+      {!baseQ.isLoading && !baseQ.isError && aba === "inscricoes" && (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">Pendentes: {inscricoesPendentes.length}</Badge>
-            <Badge variant="secondary">Aprovadas: {inscricoesAprovadas.length}</Badge>
-            <Badge variant="secondary">Rejeitadas: {inscricoesRejeitadas.length}</Badge>
+            <Badge variant="secondary">
+              Pendentes: {inscricoesPendentes.length}
+            </Badge>
+            <Badge variant="secondary">
+              Aprovadas: {inscricoesAprovadas.length}
+            </Badge>
+            <Badge variant="secondary">
+              Rejeitadas: {inscricoesRejeitadas.length}
+            </Badge>
           </div>
 
-          {inscricoesQ.isLoading && (
-            <p className="text-sm text-muted-foreground">
-              <Loader2 className="mr-1 inline h-4 w-4 animate-spin" />Carregando inscrições…
-            </p>
-          )}
-          {inscricoesQ.isError && (
-            <p className="text-sm text-destructive">Não foi possível carregar as inscrições.</p>
-          )}
-
-          {!inscricoesQ.isLoading && !inscricoesQ.isError && inscricoesPendentes.length === 0 && (
+          {!inscricoesPendentes.length && (
             <Card>
               <CardContent className="p-6 text-sm text-muted-foreground">
                 Nenhuma inscrição aguardando confirmação de vaga.
@@ -565,49 +663,55 @@ function AdminAprovacoes() {
 
           <div className="space-y-3">
             {inscricoesPendentes.map((inscricao) => {
-              const turma = inscricao.turma;
-              const vagasRestantes = turma?.vagas_restantes ?? 0;
-              const semVaga = !!turma?.vagas_max && vagasRestantes <= 0;
+              const vagasRestantes = inscricao.turma?.vagas_restantes ?? 0;
+              const semVaga =
+                (inscricao.turma?.vagas_max ?? 0) > 0 && vagasRestantes <= 0;
 
               return (
                 <Card key={inscricao.id}>
-                  <CardContent className="space-y-4 p-4">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0">
-                        <p className="font-serif text-lg font-semibold">{inscricao.participante?.nome ?? "Aluno"}</p>
-                        <p className="text-sm">{inscricao.livro?.titulo ?? "Curso não informado"}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {turma?.nome ?? "Turma não informada"}
-                          {turma?.data_inicio ? ` • ${dataBR(turma.data_inicio)}` : ""}
-                          {turma?.data_fim ? ` até ${dataBR(turma.data_fim)}` : ""}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{inscricao.participante?.email ?? ""}</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <Badge className="gap-1"><CheckCircle2 className="h-3 w-3" />Pagamento aprovado</Badge>
-                          <Badge variant={semVaga ? "destructive" : "secondary"}>
-                            {semVaga ? "Sem vagas" : `${vagasRestantes} vaga${vagasRestantes === 1 ? "" : "s"} restante${vagasRestantes === 1 ? "" : "s"}`}
-                          </Badge>
-                        </div>
+                  <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-serif text-lg font-semibold">
+                        {inscricao.participante?.nome ?? "Aluno"}
+                      </p>
+                      <p className="text-sm">{inscricao.livro?.titulo ?? "Curso não informado"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {inscricao.turma?.nome ?? "Turma não informada"}
+                        {inscricao.turma?.data_inicio
+                          ? ` • ${dataBR(inscricao.turma.data_inicio)}`
+                          : ""}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Badge>
+                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                          Pagamento aprovado
+                        </Badge>
+                        <Badge variant={semVaga ? "destructive" : "secondary"}>
+                          {semVaga ? "Sem vagas" : `${vagasRestantes} vagas restantes`}
+                        </Badge>
                       </div>
+                    </div>
 
-                      <div className="flex flex-wrap gap-2 sm:justify-end">
-                        <Button
-                          disabled={aprovarInscricao.isPending || semVaga}
-                          onClick={() => aprovarInscricao.mutate(inscricao)}
-                        >
-                          <CheckCircle2 className="mr-1 h-4 w-4" />Aprovar inscrição
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          disabled={recusarInscricao.isPending}
-                          onClick={() => {
-                            setRecusandoInscricao(inscricao);
-                            setMotivoInscricao("");
-                          }}
-                        >
-                          <XCircle className="mr-1 h-4 w-4" />Recusar
-                        </Button>
-                      </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        disabled={aprovarInscricao.isPending || semVaga}
+                        onClick={() => aprovarInscricao.mutate(inscricao)}
+                      >
+                        <CheckCircle2 className="mr-1 h-4 w-4" />
+                        Aprovar inscrição
+                      </Button>
+
+                      <Button
+                        variant="destructive"
+                        disabled={recusarInscricao.isPending}
+                        onClick={() => {
+                          setRecusandoInscricao(inscricao);
+                          setMotivoInscricao("");
+                        }}
+                      >
+                        <XCircle className="mr-1 h-4 w-4" />
+                        Recusar
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -618,21 +722,28 @@ function AdminAprovacoes() {
           {inscricoesAprovadas.length > 0 && (
             <Card>
               <CardContent className="space-y-3 p-4">
-                <div>
-                  <h2 className="font-serif text-lg font-semibold">Inscrições aprovadas</h2>
-                  <p className="text-xs text-muted-foreground">Estas inscrições já têm a vaga confirmada.</p>
-                </div>
+                <h2 className="font-serif text-lg font-semibold">Inscrições aprovadas</h2>
                 {inscricoesAprovadas.map((inscricao) => (
-                  <div key={inscricao.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 p-3">
+                  <div
+                    key={inscricao.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 p-3"
+                  >
                     <div>
-                      <p className="font-semibold">{inscricao.participante?.nome ?? "Aluno"}</p>
+                      <p className="font-semibold">
+                        {inscricao.participante?.nome ?? "Aluno"}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {inscricao.livro?.titulo ?? "Curso não informado"}
                         {inscricao.turma?.nome ? ` · ${inscricao.turma.nome}` : ""}
                       </p>
                     </div>
-                    <Button size="sm" disabled={liberarInicio.isPending} onClick={() => liberarInicio.mutate(inscricao)}>
-                      <PlayCircle className="mr-1 h-4 w-4" />Liberar início
+                    <Button
+                      size="sm"
+                      disabled={liberarInicio.isPending}
+                      onClick={() => liberarInicio.mutate(inscricao)}
+                    >
+                      <PlayCircle className="mr-1 h-4 w-4" />
+                      Liberar início
                     </Button>
                   </div>
                 ))}
@@ -645,11 +756,19 @@ function AdminAprovacoes() {
               <CardContent className="space-y-3 p-4">
                 <h2 className="font-serif text-lg font-semibold">Inscrições rejeitadas</h2>
                 {inscricoesRejeitadas.map((inscricao) => {
-                  const pagamento = inscricao.pagamentos?.[0];
+                  const pagamento = inscricao.pagamentos[0];
+
                   return (
-                    <div key={inscricao.id} className="rounded-lg border border-destructive/20 bg-destructive/5 p-3">
-                      <p className="font-semibold">{inscricao.participante?.nome ?? "Aluno"}</p>
-                      <p className="text-xs text-muted-foreground">{inscricao.livro?.titulo ?? "Curso não informado"}</p>
+                    <div
+                      key={inscricao.id}
+                      className="rounded-lg border border-destructive/20 bg-destructive/5 p-3"
+                    >
+                      <p className="font-semibold">
+                        {inscricao.participante?.nome ?? "Aluno"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {inscricao.livro?.titulo ?? "Curso não informado"}
+                      </p>
                       {pagamento?.observacao && (
                         <p className="mt-1 text-xs text-destructive">
                           <strong>Motivo:</strong> {pagamento.observacao}
@@ -677,6 +796,7 @@ function AdminAprovacoes() {
           <DialogHeader>
             <DialogTitle>Rejeitar inscrição</DialogTitle>
           </DialogHeader>
+
           {recusandoInscricao && (
             <form
               className="space-y-4"
@@ -689,9 +809,14 @@ function AdminAprovacoes() {
               }}
             >
               <div>
-                <p className="font-medium">{recusandoInscricao.participante?.nome ?? "Aluno"}</p>
-                <p className="text-xs text-muted-foreground">{recusandoInscricao.livro?.titulo ?? "Curso não informado"}</p>
+                <p className="font-medium">
+                  {recusandoInscricao.participante?.nome ?? "Aluno"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {recusandoInscricao.livro?.titulo ?? "Curso não informado"}
+                </p>
               </div>
+
               <div className="space-y-1.5">
                 <Label htmlFor="motivo-inscricao">Justificativa da rejeição</Label>
                 <Input
@@ -702,14 +827,24 @@ function AdminAprovacoes() {
                   autoFocus
                 />
               </div>
+
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={() => {
-                  setRecusandoInscricao(null);
-                  setMotivoInscricao("");
-                }}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setRecusandoInscricao(null);
+                    setMotivoInscricao("");
+                  }}
+                >
                   Cancelar
                 </Button>
-                <Button type="submit" variant="destructive" disabled={recusarInscricao.isPending || !motivoInscricao.trim()}>
+
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  disabled={recusarInscricao.isPending || !motivoInscricao.trim()}
+                >
                   {recusarInscricao.isPending ? "Salvando..." : "Confirmar rejeição"}
                 </Button>
               </div>
@@ -719,4 +854,17 @@ function AdminAprovacoes() {
       </Dialog>
     </div>
   );
+}
+
+async function abrirComprovante(url: string) {
+  const { data, error } = await supabase.storage
+    .from("comprovantes")
+    .createSignedUrl(url, 300);
+
+  if (error || !data?.signedUrl) {
+    toast.error("Não foi possível abrir o comprovante.");
+    return;
+  }
+
+  window.open(data.signedUrl, "_blank", "noopener,noreferrer");
 }
