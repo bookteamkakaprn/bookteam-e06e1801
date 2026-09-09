@@ -1,12 +1,9 @@
-import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { BookOpen, Loader2 } from "lucide-react";
+import { BookOpen, User } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cursos")({
   head: () => ({
@@ -18,157 +15,119 @@ export const Route = createFileRoute("/_authenticated/cursos")({
   component: CursosPage,
 });
 
+type Nivel = {
+  id: string;
+  nome: string | null;
+};
+
 type Livro = {
   id: string;
-  titulo: string;
-  autor: string | null;
-  imagem_url: string | null;
+  titulo: string | null;
   descricao: string | null;
-  categoria: string | null;
-  trilha_id: string | null;
-  ordem: number;
-  status: string;
-  trilhas?: { nome: string; nivel: string | null } | null;
+  nivel_id: string | null;
+  autor: string | null;
+  ativo: boolean;
+  nivel?: Nivel | null;
 };
 
 function CursosPage() {
-  const [busca, setBusca] = useState("");
-
-  const { data: cursos = [], isLoading } = useQuery({
-    queryKey: ["aluno-cursos"],
-
+  const { data: livros = [], isLoading } = useQuery({
+    queryKey: ["cursos"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("livros")
-        .select("*, trilhas(nome, nivel)")
-        .order("ordem");
+        .select("id, titulo, descricao, nivel_id, autor, ativo, nivel:niveis_trilha(id, nome)")
+        .order("titulo");
 
       if (error) throw error;
       return (data ?? []) as unknown as Livro[];
     },
   });
 
-  const cursosFiltrados = useMemo(() => {
-    if (!busca.trim()) return cursos;
-    const termo = busca.toLowerCase();
-    return cursos.filter(
-      (c) =>
-        c.titulo.toLowerCase().includes(termo) ||
-        c.autor?.toLowerCase().includes(termo) ||
-        c.categoria?.toLowerCase().includes(termo)
-    );
-  }, [cursos, busca]);
+  // Agrupar por nível
+  const porNivel = livros.reduce(
+    (acc, livro) => {
+      const nivel = livro.nivel?.nome || "Sem categoria";
+      if (!acc[nivel]) acc[nivel] = [];
+      acc[nivel].push(livro);
+      return acc;
+    },
+    {} as Record<string, Livro[]>
+  );
 
-  const cursosPorNivel = useMemo(() => {
-    const grupos: { [key: string]: Livro[] } = {};
-
-    cursosFiltrados.forEach((curso) => {
-      const nivel = curso.trilhas?.nivel || "Sem nível";
-      if (!grupos[nivel]) grupos[nivel] = [];
-      grupos[nivel].push(curso);
-    });
-
-    return grupos;
-  }, [cursosFiltrados]);
+  const niveis = Object.keys(porNivel).sort();
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-3xl font-bold">Cursos disponíveis</h1>
+        <h1 className="font-serif text-3xl font-bold">Cursos</h1>
         <p className="text-sm text-muted-foreground">
-          Explore nossos cursos e conheça cada trilha de aprendizado.
+          Conheça todos os cursos disponíveis na plataforma.
         </p>
       </div>
 
-      {/* BUSCA */}
-      <div>
-        <Input
-          placeholder="Buscar por nome, autor ou categoria..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          className="max-w-md"
-        />
-      </div>
-
       {isLoading && (
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+        <p className="text-sm text-muted-foreground">Carregando cursos…</p>
       )}
 
-      {!isLoading && Object.entries(cursosPorNivel).map(([nivel, cursosNivel]) => (
+      {!isLoading && livros.length === 0 && (
+        <Card>
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            Nenhum curso disponível no momento.
+          </CardContent>
+        </Card>
+      )}
+
+      {!isLoading && niveis.map((nivel) => (
         <div key={nivel} className="space-y-3">
-          <h2 className="font-serif text-xl font-semibold">{nivel}</h2>
+          <h2 className="font-serif text-xl font-semibold text-gold">{nivel}</h2>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {cursosNivel.map((curso) => (
-              <Card
-                key={curso.id}
-                className="overflow-hidden hover:border-primary/50 transition-colors"
-              >
-                {curso.imagem_url && (
-                  <div className="aspect-video w-full overflow-hidden bg-secondary">
-                    <img
-                      src={curso.imagem_url}
-                      alt={curso.titulo}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                )}
-
-                <CardHeader className="pb-3">
-                  <div className="space-y-1">
-                    <CardTitle className="line-clamp-2 text-base">
-                      {curso.titulo}
-                    </CardTitle>
-
-                    {curso.autor && (
-                      <p className="text-xs text-muted-foreground">
-                        Por {curso.autor}
-                      </p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {porNivel[nivel].map((livro) => (
+              <Card key={livro.id} className="flex flex-col">
+                <CardContent className="flex-1 space-y-3 p-4">
+                  {/* Status */}
+                  <div>
+                    {livro.ativo ? (
+                      <Badge className="bg-green-500 gap-1">
+                        <BookOpen className="h-3 w-3" />
+                        Ativo
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="gap-1">
+                        <BookOpen className="h-3 w-3" />
+                        Inativo
+                      </Badge>
                     )}
-
-                    <div className="flex flex-wrap gap-1 pt-2">
-                      {curso.categoria && (
-                        <Badge variant="outline" className="text-xs">
-                          {curso.categoria}
-                        </Badge>
-                      )}
-
-                      {curso.status === "ativo" && (
-                        <Badge className="bg-green-500/20 text-green-700 text-xs">
-                          Ativo
-                        </Badge>
-                      )}
-                    </div>
                   </div>
-                </CardHeader>
 
-                <CardContent className="space-y-3">
-                  {curso.descricao && (
-                    <p className="text-sm line-clamp-3 text-muted-foreground">
-                      {curso.descricao}
+                  {/* Título */}
+                  <div>
+                    <p className="font-serif text-lg font-semibold line-clamp-2">
+                      {livro.titulo || "Sem título"}
                     </p>
+                  </div>
+
+                  {/* Autor */}
+                  {livro.autor && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <User className="h-3 w-3" />
+                      {livro.autor}
+                    </div>
                   )}
 
-                  <Button size="sm" variant="outline" className="w-full" asChild>
-                    <Link to={`/eventos`}>Ver turmas abertas</Link>
-                  </Button>
+                  {/* Descrição */}
+                  {livro.descricao && (
+                    <p className="text-xs text-muted-foreground line-clamp-3">
+                      {livro.descricao}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
         </div>
       ))}
-
-      {!isLoading && cursosFiltrados.length === 0 && (
-        <Card>
-          <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            <BookOpen className="mx-auto mb-2 h-8 w-8 opacity-50" />
-            Nenhum curso encontrado com sua busca.
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
