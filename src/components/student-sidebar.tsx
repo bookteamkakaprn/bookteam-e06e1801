@@ -89,7 +89,7 @@ export function StudentSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   return (
-    <aside className="hidden w-56 shrink-0 border-r border-border bg-secondary/20 md:block">
+    <aside className="w-56 shrink-0 border-r border-border bg-secondary/20">
       <nav className="space-y-1 p-4">
         {navItems.map(({ to, label, icon: Icon, disabled }) => {
           const isActive = pathname === to || pathname.startsWith(to + "/");

@@ -109,7 +109,9 @@ function AuthenticatedLayout() {
       {/* Main layout: Sidebar + Content */}
       <div className="flex min-h-[calc(100vh-64px)]">
         {/* Sidebar (desktop only) */}
-        <StudentSidebar />
+        <div className="hidden md:block">
+          <StudentSidebar />
+        </div>
 
         {/* Main content */}
         <main className="flex-1 min-w-0 overflow-y-auto">
