@@ -75,6 +75,48 @@ function MatriculaPage() {
     },
   });
 
+  const desinscrever = useMutation({
+    mutationFn: async () => {
+      if (!user || !data) {
+        throw new Error("Dados não encontrados");
+      }
+
+      if (
+        !window.confirm(
+          "Tem certeza que deseja se desinscrever deste curso? Esta ação não pode ser desfeita."
+        )
+      ) {
+        return false;
+      }
+
+      const { error } = await supabase
+        .from("inscricoes")
+        .update({ status: "cancelada" })
+        .eq("id", inscricaoId);
+
+      if (error) throw error;
+      return true;
+    },
+
+    onSuccess: (ok) => {
+      if (!ok) return;
+
+      toast.success("Você foi desinscrito do curso.");
+
+      setTimeout(() => {
+        window.location.href = "/inicio";
+      }, 1000);
+    },
+
+    onError: (e: unknown) => {
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : "Erro ao desinscrever"
+      );
+    },
+  });
+
   const enviar = useMutation({
     mutationFn: async () => {
       if (!user || !data) {
@@ -466,6 +508,19 @@ function MatriculaPage() {
 
         </CardContent>
       </Card>
+
+      {/* Botão de desinscrição */}
+      <div className="flex justify-end">
+        <Button
+          variant="destructive"
+          disabled={desinscrever.isPending}
+          onClick={() => desinscrever.mutate()}
+        >
+          {desinscrever.isPending
+            ? "Desinscrever..."
+            : "Desinscrever do curso"}
+        </Button>
+      </div>
 
     </div>
   );
