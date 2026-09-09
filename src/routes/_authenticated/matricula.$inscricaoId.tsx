@@ -173,6 +173,7 @@ function MatriculaPage() {
           .from("pagamentos")
           .update({
             comprovante_url: path,
+            comprovante_enviado_em: new Date().toISOString(),
             status: "aguardando",
           })
           .eq("id", pagamentoAtual.id);
@@ -192,6 +193,7 @@ function MatriculaPage() {
             inscricao_id: inscricaoId,
             valor: Number(data.turmas?.valor ?? 0),
             comprovante_url: path,
+            comprovante_enviado_em: new Date().toISOString(),
             status: "aguardando",
           });
 
