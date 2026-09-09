@@ -26,7 +26,7 @@ type Livro = {
   descricao: string | null;
   nivel_id: string | null;
   autor: string | null;
-  ativo: boolean;
+  status?: string | null;
   nivel?: Nivel | null;
 };
 
@@ -36,7 +36,8 @@ function CursosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("livros")
-        .select("id, titulo, descricao, nivel_id, autor, ativo, nivel:niveis_trilha(id, nome)")
+        .select("id, titulo, descricao, nivel_id, autor, status, nivel:niveis_trilha(id, nome)")
+        .eq("status", "ativo")
         .order("titulo");
 
       if (error) throw error;
@@ -88,17 +89,10 @@ function CursosPage() {
                 <CardContent className="flex-1 space-y-3 p-4">
                   {/* Status */}
                   <div>
-                    {livro.ativo ? (
-                      <Badge className="bg-green-500 gap-1">
-                        <BookOpen className="h-3 w-3" />
-                        Ativo
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="gap-1">
-                        <BookOpen className="h-3 w-3" />
-                        Inativo
-                      </Badge>
-                    )}
+                    <Badge className="bg-green-500 gap-1">
+                      <BookOpen className="h-3 w-3" />
+                      Disponível
+                    </Badge>
                   </div>
 
                   {/* Título */}
