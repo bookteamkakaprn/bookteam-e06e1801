@@ -710,7 +710,7 @@ function LivrosComplementares() {
       const { data, error } = await supabase
         .from("livros")
         .select("id, titulo, autor, imagem_url, capa_url")
-        .is("categoria", null)  // Apenas livros que não têm categoria "Jornada"
+        .eq("categoria", "complementar")  // Filtrar apenas "Cursos Complementares"
         .order("titulo", { ascending: true })
         .limit(20);
 
