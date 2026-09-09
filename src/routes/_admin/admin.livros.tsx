@@ -66,7 +66,6 @@ type Livro = {
 
   ordem: number;
 
-  categoria: string | null;
   descricao: string | null;
 
   valor: number | null;
@@ -76,14 +75,9 @@ type Livro = {
   qtd_encontros: number | null;
 
   duracao: string | null;
-  material_necessario: string | null;
   turma: string | null;
-  datas_curriculo: string | null;
-  data_curso: string | null;
 
-  imagem_url: string | null;
   capa_url: string | null;
-  video_url: string | null;
 
   status: string;
 };
@@ -109,14 +103,7 @@ type Nivel = {
  * - não aparecerem setinhas;
  * - não perder o foco.
  */
-const CATEGORIAS = [
-  "Homens",
-  "Mulheres",
-  "Mulheres solteiras",
-  "Misto",
-  "Família",
-  "Ministério (Staff)",
-] as const;
+
 
 type FormLivro = {
   tipo_curso: "jornada" | "complementar";
@@ -124,7 +111,6 @@ type FormLivro = {
 
   titulo: string;
   autor: string;
-  categoria: string;
 
   ordem: string;
   descricao: string;
@@ -137,8 +123,6 @@ type FormLivro = {
 
   duracao: string;
   turma: string;
-  datas_curriculo: string;
-  data_curso: string;
 };
 
 /* =========================================================
@@ -168,7 +152,6 @@ const vazio: FormLivro = {
 
   titulo: "",
   autor: "",
-  categoria: "",
 
   ordem: "1",
   descricao: "",
@@ -181,8 +164,6 @@ const vazio: FormLivro = {
 
   duracao: "",
   turma: "",
-  datas_curriculo: "",
-  data_curso: "",
 };
 
 /* =========================================================
@@ -243,6 +224,8 @@ function AdminLivrosPage() {
     form,
     setForm,
   ] = useState<FormLivro>(vazio);
+
+  const [capaFile, setCapaFile] = useState<File | null>(null);
 
   const [filtroTipo, setFiltroTipo] = useState("todos");
 
@@ -408,10 +391,6 @@ function AdminLivrosPage() {
         throw new Error("Informe o nome do curso.");
       }
 
-      if (!form.categoria) {
-        throw new Error("Selecione uma categoria.");
-      }
-
       const trilhaId =
         form.tipo_curso === "jornada"
           ? trilhaJornada?.id
@@ -431,7 +410,6 @@ function AdminLivrosPage() {
         nivel_id: form.nivel_id || null,
         titulo: form.titulo.trim(),
         autor: form.autor.trim() || null,
-        categoria: form.categoria || null,
         ordem: Number(form.ordem) || 1,
         descricao: form.descricao.trim() || null,
         valor:
@@ -452,9 +430,9 @@ function AdminLivrosPage() {
             : Number(form.qtd_encontros),
         duracao: form.duracao.trim() || null,
         turma: form.turma.trim() || null,
-        datas_curriculo: form.datas_curriculo.trim() || null,
-        data_curso: form.data_curso || null,
       };
+
+      let livroId = selecionado;
 
       if (selecionado) {
         const { error } = await supabase
@@ -463,10 +441,38 @@ function AdminLivrosPage() {
           .eq("id", selecionado);
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("livros")
-          .insert(payload);
+          .insert(payload)
+          .select("id")
+          .single();
         if (error) throw error;
+        livroId = data.id;
+      }
+
+      if (capaFile && livroId) {
+        const ext = capaFile.name.toLowerCase().endsWith(".png") ? "png" : "jpg";
+        const path = `${livroId}/${crypto.randomUUID()}.${ext}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("book-capas")
+          .upload(path, capaFile, {
+            upsert: false,
+            contentType: capaFile.type,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrl } = supabase.storage
+          .from("book-capas")
+          .getPublicUrl(path);
+
+        const { error: coverError } = await supabase
+          .from("livros")
+          .update({ capa_url: publicUrl.publicUrl })
+          .eq("id", livroId);
+
+        if (coverError) throw coverError;
       }
     },
     onSuccess: async () => {
@@ -655,6 +661,7 @@ function AdminLivrosPage() {
   function editar(livro: Livro) {
     setCriando(false);
     setSelecionado(livro.id);
+    setCapaFile(null);
 
     const tipo_curso =
       livro.trilha_id === trilhaJornada?.id
@@ -666,7 +673,6 @@ function AdminLivrosPage() {
       nivel_id: livro.nivel_id ?? "",
       titulo: livro.titulo ?? "",
       autor: livro.autor ?? "",
-      categoria: livro.categoria ?? "",
       ordem: String(livro.ordem ?? 1),
       descricao: livro.descricao ?? "",
       valor: livro.valor == null ? "" : String(livro.valor),
@@ -678,8 +684,6 @@ function AdminLivrosPage() {
           : String(livro.qtd_encontros),
       duracao: livro.duracao ?? "",
       turma: livro.turma ?? "",
-      datas_curriculo: livro.datas_curriculo ?? "",
-      data_curso: livro.data_curso ?? "",
     });
   }
 
@@ -693,6 +697,7 @@ function AdminLivrosPage() {
 
     setSelecionado(null);
     setCriando(true);
+    setCapaFile(null);
     setForm({
       ...vazio,
       tipo_curso,
@@ -707,6 +712,7 @@ function AdminLivrosPage() {
   function fechar() {
     setSelecionado(null);
     setCriando(false);
+    setCapaFile(null);
     setForm({
       ...vazio,
     });
@@ -824,15 +830,6 @@ function AdminLivrosPage() {
                     livro.nivel_id
                   )
                 }
-              </Badge>
-            )}
-
-            {livro.categoria && (
-              <Badge
-                variant="secondary"
-                className="text-[10px]"
-              >
-                {livro.categoria}
               </Badge>
             )}
 
@@ -1193,32 +1190,6 @@ function AdminLivrosPage() {
                 </Select>
               </Field>
 
-              {/* CATEGORIA */}
-
-              <Field label="Categoria">
-                <Select
-                  value={form.categoria || "sem-categoria"}
-                  onValueChange={(value) =>
-                    set(
-                      "categoria",
-                      value === "sem-categoria" ? "" : value
-                    )
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sem-categoria">Selecione</SelectItem>
-                    {CATEGORIAS.map((categoria) => (
-                      <SelectItem key={categoria} value={categoria}>
-                        {categoria}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-
               {/* NÍVEL */}
 
               <Field label="Nível">
@@ -1344,26 +1315,6 @@ function AdminLivrosPage() {
                 />
               </Field>
 
-              {/* DATA */}
-
-              <Field label="Data do curso">
-                <Input
-                  type="date"
-                  value={
-                    form.data_curso
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    set(
-                      "data_curso",
-                      event.target
-                        .value
-                    )
-                  }
-                />
-              </Field>
-
               {/* ANO */}
 
               <Field label="Ano">
@@ -1444,22 +1395,35 @@ function AdminLivrosPage() {
                 />
               </Field>
 
-              {/* DATAS */}
+              {/* CAPA */}
 
-              <Field label="Datas do curso">
+              <Field label="Capa do curso">
                 <Input
-                  value={
-                    form.datas_curriculo
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    set(
-                      "datas_curriculo",
-                      event.target
-                        .value
-                    )
-                  }
+                  type="file"
+                  accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    if (!file) {
+                      setCapaFile(null);
+                      return;
+                    }
+
+                    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+                      toast.error("A capa deve estar em JPG ou PNG.");
+                      event.currentTarget.value = "";
+                      setCapaFile(null);
+                      return;
+                    }
+
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast.error("A capa deve ter no máximo 5 MB.");
+                      event.currentTarget.value = "";
+                      setCapaFile(null);
+                      return;
+                    }
+
+                    setCapaFile(file);
+                  }}
                 />
               </Field>
 
