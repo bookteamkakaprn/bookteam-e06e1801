@@ -74,6 +74,9 @@ type Inscricao = {
   id: string;
   status: string;
   created_at: string;
+  motivo_rejeicao: string | null;
+  motivo_cancelamento: string | null;
+  cancelado_em: string | null;
   participante: {
     id: string;
     nome: string | null;
@@ -151,6 +154,18 @@ function AdminAprovacoes() {
     useState<Inscricao | null>(null);
   const [motivoInscricao, setMotivoInscricao] = useState("");
 
+  // Estados para edição
+  const [editandoPagamento, setEditandoPagamento] =
+    useState<Pagamento | null>(null);
+  const [novoStatusPagamento, setNovoStatusPagamento] =
+    useState<StatusPagamento>("aguardando");
+  const [motivoEdicaoPagamento, setMotivoEdicaoPagamento] = useState("");
+
+  const [editandoInscricao, setEditandoInscricao] =
+    useState<Inscricao | null>(null);
+  const [novoStatusInscricao, setNovoStatusInscricao] = useState("");
+  const [motivoEdicaoInscricao, setMotivoEdicaoInscricao] = useState("");
+
   const pagamentosQ = useQuery({
     queryKey: ["admin-aprovacoes-pagamentos-final"],
     queryFn: async () => {
@@ -183,7 +198,7 @@ function AdminAprovacoes() {
       const { data, error } = await supabase
         .from("inscricoes")
         .select(
-          `id,status,created_at,
+          `id,status,created_at,motivo_rejeicao,motivo_cancelamento,cancelado_em,
            participante:participantes(id,nome,email,status),
            livro:livros(id,titulo,autor),
            turma:turmas(
@@ -348,6 +363,74 @@ function AdminAprovacoes() {
       ),
   });
 
+  const editarPagamento = useMutation({
+    mutationFn: async ({
+      pagamento,
+      novoStatus,
+      motivo,
+    }: {
+      pagamento: Pagamento;
+      novoStatus: StatusPagamento;
+      motivo: string;
+    }) => {
+      // Validação
+      if (novoStatus === "rejeitado" && !motivo.trim()) {
+        throw new Error("Informe o motivo da recusa.");
+      }
+
+      const updateData: Record<string, unknown> = {
+        status: novoStatus,
+      };
+
+      if (novoStatus === "aprovado") {
+        updateData.pago_em = new Date().toISOString();
+      } else if (novoStatus === "aguardando") {
+        updateData.pago_em = null;
+      } else if (novoStatus === "rejeitado") {
+        updateData.observacao = motivo;
+      }
+
+      const { error } = await supabase
+        .from("pagamentos")
+        .update(updateData)
+        .eq("id", pagamento.id);
+
+      if (error) throw error;
+
+      // Registrar auditoria
+      await supabase.from("audit_log").insert({
+        tabela: "pagamentos",
+        registro_id: pagamento.id,
+        usuario_id: (await supabase.auth.getUser()).data.user?.id,
+        status_anterior: pagamento.status,
+        status_novo: novoStatus,
+        motivo: motivo || null,
+        dados_anteriores: { status: pagamento.status },
+        dados_novos: { status: novoStatus },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Pagamento atualizado com sucesso.");
+      setEditandoPagamento(null);
+      setNovoStatusPagamento("aguardando");
+      setMotivoEdicaoPagamento("");
+
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-pagamentos-final"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-inscricoes-final"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["meus-pagamentos"],
+      });
+    },
+    onError: (e: unknown) =>
+      toast.error(
+        erroTexto(e) || "Não foi possível atualizar o pagamento.",
+      ),
+  });
+
   const aprovarInscricao = useMutation({
     mutationFn: async (inscricao: Inscricao) => {
       const pagamentoAprovado = inscricao.pagamentos.some(
@@ -476,6 +559,89 @@ function AdminAprovacoes() {
     onError: (e: unknown) =>
       toast.error(
         erroTexto(e) || "Não foi possível liberar o início.",
+      ),
+  });
+
+  const editarInscricao = useMutation({
+    mutationFn: async ({
+      inscricao,
+      novoStatus,
+      motivo,
+    }: {
+      inscricao: Inscricao;
+      novoStatus: string;
+      motivo: string;
+    }) => {
+      // Validações
+      if (
+        novoStatus === "cancelada" &&
+        !motivo.trim()
+      ) {
+        throw new Error(
+          "Informe o motivo do cancelamento/rejeição.",
+        );
+      }
+
+      if (
+        novoStatus === "confirmada" &&
+        !inscricao.pagamentos.some((p) => p.status === "aprovado")
+      ) {
+        throw new Error("O pagamento ainda não foi aprovado.");
+      }
+
+      if (novoStatus === "confirmada") {
+        const vagasMax = inscricao.turma?.vagas_max ?? 0;
+        const vagasRestantes = inscricao.turma?.vagas_restantes ?? 0;
+
+        if (vagasMax > 0 && vagasRestantes <= 0) {
+          throw new Error("Não há vagas disponíveis nesta turma.");
+        }
+      }
+
+      const updateData: Record<string, unknown> = {
+        status: novoStatus,
+      };
+
+      if (novoStatus === "cancelada") {
+        updateData.motivo_rejeicao = motivo;
+        updateData.cancelado_em = new Date().toISOString();
+      }
+
+      const { error } = await supabase
+        .from("inscricoes")
+        .update(updateData)
+        .eq("id", inscricao.id);
+
+      if (error) throw error;
+
+      // Registrar auditoria
+      await supabase.from("audit_log").insert({
+        tabela: "inscricoes",
+        registro_id: inscricao.id,
+        usuario_id: (await supabase.auth.getUser()).data.user?.id,
+        status_anterior: inscricao.status,
+        status_novo: novoStatus,
+        motivo: motivo || null,
+        dados_anteriores: { status: inscricao.status },
+        dados_novos: { status: novoStatus },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Inscrição atualizada com sucesso.");
+      setEditandoInscricao(null);
+      setNovoStatusInscricao("");
+      setMotivoEdicaoInscricao("");
+
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-inscricoes-final"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["admin-aprovacoes-pagamentos-final"],
+      });
+    },
+    onError: (e: unknown) =>
+      toast.error(
+        erroTexto(e) || "Não foi possível atualizar a inscrição.",
       ),
   });
 
