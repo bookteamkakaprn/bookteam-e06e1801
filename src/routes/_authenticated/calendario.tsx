@@ -152,8 +152,6 @@ function CalendarioPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const proximos = eventos.filter((e) => e.data >= hojeIso);
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -247,44 +245,7 @@ function CalendarioPage() {
         </CardContent>
       </Card>
 
-      <section className="space-y-3">
-        <h2 className="font-serif text-xl font-semibold">Próximos encontros deste mês</h2>
-        {proximos.length === 0 && (
-          <p className="text-sm text-muted-foreground">Nenhum encontro programado para o restante do mês.</p>
-        )}
-        {proximos.map((e) => {
-          const presenca = presencaDe(e.id);
-          return (
-            <Card key={e.id}>
-              <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="font-serif text-lg font-semibold">{e.titulo}</p>
-                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarDays className="h-3.5 w-3.5" /> {fmtData(e.data)} {e.hora?.slice(0, 5)}
-                    </span>
-                    {(e.local || e.cidade) && (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5" /> {[e.local, e.cidade].filter(Boolean).join(" — ")}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {presenca?.presente && (
-                    <Badge className="bg-primary/20 text-foreground">
-                      <CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Presença registrada
-                    </Badge>
-                  )}
-                  <Button size="sm" variant="outline" onClick={() => setDetalhe(e)}>
-                    Ver detalhes
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </section>
+
 
       <Dialog open={!!detalhe} onOpenChange={(o) => !o && setDetalhe(null)}>
         <DialogContent className="max-w-lg">
