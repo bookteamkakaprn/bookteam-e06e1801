@@ -78,7 +78,6 @@ type Livro = {
   turma: string | null;
 
   capa_url: string | null;
-  imagem_url: string | null;
 
   status: string;
 };
@@ -119,9 +118,11 @@ type FormLivro = {
   valor: string;
   vagas: string;
 
+  ano: string;
   qtd_encontros: string;
 
   duracao: string;
+  turma: string;
 };
 
 /* =========================================================
@@ -158,9 +159,11 @@ const vazio: FormLivro = {
   valor: "",
   vagas: "0",
 
+  ano: "",
   qtd_encontros: "",
 
   duracao: "",
+  turma: "",
 };
 
 /* =========================================================
@@ -243,6 +246,9 @@ function AdminLivrosPage() {
 
   const [novoNivelTipo, setNovoNivelTipo] =
     useState<"jornada" | "complementar">("jornada");
+
+  const [nivelEditando, setNivelEditando] = useState<string | null>(null);
+  const [nivelEditNome, setNivelEditNome] = useState("");
 
   /* =======================================================
      LIVROS
@@ -417,11 +423,16 @@ function AdminLivrosPage() {
           form.vagas.trim() === ""
             ? 0
             : Number(form.vagas),
+        ano:
+          form.ano.trim() === ""
+            ? null
+            : Number(form.ano),
         qtd_encontros:
           form.qtd_encontros.trim() === ""
             ? null
             : Number(form.qtd_encontros),
         duracao: form.duracao.trim() || null,
+        turma: form.turma.trim() || null,
       };
 
       let livroId = selecionado;
@@ -461,10 +472,7 @@ function AdminLivrosPage() {
 
         const { error: coverError } = await supabase
           .from("livros")
-          .update({
-            capa_url: publicUrl.publicUrl,
-            imagem_url: publicUrl.publicUrl,
-          })
+          .update({ capa_url: publicUrl.publicUrl })
           .eq("id", livroId);
 
         if (coverError) throw coverError;
@@ -616,6 +624,66 @@ function AdminLivrosPage() {
   });
 
   /* =======================================================
+     EDITAR / EXCLUIR NÍVEL
+  ======================================================= */
+
+  const salvarNivel = useMutation({
+    mutationFn: async () => {
+      if (!nivelEditando) throw new Error("Nenhum nível selecionado.");
+      const nome = nivelEditNome.trim();
+      if (!nome) throw new Error("Informe o nome do nível.");
+
+      const { error } = await supabase
+        .from("niveis_trilha")
+        .update({ nome })
+        .eq("id", nivelEditando);
+
+      if (error) throw error;
+    },
+    onSuccess: async () => {
+      toast.success("Nível atualizado!");
+      setNivelEditando(null);
+      setNivelEditNome("");
+      await qc.invalidateQueries({ queryKey: ["admin-niveis-trilha"] });
+    },
+    onError: (e: unknown) =>
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível atualizar o nível."
+      ),
+  });
+
+  const excluirNivel = useMutation({
+    mutationFn: async (nivel: Nivel) => {
+      const confirmar = window.confirm(
+        `Excluir o nível "${nivel.nome}"?\n\nOs cursos vinculados ficarão sem nível. Essa ação não poderá ser desfeita.`
+      );
+      if (!confirmar) return false;
+
+      const { error } = await supabase
+        .from("niveis_trilha")
+        .delete()
+        .eq("id", nivel.id);
+
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: async (apagou) => {
+      if (!apagou) return;
+      toast.success("Nível excluído!");
+      if (nivelEditando) {
+        setNivelEditando(null);
+        setNivelEditNome("");
+      }
+      await qc.invalidateQueries({ queryKey: ["admin-niveis-trilha"] });
+      await qc.invalidateQueries({ queryKey: ["admin-livros"] });
+    },
+    onError: (e: unknown) =>
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível excluir o nível."
+      ),
+  });
+
+  /* =======================================================
      EXCLUIR CURSO
   ======================================================= */
 
@@ -672,11 +740,13 @@ function AdminLivrosPage() {
       descricao: livro.descricao ?? "",
       valor: livro.valor == null ? "" : String(livro.valor),
       vagas: String(livro.vagas ?? 0),
+      ano: livro.ano == null ? "" : String(livro.ano),
       qtd_encontros:
         livro.qtd_encontros == null
           ? ""
           : String(livro.qtd_encontros),
       duracao: livro.duracao ?? "",
+      turma: livro.turma ?? "",
     });
   }
 
@@ -960,6 +1030,95 @@ function AdminLivrosPage() {
               </SelectContent>
             </Select>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Níveis cadastrados</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {niveisDoFiltro.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum nível cadastrado para este tipo de curso.
+            </p>
+          ) : (
+            niveisDoFiltro.map((nivel) => (
+              <div
+                key={nivel.id}
+                className="flex items-center gap-3 rounded-lg border p-3"
+              >
+                <div className="min-w-0 flex-1">
+                  {nivelEditando === nivel.id ? (
+                    <Input
+                      autoFocus
+                      value={nivelEditNome}
+                      onChange={(event) => setNivelEditNome(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") salvarNivel.mutate();
+                        if (event.key === "Escape") {
+                          setNivelEditando(null);
+                          setNivelEditNome("");
+                        }
+                      }}
+                    />
+                  ) : (
+                    <p className="text-sm font-medium">{nivel.nome}</p>
+                  )}
+                </div>
+
+                <div className="flex shrink-0 gap-2">
+                  {nivelEditando === nivel.id ? (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={salvarNivel.isPending}
+                        onClick={() => salvarNivel.mutate()}
+                      >
+                        {salvarNivel.isPending ? "Salvando..." : "Salvar"}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setNivelEditando(null);
+                          setNivelEditNome("");
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setNivelEditando(nivel.id);
+                          setNivelEditNome(nivel.nome);
+                        }}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="destructive"
+                        disabled={excluirNivel.isPending}
+                        onClick={() => excluirNivel.mutate(nivel)}
+                        title="Excluir nível"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </CardContent>
       </Card>
 
@@ -1307,7 +1466,29 @@ function AdminLivrosPage() {
                   placeholder="0"
                 />
               </Field>
-{/* ENCONTROS */}
+
+              {/* ANO */}
+
+              <Field label="Ano">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  value={
+                    form.ano
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    set(
+                      "ano",
+                      event.target
+                        .value
+                    )
+                  }
+                />
+              </Field>
+
+              {/* ENCONTROS */}
 
               <Field label="Quantidade de encontros">
                 <Input
@@ -1346,7 +1527,27 @@ function AdminLivrosPage() {
                   }
                 />
               </Field>
-{/* CAPA */}
+
+              {/* TURMA */}
+
+              <Field label="Turma">
+                <Input
+                  value={
+                    form.turma
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    set(
+                      "turma",
+                      event.target
+                        .value
+                    )
+                  }
+                />
+              </Field>
+
+              {/* CAPA */}
 
               <Field label="Capa do curso">
                 <Input
