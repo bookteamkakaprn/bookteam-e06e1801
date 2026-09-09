@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Download, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import { Download, AlertCircle, CheckCircle2, XCircle, Archive } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/minhas-inscricoes")({
@@ -34,6 +34,7 @@ type Inscricao = {
     observacao: string | null;
     comprovante_url: string | null;
     created_at: string;
+    arquivado?: boolean;
   }>;
 };
 
@@ -42,6 +43,7 @@ function MinhasInscricoesPage() {
   const [abaSelecionada, setAbaSelecionada] = useState<
     "confirmadas" | "rejeitadas" | "canceladas" | "pagamentos-aprovados" | "pagamentos-rejeitados" | "estornos"
   >("confirmadas");
+  const [mostrarArquivados, setMostrarArquivados] = useState(false);
 
   const { data: inscricoes = [], isLoading: carregandoInscricoes } = useQuery({
     enabled: !!user,
@@ -82,6 +84,20 @@ function MinhasInscricoesPage() {
     }
   };
 
+  const arquivarComprovante = async (pagamentoId: string, pagInscricaoId: string) => {
+    try {
+      const { error } = await supabase
+        .from("pagamentos")
+        .update({ arquivado: true })
+        .eq("id", pagamentoId);
+
+      if (error) throw error;
+      toast.success("Comprovante arquivado!");
+    } catch (e) {
+      toast.error("Erro ao arquivar comprovante");
+    }
+  };
+
   // Filtrar inscrições por status
   const confirmadasFiltradas = inscricoes.filter((i) => i.status === "confirmada");
   const rejeitadasFiltradas = inscricoes.filter((i) => i.status === "cancelada" && i.motivo_rejeicao);
@@ -93,10 +109,15 @@ function MinhasInscricoesPage() {
 
   inscricoes.forEach((insc) => {
     insc.pagamentos?.forEach((pag) => {
-      if (pag.status === "aprovado") {
-        pagamentosAprovados.push({ ...insc, pagamentos: [pag] });
-      } else if (pag.status === "rejeitado") {
-        pagamentosRejeitados.push({ ...insc, pagamentos: [pag] });
+      const isArquivado = pag.arquivado === true;
+      const deveExibir = mostrarArquivados ? isArquivado : !isArquivado;
+
+      if (deveExibir) {
+        if (pag.status === "aprovado") {
+          pagamentosAprovados.push({ ...insc, pagamentos: [pag] });
+        } else if (pag.status === "rejeitado") {
+          pagamentosRejeitados.push({ ...insc, pagamentos: [pag] });
+        }
       }
     });
   });
@@ -156,6 +177,21 @@ function MinhasInscricoesPage() {
         ))}
       </div>
 
+      {/* Filtro de arquivados */}
+      {temPagamento && (
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant={mostrarArquivados ? "default" : "outline"}
+            onClick={() => setMostrarArquivados(!mostrarArquivados)}
+            className="gap-1"
+          >
+            <Archive className="h-3.5 w-3.5" />
+            {mostrarArquivados ? "Mostrando arquivados" : "Mostrar arquivados"}
+          </Button>
+        </div>
+      )}
+
       {/* Conteúdo */}
       {carregandoInscricoes && (
         <p className="text-sm text-muted-foreground">Carregando inscrições…</p>
@@ -201,6 +237,12 @@ function MinhasInscricoesPage() {
                             <Badge variant="destructive" className="gap-1">
                               <XCircle className="h-3 w-3" />
                               Rejeitado
+                            </Badge>
+                          )}
+                          {pag?.arquivado && (
+                            <Badge variant="secondary" className="gap-1">
+                              <Archive className="h-3 w-3" />
+                              Arquivado
                             </Badge>
                           )}
                         </>
@@ -260,7 +302,29 @@ function MinhasInscricoesPage() {
                             currency: "BRL",
                           })}
                         </span>
-                        {pag.comprovante_url && (
+                        {pag.comprovante_url && !pag.arquivado && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => downloadComprovante(pag.comprovante_url!, "comprovante")}
+                              className="gap-1"
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              Comprovante
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => arquivarComprovante(pag.id, inscricao.id)}
+                              className="gap-1"
+                            >
+                              <Archive className="h-3.5 w-3.5" />
+                              Arquivar
+                            </Button>
+                          </>
+                        )}
+                        {pag.comprovante_url && pag.arquivado && (
                           <Button
                             size="sm"
                             variant="outline"
@@ -282,4 +346,5 @@ function MinhasInscricoesPage() {
       </div>
     </div>
   );
+}
 }
