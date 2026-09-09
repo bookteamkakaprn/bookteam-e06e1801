@@ -898,6 +898,20 @@ function AdminAprovacoes() {
                             Excluir aprovação
                           </Button>
                         )}
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setEditandoPagamento(pagamento);
+                            setNovoStatusPagamento(
+                              pagamento.status,
+                            );
+                            setMotivoEdicaoPagamento("");
+                          }}
+                        >
+                          Editar
+                        </Button>
                       </div>
                     </div>
 
@@ -1052,6 +1066,19 @@ function AdminAprovacoes() {
                         <XCircle className="mr-1 h-4 w-4" />
                         Recusar
                       </Button>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setEditandoInscricao(inscricao);
+                          setNovoStatusInscricao(
+                            inscricao.status,
+                          );
+                          setMotivoEdicaoInscricao("");
+                        }}
+                      >
+                        Editar
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -1084,16 +1111,32 @@ function AdminAprovacoes() {
                       </p>
                     </div>
 
-                    <Button
-                      size="sm"
-                      disabled={liberarInicio.isPending}
-                      onClick={() =>
-                        liberarInicio.mutate(inscricao)
-                      }
-                    >
-                      <PlayCircle className="mr-1 h-4 w-4" />
-                      Liberar início
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        disabled={liberarInicio.isPending}
+                        onClick={() =>
+                          liberarInicio.mutate(inscricao)
+                        }
+                      >
+                        <PlayCircle className="mr-1 h-4 w-4" />
+                        Liberar início
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditandoInscricao(inscricao);
+                          setNovoStatusInscricao(
+                            inscricao.status,
+                          );
+                          setMotivoEdicaoInscricao("");
+                        }}
+                      >
+                        Editar
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </CardContent>
@@ -1113,23 +1156,40 @@ function AdminAprovacoes() {
                   return (
                     <div
                       key={inscricao.id}
-                      className="rounded-lg border border-destructive/20 bg-destructive/5 p-3"
+                      className="flex items-start justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3"
                     >
-                      <p className="font-semibold">
-                        {inscricao.participante?.nome ?? "Aluno"}
-                      </p>
-
-                      <p className="text-xs text-muted-foreground">
-                        {inscricao.livro?.titulo ??
-                          "Curso não informado"}
-                      </p>
-
-                      {pagamento?.observacao && (
-                        <p className="mt-1 text-xs text-destructive">
-                          <strong>Motivo:</strong>{" "}
-                          {pagamento.observacao}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold">
+                          {inscricao.participante?.nome ?? "Aluno"}
                         </p>
-                      )}
+
+                        <p className="text-xs text-muted-foreground">
+                          {inscricao.livro?.titulo ??
+                            "Curso não informado"}
+                        </p>
+
+                        {pagamento?.observacao && (
+                          <p className="mt-1 text-xs text-destructive">
+                            <strong>Motivo:</strong>{" "}
+                            {pagamento.observacao}
+                          </p>
+                        )}
+                      </div>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditandoInscricao(inscricao);
+                          setNovoStatusInscricao(
+                            inscricao.status,
+                          );
+                          setMotivoEdicaoInscricao("");
+                        }}
+                        className="whitespace-nowrap"
+                      >
+                        Editar
+                      </Button>
                     </div>
                   );
                 })}
@@ -1216,6 +1276,342 @@ function AdminAprovacoes() {
                   {recusarInscricao.isPending
                     ? "Salvando..."
                     : "Confirmar rejeição"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Editar Pagamento */}
+      <Dialog
+        open={!!editandoPagamento}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditandoPagamento(null);
+            setNovoStatusPagamento("aguardando");
+            setMotivoEdicaoPagamento("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Pagamento</DialogTitle>
+          </DialogHeader>
+
+          {editandoPagamento && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                editarPagamento.mutate({
+                  pagamento: editandoPagamento,
+                  novoStatus: novoStatusPagamento as StatusPagamento,
+                  motivo: motivoEdicaoPagamento,
+                });
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Aluno
+                </p>
+                <p className="font-semibold">
+                  {editandoPagamento.inscricao?.participante?.nome ||
+                    "—"}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Curso
+                </p>
+                <p>
+                  {editandoPagamento.inscricao?.livro?.titulo ||
+                    "—"}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Valor
+                </p>
+                <p>{moeda(editandoPagamento.valor)}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Status atual
+                </p>
+                <Badge className="w-fit">
+                  {editandoPagamento.status === "aprovado"
+                    ? "Aprovado"
+                    : editandoPagamento.status === "rejeitado"
+                      ? "Recusado"
+                      : "Pendente"}
+                </Badge>
+              </div>
+
+              {editandoPagamento.comprovante_url && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    Comprovante
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      abrirComprovante(
+                        editandoPagamento.comprovante_url!,
+                      )
+                    }
+                  >
+                    Ver comprovante
+                  </Button>
+                  {editandoPagamento.comprovante_enviado_em && (
+                    <p className="text-xs text-muted-foreground">
+                      Enviado em{" "}
+                      {new Date(
+                        editandoPagamento.comprovante_enviado_em,
+                      ).toLocaleString("pt-BR")}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {editandoPagamento.status === "rejeitado" &&
+                editandoPagamento.observacao && (
+                  <div className="space-y-1 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                    <p className="text-xs font-semibold text-destructive">
+                      Motivo da recusa:
+                    </p>
+                    <p className="text-sm text-destructive">
+                      {editandoPagamento.observacao}
+                    </p>
+                  </div>
+                )}
+
+              <div className="space-y-2">
+                <Label htmlFor="novo-status-pagamento">
+                  Novo status
+                </Label>
+                <select
+                  id="novo-status-pagamento"
+                  value={novoStatusPagamento}
+                  onChange={(e) =>
+                    setNovoStatusPagamento(
+                      e.target
+                        .value as StatusPagamento,
+                    )
+                  }
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="aguardando">
+                    Pendente
+                  </option>
+                  <option value="aprovado">
+                    Aprovado
+                  </option>
+                  <option value="rejeitado">
+                    Recusado
+                  </option>
+                </select>
+              </div>
+
+              {novoStatusPagamento === "rejeitado" && (
+                <div className="space-y-2">
+                  <Label htmlFor="motivo-edicao-pagamento">
+                    Motivo da recusa *
+                  </Label>
+                  <Input
+                    id="motivo-edicao-pagamento"
+                    value={motivoEdicaoPagamento}
+                    onChange={(e) =>
+                      setMotivoEdicaoPagamento(
+                        e.target.value,
+                      )
+                    }
+                    placeholder="Ex.: comprovante ilegível..."
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditandoPagamento(null);
+                    setNovoStatusPagamento("aguardando");
+                    setMotivoEdicaoPagamento("");
+                  }}
+                  disabled={editarPagamento.isPending}
+                >
+                  Cancelar
+                </Button>
+
+                <Button
+                  type="submit"
+                  disabled={
+                    editarPagamento.isPending ||
+                    (novoStatusPagamento ===
+                      "rejeitado" &&
+                      !motivoEdicaoPagamento.trim())
+                  }
+                >
+                  {editarPagamento.isPending
+                    ? "Salvando..."
+                    : "Salvar alterações"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: Editar Inscrição */}
+      <Dialog
+        open={!!editandoInscricao}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditandoInscricao(null);
+            setNovoStatusInscricao("");
+            setMotivoEdicaoInscricao("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Inscrição</DialogTitle>
+          </DialogHeader>
+
+          {editandoInscricao && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                editarInscricao.mutate({
+                  inscricao: editandoInscricao,
+                  novoStatus: novoStatusInscricao,
+                  motivo: motivoEdicaoInscricao,
+                });
+              }}
+              className="space-y-4"
+            >
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Aluno
+                </p>
+                <p className="font-semibold">
+                  {editandoInscricao.participante?.nome ||
+                    "—"}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Curso
+                </p>
+                <p>
+                  {editandoInscricao.livro?.titulo || "—"}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Status atual
+                </p>
+                <Badge className="w-fit">
+                  {editandoInscricao.status ===
+                  "confirmada"
+                    ? "Aprovada"
+                    : editandoInscricao.status ===
+                        "cancelada"
+                      ? "Cancelada"
+                      : "Aguardando"}
+                </Badge>
+              </div>
+
+              {editandoInscricao.motivo_rejeicao && (
+                <div className="space-y-1 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                  <p className="text-xs font-semibold text-destructive">
+                    Motivo da rejeição:
+                  </p>
+                  <p className="text-sm text-destructive">
+                    {editandoInscricao.motivo_rejeicao}
+                  </p>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="novo-status-inscricao">
+                  Novo status
+                </Label>
+                <select
+                  id="novo-status-inscricao"
+                  value={novoStatusInscricao}
+                  onChange={(e) =>
+                    setNovoStatusInscricao(e.target.value)
+                  }
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Selecione...</option>
+                  <option value="aguardando_pagamento">
+                    Aguardando pagamento
+                  </option>
+                  <option value="confirmada">
+                    Aprovada
+                  </option>
+                  <option value="cancelada">
+                    Cancelada
+                  </option>
+                </select>
+              </div>
+
+              {novoStatusInscricao === "cancelada" && (
+                <div className="space-y-2">
+                  <Label htmlFor="motivo-edicao-inscricao">
+                    Motivo *
+                  </Label>
+                  <Input
+                    id="motivo-edicao-inscricao"
+                    value={motivoEdicaoInscricao}
+                    onChange={(e) =>
+                      setMotivoEdicaoInscricao(
+                        e.target.value,
+                      )
+                    }
+                    placeholder="Ex.: vaga indisponível..."
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditandoInscricao(null);
+                    setNovoStatusInscricao("");
+                    setMotivoEdicaoInscricao("");
+                  }}
+                  disabled={editarInscricao.isPending}
+                >
+                  Cancelar
+                </Button>
+
+                <Button
+                  type="submit"
+                  disabled={
+                    editarInscricao.isPending ||
+                    !novoStatusInscricao ||
+                    (novoStatusInscricao ===
+                      "cancelada" &&
+                      !motivoEdicaoInscricao.trim())
+                  }
+                >
+                  {editarInscricao.isPending
+                    ? "Salvando..."
+                    : "Salvar alterações"}
                 </Button>
               </div>
             </form>
