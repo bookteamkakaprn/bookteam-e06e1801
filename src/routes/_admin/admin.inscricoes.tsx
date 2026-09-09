@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_admin/admin/inscricoes")({
 type StatusPagamento = "aguardando" | "aprovado" | "rejeitado";
 type Aba = "pagamentos" | "inscricoes";
 
-type Pagamento = {
+type PagamentoRow = {
   id: string;
   inscricao_id: string;
   status: StatusPagamento;
@@ -42,7 +42,7 @@ type Pagamento = {
   created_at: string;
 };
 
-type Inscricao = {
+type InscricaoRow = {
   id: string;
   status: string;
   created_at: string;
@@ -84,106 +84,79 @@ function dataBR(v: string | null) {
   return v ? new Date(`${v}T00:00:00`).toLocaleDateString("pt-BR") : "—";
 }
 
-function erroTexto(e: unknown) {
-  if (!e) return "";
-  if (typeof e === "string") return e;
-  const x = e as { message?: string; details?: string; hint?: string; code?: string };
-  return [x.code, x.message, x.details, x.hint].filter(Boolean).join(" | ");
-}
-
 function AdminAprovacoes() {
   const qc = useQueryClient();
-
   const [aba, setAba] = useState<Aba>("pagamentos");
   const [filtroPagamento, setFiltroPagamento] =
     useState<StatusPagamento>("aguardando");
   const [recusandoPagamento, setRecusandoPagamento] =
-    useState<Pagamento | null>(null);
+    useState<PagamentoRow | null>(null);
   const [motivoPagamento, setMotivoPagamento] = useState("");
   const [recusandoInscricao, setRecusandoInscricao] =
-    useState<Inscricao | null>(null);
+    useState<InscricaoRow | null>(null);
   const [motivoInscricao, setMotivoInscricao] = useState("");
 
   const pagamentosQ = useQuery({
-    queryKey: ["admin-aprovacoes-pagamentos-diagnostico"],
+    queryKey: ["admin-aprovacoes-pagamentos-v3"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pagamentos")
-        .select(
-          "id,inscricao_id,status,valor,comprovante_url,observacao,created_at",
-        )
+        .select("id,inscricao_id,status,valor,comprovante_url,observacao,created_at")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        throw new Error(`PAGAMENTOS: ${erroTexto(error)}`);
-      }
-
-      return (data ?? []) as Pagamento[];
+      if (error) throw error;
+      return (data ?? []) as PagamentoRow[];
     },
   });
 
   const inscricoesQ = useQuery({
-    queryKey: ["admin-aprovacoes-inscricoes-diagnostico"],
+    queryKey: ["admin-aprovacoes-inscricoes-v3"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inscricoes")
-        .select(
-          "id,status,created_at,participante_id,livro_id,turma_id",
-        )
+        .select("id,status,created_at,participante_id,livro_id,turma_id")
         .order("created_at", { ascending: false });
 
-      if (error) {
-        throw new Error(`INSCRICOES: ${erroTexto(error)}`);
-      }
-
-      return (data ?? []) as Inscricao[];
+      if (error) throw error;
+      return (data ?? []) as InscricaoRow[];
     },
   });
 
   const participantesQ = useQuery({
-    queryKey: ["admin-aprovacoes-participantes-diagnostico"],
+    queryKey: ["admin-aprovacoes-participantes-v3"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("participantes")
         .select("id,nome,email,status")
         .order("nome");
 
-      if (error) {
-        throw new Error(`PARTICIPANTES: ${erroTexto(error)}`);
-      }
-
+      if (error) throw error;
       return (data ?? []) as Participante[];
     },
   });
 
   const livrosQ = useQuery({
-    queryKey: ["admin-aprovacoes-livros-diagnostico"],
+    queryKey: ["admin-aprovacoes-livros-v3"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("livros")
         .select("id,titulo,autor")
         .order("ordem");
 
-      if (error) {
-        throw new Error(`LIVROS: ${erroTexto(error)}`);
-      }
-
+      if (error) throw error;
       return (data ?? []) as Livro[];
     },
   });
 
   const turmasQ = useQuery({
-    queryKey: ["admin-aprovacoes-turmas-diagnostico"],
+    queryKey: ["admin-aprovacoes-turmas-v3"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("turmas")
         .select("id,nome,data_inicio,data_fim,vagas_max,vagas_restantes")
         .order("data_inicio");
 
-      if (error) {
-        throw new Error(`TURMAS: ${erroTexto(error)}`);
-      }
-
+      if (error) throw error;
       return (data ?? []) as Turma[];
     },
   });
@@ -237,7 +210,7 @@ function AdminAprovacoes() {
 
   const inscricoesPendentes = inscricoesComDados.filter((inscricao) => {
     const pagamentoAprovado = inscricao.pagamentos.some(
-      (p) => p.status === "aprovado",
+      (pagamento) => pagamento.status === "aprovado",
     );
 
     return (
@@ -256,14 +229,16 @@ function AdminAprovacoes() {
   );
 
   const aprovarPagamento = useMutation({
-    mutationFn: async (pagamento: Pagamento) => {
-      const agora = new Date().toISOString();
+    mutationFn: async (pagamento: PagamentoRow) => {
+      const { data: usuario } = await supabase.auth.getUser();
 
       const { error } = await supabase
         .from("pagamentos")
         .update({
           status: "aprovado",
-          pago_em: agora,
+          pago_em: new Date().toISOString(),
+          aprovado_em: new Date().toISOString(),
+          aprovado_por: usuario.user?.id ?? null,
           observacao: null,
         })
         .eq("id", pagamento.id);
@@ -273,14 +248,17 @@ function AdminAprovacoes() {
     onSuccess: () => {
       toast.success("Pagamento aprovado.");
       qc.invalidateQueries({
-        queryKey: ["admin-aprovacoes-pagamentos-diagnostico"],
+        queryKey: ["admin-aprovacoes-pagamentos-v3"],
       });
       qc.invalidateQueries({
-        queryKey: ["admin-aprovacoes-inscricoes-diagnostico"],
+        queryKey: ["admin-aprovacoes-inscricoes-v3"],
       });
+      qc.invalidateQueries({ queryKey: ["meus-pagamentos"] });
     },
     onError: (e: unknown) =>
-      toast.error(erroTexto(e) || "Não foi possível aprovar o pagamento."),
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível aprovar o pagamento.",
+      ),
   });
 
   const recusarPagamento = useMutation({
@@ -288,10 +266,11 @@ function AdminAprovacoes() {
       pagamento,
       motivo,
     }: {
-      pagamento: Pagamento;
+      pagamento: PagamentoRow;
       motivo: string;
     }) => {
       const texto = motivo.trim();
+
       if (!texto) throw new Error("Informe o motivo da recusa.");
 
       const { error } = await supabase
@@ -299,6 +278,8 @@ function AdminAprovacoes() {
         .update({
           status: "rejeitado",
           pago_em: null,
+          aprovado_em: null,
+          aprovado_por: null,
           observacao: texto,
         })
         .eq("id", pagamento.id);
@@ -310,26 +291,36 @@ function AdminAprovacoes() {
       setRecusandoPagamento(null);
       setMotivoPagamento("");
       qc.invalidateQueries({
-        queryKey: ["admin-aprovacoes-pagamentos-diagnostico"],
+        queryKey: ["admin-aprovacoes-pagamentos-v3"],
       });
       qc.invalidateQueries({
-        queryKey: ["admin-aprovacoes-inscricoes-diagnostico"],
+        queryKey: ["admin-aprovacoes-inscricoes-v3"],
       });
+      qc.invalidateQueries({ queryKey: ["meus-pagamentos"] });
     },
     onError: (e: unknown) =>
-      toast.error(erroTexto(e) || "Não foi possível recusar o pagamento."),
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível recusar o pagamento.",
+      ),
   });
 
   const excluirAprovacao = useMutation({
-    mutationFn: async (pagamento: Pagamento) => {
-      if (!window.confirm("Excluir a aprovação deste pagamento?")) return false;
+    mutationFn: async (pagamento: PagamentoRow) => {
+      if (
+        !window.confirm(
+          "Excluir a aprovação deste pagamento? Ele voltará para Pendentes.",
+        )
+      ) {
+        return false;
+      }
 
       const { error } = await supabase
         .from("pagamentos")
         .update({
           status: "aguardando",
           pago_em: null,
-          observacao: null,
+          aprovado_em: null,
+          aprovado_por: null,
         })
         .eq("id", pagamento.id);
 
@@ -338,25 +329,39 @@ function AdminAprovacoes() {
     },
     onSuccess: (ok) => {
       if (!ok) return;
+
       toast.success("Aprovação excluída.");
       qc.invalidateQueries({
-        queryKey: ["admin-aprovacoes-pagamentos-diagnostico"],
+        queryKey: ["admin-aprovacoes-pagamentos-v3"],
       });
       qc.invalidateQueries({
-        queryKey: ["admin-aprovacoes-inscricoes-diagnostico"],
+        queryKey: ["admin-aprovacoes-inscricoes-v3"],
       });
     },
     onError: (e: unknown) =>
-      toast.error(erroTexto(e) || "Não foi possível excluir a aprovação."),
+      toast.error(
+        e instanceof Error
+          ? e.message
+          : "Não foi possível excluir a aprovação.",
+      ),
   });
 
   const aprovarInscricao = useMutation({
-    mutationFn: async (id: string) => {
-      const inscricao = inscricoesComDados.find((i) => i.id === id);
+    mutationFn: async (inscricaoId: string) => {
+      const inscricao = inscricoesComDados.find(
+        (item) => item.id === inscricaoId,
+      );
+
       if (!inscricao) throw new Error("Inscrição não encontrada.");
 
-      if (!inscricao.pagamentos.some((p) => p.status === "aprovado")) {
-        throw new Error("O pagamento ainda não foi aprovado.");
+      const pagamentoAprovado = inscricao.pagamentos.some(
+        (pagamento) => pagamento.status === "aprovado",
+      );
+
+      if (!pagamentoAprovado) {
+        throw new Error(
+          "A inscrição só pode ser aprovada depois do pagamento aprovado.",
+        );
       }
 
       const vagasMax = inscricao.turma?.vagas_max ?? 0;
@@ -369,21 +374,24 @@ function AdminAprovacoes() {
       const { error } = await supabase
         .from("inscricoes")
         .update({ status: "confirmada" })
-        .eq("id", id);
+        .eq("id", inscricaoId);
 
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Inscrição aprovada.");
       qc.invalidateQueries({
-        queryKey: ["admin-aprovacoes-inscricoes-diagnostico"],
+        queryKey: ["admin-aprovacoes-inscricoes-v3"],
       });
       qc.invalidateQueries({
-        queryKey: ["admin-aprovacoes-pagamentos-diagnostico"],
+        queryKey: ["admin-aprovacoes-pagamentos-v3"],
       });
+      qc.invalidateQueries({ queryKey: ["admin-inscricoes"] });
     },
     onError: (e: unknown) =>
-      toast.error(erroTexto(e) || "Não foi possível aprovar a inscrição."),
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível aprovar a inscrição.",
+      ),
   });
 
   const recusarInscricao = useMutation({
@@ -391,10 +399,11 @@ function AdminAprovacoes() {
       inscricao,
       motivo,
     }: {
-      inscricao: Inscricao;
+      inscricao: InscricaoRow;
       motivo: string;
     }) => {
       const texto = motivo.trim();
+
       if (!texto) throw new Error("Informe o motivo da rejeição.");
 
       const { error } = await supabase
@@ -405,13 +414,15 @@ function AdminAprovacoes() {
       if (error) throw error;
 
       const pagamento = pagamentos.find(
-        (p) => p.inscricao_id === inscricao.id,
+        (item) => item.inscricao_id === inscricao.id,
       );
 
       if (pagamento) {
         const { error: pagamentoError } = await supabase
           .from("pagamentos")
-          .update({ observacao: `Rejeição da inscrição: ${texto}` })
+          .update({
+            observacao: `Rejeição da inscrição: ${texto}`,
+          })
           .eq("id", pagamento.id);
 
         if (pagamentoError) throw pagamentoError;
@@ -422,22 +433,29 @@ function AdminAprovacoes() {
       setRecusandoInscricao(null);
       setMotivoInscricao("");
       qc.invalidateQueries({
-        queryKey: ["admin-aprovacoes-inscricoes-diagnostico"],
+        queryKey: ["admin-aprovacoes-inscricoes-v3"],
       });
       qc.invalidateQueries({
-        queryKey: ["admin-aprovacoes-pagamentos-diagnostico"],
+        queryKey: ["admin-aprovacoes-pagamentos-v3"],
       });
+      qc.invalidateQueries({ queryKey: ["admin-inscricoes"] });
     },
     onError: (e: unknown) =>
-      toast.error(erroTexto(e) || "Não foi possível rejeitar a inscrição."),
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível rejeitar a inscrição.",
+      ),
   });
 
   const liberarInicio = useMutation({
-    mutationFn: async (id: string) => {
-      const inscricao = inscricoesComDados.find((i) => i.id === id);
+    mutationFn: async (inscricaoId: string) => {
+      const inscricao = inscricoesComDados.find(
+        (item) => item.id === inscricaoId,
+      );
+
       if (!inscricao) throw new Error("Inscrição não encontrada.");
 
       const participanteId = inscricao.participante?.id;
+
       if (!participanteId) throw new Error("Aluno não encontrado.");
 
       const { error } = await supabase
@@ -450,12 +468,14 @@ function AdminAprovacoes() {
     onSuccess: () => {
       toast.success("Aluno liberado para iniciar.");
       qc.invalidateQueries({
-        queryKey: ["admin-aprovacoes-inscricoes-diagnostico"],
+        queryKey: ["admin-aprovacoes-inscricoes-v3"],
       });
       qc.invalidateQueries({ queryKey: ["admin-alunos"] });
     },
     onError: (e: unknown) =>
-      toast.error(erroTexto(e) || "Não foi possível liberar o início."),
+      toast.error(
+        e instanceof Error ? e.message : "Não foi possível liberar o início.",
+      ),
   });
 
   const carregando =
@@ -478,7 +498,7 @@ function AdminAprovacoes() {
       .createSignedUrl(url, 300);
 
     if (error || !data?.signedUrl) {
-      toast.error(erroTexto(error) || "Não foi possível abrir o comprovante.");
+      toast.error("Não foi possível abrir o comprovante.");
       return;
     }
 
@@ -492,8 +512,7 @@ function AdminAprovacoes() {
           Aprovar inscrições e pagamentos
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Primeiro aprove o pagamento. Depois confirme a inscrição conforme a
-          disponibilidade de vagas.
+          Primeiro aprove o pagamento. Depois confirme a inscrição conforme a disponibilidade de vagas.
         </p>
       </div>
 
@@ -514,7 +533,7 @@ function AdminAprovacoes() {
         >
           <CheckCircle2 className="mr-2 h-4 w-4" />
           Aprovar inscrições
-          {inscricoesPendentes.length
+          {inscricoesPendentes.length > 0
             ? ` (${inscricoesPendentes.length})`
             : ""}
         </Button>
@@ -531,10 +550,12 @@ function AdminAprovacoes() {
         <Card>
           <CardContent className="space-y-2 p-5">
             <p className="font-semibold text-destructive">
-              Erro ao carregar a tela
+              Não foi possível carregar os dados.
             </p>
-            <p className="break-words text-sm text-muted-foreground">
-              {erroTexto(erro)}
+            <p className="text-sm text-muted-foreground">
+              {erro instanceof Error
+                ? erro.message
+                : "Verifique o acesso às tabelas do Supabase."}
             </p>
           </CardContent>
         </Card>
@@ -583,14 +604,13 @@ function AdminAprovacoes() {
               const turma = inscricao?.turma_id
                 ? turmasMap.get(inscricao.turma_id)
                 : null;
-              const recusando =
-                recusandoPagamento?.id === pagamento.id;
+              const recusando = recusandoPagamento?.id === pagamento.id;
 
               return (
                 <Card key={pagamento.id}>
                   <CardContent className="space-y-4 p-4">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0">
+                      <div>
                         <p className="font-serif text-lg font-semibold">
                           {aluno?.nome ?? "Aluno"}
                         </p>
@@ -771,67 +791,82 @@ function AdminAprovacoes() {
             </Card>
           )}
 
-          {inscricoesPendentes.map((inscricao) => {
-            const turma = inscricao.turma;
-            const vagas = turma?.vagas_restantes ?? 0;
-            const semVaga = (turma?.vagas_max ?? 0) > 0 && vagas <= 0;
+          <div className="space-y-3">
+            {inscricoesPendentes.map((inscricao) => {
+              const turma = inscricao.turma;
+              const vagasRestantes = turma?.vagas_restantes ?? 0;
+              const semVaga =
+                (turma?.vagas_max ?? 0) > 0 && vagasRestantes <= 0;
 
-            return (
-              <Card key={inscricao.id}>
-                <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="font-serif text-lg font-semibold">
-                      {inscricao.participante?.nome ?? "Aluno"}
-                    </p>
-                    <p className="text-sm">
-                      {inscricao.livro?.titulo ?? "Curso não informado"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {turma?.nome ?? "Turma não informada"}
-                      {turma?.data_inicio
-                        ? ` • ${dataBR(turma.data_inicio)}`
-                        : ""}
-                      {turma?.data_fim
-                        ? ` até ${dataBR(turma.data_fim)}`
-                        : ""}
-                    </p>
-                    <Badge
-                      variant={semVaga ? "destructive" : "secondary"}
-                      className="mt-2"
-                    >
-                      {semVaga
-                        ? "Sem vagas"
-                        : `${vagas} vaga${vagas === 1 ? "" : "s"} disponível${vagas === 1 ? "" : "eis"}`}
-                    </Badge>
-                  </div>
+              return (
+                <Card key={inscricao.id}>
+                  <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-serif text-lg font-semibold">
+                        {inscricao.participante?.nome ?? "Aluno"}
+                      </p>
+                      <p className="text-sm">
+                        {inscricao.livro?.titulo ?? "Curso não informado"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {inscricao.turma?.nome ?? "Turma não informada"}
+                        {turma?.data_inicio
+                          ? ` • ${dataBR(turma.data_inicio)}`
+                          : ""}
+                        {turma?.data_fim
+                          ? ` até ${dataBR(turma.data_fim)}`
+                          : ""}
+                      </p>
 
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      disabled={aprovarInscricao.isPending || semVaga}
-                      onClick={() =>
-                        aprovarInscricao.mutate(inscricao.id)
-                      }
-                    >
-                      <CheckCircle2 className="mr-1 h-4 w-4" />
-                      Aprovar inscrição
-                    </Button>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Badge>
+                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                          Pagamento aprovado
+                        </Badge>
+                        <Badge
+                          variant={semVaga ? "destructive" : "secondary"}
+                        >
+                          {semVaga
+                            ? "Sem vagas"
+                            : `${vagasRestantes} vaga${
+                                vagasRestantes === 1 ? "" : "s"
+                              } restante${
+                                vagasRestantes === 1 ? "" : "s"
+                              }`}
+                        </Badge>
+                      </div>
+                    </div>
 
-                    <Button
-                      variant="destructive"
-                      disabled={recusarInscricao.isPending}
-                      onClick={() => {
-                        setRecusandoInscricao(inscricao);
-                        setMotivoInscricao("");
-                      }}
-                    >
-                      <XCircle className="mr-1 h-4 w-4" />
-                      Recusar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        disabled={
+                          aprovarInscricao.isPending || semVaga
+                        }
+                        onClick={() =>
+                          aprovarInscricao.mutate(inscricao.id)
+                        }
+                      >
+                        <CheckCircle2 className="mr-1 h-4 w-4" />
+                        Aprovar inscrição
+                      </Button>
+
+                      <Button
+                        variant="destructive"
+                        disabled={recusarInscricao.isPending}
+                        onClick={() => {
+                          setRecusandoInscricao(inscricao);
+                          setMotivoInscricao("");
+                        }}
+                      >
+                        <XCircle className="mr-1 h-4 w-4" />
+                        Recusar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
 
           {inscricoesAprovadas.length > 0 && (
             <Card>
@@ -896,8 +931,7 @@ function AdminAprovacoes() {
                       </p>
                       {pagamento?.observacao && (
                         <p className="mt-1 text-xs text-destructive">
-                          <strong>Motivo:</strong>{" "}
-                          {pagamento.observacao}
+                          <strong>Motivo:</strong> {pagamento.observacao}
                         </p>
                       )}
                     </div>
@@ -911,8 +945,8 @@ function AdminAprovacoes() {
 
       <Dialog
         open={!!recusandoInscricao}
-        onOpenChange={(open) => {
-          if (!open) {
+        onOpenChange={(aberto) => {
+          if (!aberto) {
             setRecusandoInscricao(null);
             setMotivoInscricao("");
           }
@@ -935,9 +969,10 @@ function AdminAprovacoes() {
               }}
             >
               <div>
-                <p className="font-medium">
+                <p className="font-medium">Aluno</p>
+                <p className="text-sm text-muted-foreground">
                   {inscricoesComDados.find(
-                    (i) => i.id === recusandoInscricao.id,
+                    (item) => item.id === recusandoInscricao.id,
                   )?.participante?.nome ?? "Aluno"}
                 </p>
               </div>
@@ -946,7 +981,6 @@ function AdminAprovacoes() {
                 <Label htmlFor="motivo-inscricao">
                   Justificativa da rejeição
                 </Label>
-
                 <Input
                   id="motivo-inscricao"
                   placeholder="Digite o motivo da rejeição..."
