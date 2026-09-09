@@ -37,7 +37,6 @@ const navItems: NavItem[] = [
     to: "/cursos",
     label: "Cursos",
     icon: GraduationCap,
-    disabled: true,
   },
   {
     to: "/turmas",
