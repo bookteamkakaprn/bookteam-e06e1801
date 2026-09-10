@@ -22,7 +22,9 @@ import {
   Loader2,
   PlayCircle,
   XCircle,
+  AlertCircle,
 } from "lucide-react";
+import { emailPagamentoAprovado, emailPagamentoRecusado } from "@/lib/email-service";
 
 export const Route = createFileRoute("/_admin/admin/inscricoes")({
   head: () => ({
@@ -257,9 +259,34 @@ function AdminAprovacoes() {
         .eq("id", pagamento.id);
 
       if (error) throw error;
+
+      // 📧 ENVIAR EMAIL AUTOMÁTICO
+      if (pagamento.inscricao?.participante?.email) {
+        try {
+          await emailPagamentoAprovado(
+            pagamento.inscricao.participante.email,
+            pagamento.inscricao.participante.nome || "Aluno(a)",
+            pagamento.inscricao.livro?.titulo || "Curso",
+            pagamento.inscricao.turma?.nome || "Turma",
+            pagamento.valor
+          );
+        } catch (emailError) {
+          console.error("Erro ao enviar email:", emailError);
+          // Não interrompe o fluxo se o email falhar
+        }
+      }
     },
     onSuccess: () => {
-      toast.success("Pagamento aprovado.");
+      toast.success(
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-5 w-5 text-green-500" />
+          <div>
+            <p className="font-semibold">Pagamento Aprovado! ✅</p>
+            <p className="text-sm text-muted-foreground">Email enviado ao aluno</p>
+          </div>
+        </div>,
+        { duration: 5000 }
+      );
       qc.invalidateQueries({
         queryKey: ["admin-aprovacoes-pagamentos-final"],
       });
@@ -303,9 +330,34 @@ function AdminAprovacoes() {
         .eq("id", pagamento.id);
 
       if (error) throw error;
+
+      // 📧 ENVIAR EMAIL AUTOMÁTICO COM MOTIVO
+      if (pagamento.inscricao?.participante?.email) {
+        try {
+          await emailPagamentoRecusado(
+            pagamento.inscricao.participante.email,
+            pagamento.inscricao.participante.nome || "Aluno(a)",
+            pagamento.inscricao.livro?.titulo || "Curso",
+            pagamento.inscricao.turma?.nome || "Turma",
+            texto // motivo já foi validado acima
+          );
+        } catch (emailError) {
+          console.error("Erro ao enviar email:", emailError);
+          // Não interrompe o fluxo se o email falhar
+        }
+      }
     },
     onSuccess: () => {
-      toast.success("Pagamento recusado.");
+      toast.success(
+        <div className="flex items-center gap-2">
+          <AlertCircle className="h-5 w-5 text-red-500" />
+          <div>
+            <p className="font-semibold">Pagamento Recusado</p>
+            <p className="text-sm text-muted-foreground">Email de notificação enviado</p>
+          </div>
+        </div>,
+        { duration: 5000 }
+      );
       setRecusandoPagamento(null);
       setMotivoPagamento("");
 
