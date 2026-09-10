@@ -644,44 +644,44 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="como-funciona" className="relative border-t border-border/40 py-10 md:py-14">
+    <section id="como-funciona" className="relative border-t border-border/40 py-6 md:py-8">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="max-w-2xl">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gold/80">
             Como funciona
           </span>
         </div>
 
         {/* ——— Timeline horizontal (md+) / vertical (mobile) ——— */}
-        <div className="relative mt-10">
+        <div className="relative mt-5">
           {/* Trilho horizontal */}
-          <div className="pointer-events-none absolute left-0 right-0 top-10 hidden h-px bg-gradient-to-r from-gold/0 via-gold/50 to-gold/0 md:block" />
+          <div className="pointer-events-none absolute left-0 right-0 top-7 hidden h-px bg-gradient-to-r from-gold/0 via-gold/40 to-gold/0 md:block" />
           {/* Trilho vertical (mobile) */}
-          <div className="pointer-events-none absolute left-10 top-2 bottom-2 w-px bg-gradient-to-b from-gold/10 via-gold/50 to-gold/10 md:hidden" />
+          <div className="pointer-events-none absolute left-7 top-2 bottom-2 w-px bg-gradient-to-b from-gold/10 via-gold/30 to-gold/10 md:hidden" />
 
-          <ol className="grid gap-8 md:grid-cols-4 md:gap-6">
+          <ol className="grid gap-4 md:grid-cols-4 md:gap-3">
             {steps.map((s, i) => (
-              <li key={s.title} className="group relative pl-24 md:pl-0">
+              <li key={s.title} className="group relative pl-16 md:pl-0">
                 {/* Nó com logo do Book Team */}
-                <span className="absolute left-0 top-0 z-10 flex h-20 w-20 items-center justify-center rounded-full border border-gold/50 bg-background shadow-glow-gold md:relative md:mx-auto md:mb-6">
+                <span className="absolute left-0 top-0 z-10 flex h-14 w-14 items-center justify-center rounded-full border border-gold/40 bg-background shadow-glow-gold md:relative md:mx-auto md:mb-3">
                   <img
                     src={logoUrl}
                     alt="Book Team"
-                    className="h-14 w-14 rounded-full object-cover"
+                    className="h-10 w-10 rounded-full object-cover"
                   />
-                  <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border border-gold/50 bg-background text-[11px] font-bold text-gold">
+                  <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full border border-gold/40 bg-background text-[9px] font-bold text-gold">
                     {i + 1}
                   </span>
                 </span>
 
-                <div className="rounded-2xl border border-border/60 bg-card/70 p-5 text-left shadow-book backdrop-blur transition-all group-hover:border-gold/40 md:text-center">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
+                <div className="rounded-lg border border-border/50 bg-card/50 p-3 text-left shadow-book backdrop-blur transition-all group-hover:border-gold/30 md:text-center">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-gold/70">
                     Passo {i + 1}
                   </p>
-                  <p className="mt-1 font-serif text-lg font-semibold md:text-[17px]">
+                  <p className="mt-0.5 font-serif text-sm font-semibold md:text-[15px]">
                     {s.title}
                   </p>
-                  <p className="mt-1.5 text-[13px] leading-relaxed text-foreground/70">
+                  <p className="mt-1 text-[11px] leading-snug text-foreground/60">
                     {s.desc}
                   </p>
                 </div>
