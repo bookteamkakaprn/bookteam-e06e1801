@@ -43,10 +43,26 @@ function HistoricoPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("historico_livros")
-        .select("id, data_conclusao, observacao, livro:livros(id, titulo, ordem)")
+        .select("id, data_conclusao, observacao, livro_id")
         .eq("participante_id", user!.id)
         .order("data_conclusao", { ascending: false });
+      
       if (error) throw error;
+      
+      // Buscar dados dos livros separadamente
+      if (data && data.length > 0) {
+        const livroIds = [...new Set(data.map(h => h.livro_id))];
+        const { data: livros } = await supabase
+          .from("livros")
+          .select("id, titulo, ordem")
+          .in("id", livroIds);
+        
+        return data.map(h => ({
+          ...h,
+          livro: livros?.find(l => l.id === h.livro_id)
+        }));
+      }
+      
       return data ?? [];
     },
   });
