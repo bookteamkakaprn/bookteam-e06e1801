@@ -269,6 +269,9 @@ function AdminAprovacoes() {
       qc.invalidateQueries({
         queryKey: ["meus-pagamentos"],
       });
+      qc.invalidateQueries({
+        queryKey: ["admin-pagamentos"],
+      });
     },
     onError: (e: unknown) =>
       toast.error(
@@ -315,6 +318,9 @@ function AdminAprovacoes() {
       qc.invalidateQueries({
         queryKey: ["meus-pagamentos"],
       });
+      qc.invalidateQueries({
+        queryKey: ["admin-pagamentos"],
+      });
     },
     onError: (e: unknown) =>
       toast.error(
@@ -355,6 +361,9 @@ function AdminAprovacoes() {
       });
       qc.invalidateQueries({
         queryKey: ["admin-aprovacoes-inscricoes-final"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["admin-pagamentos"],
       });
     },
     onError: (e: unknown) =>
@@ -424,6 +433,9 @@ function AdminAprovacoes() {
       qc.invalidateQueries({
         queryKey: ["meus-pagamentos"],
       });
+      qc.invalidateQueries({
+        queryKey: ["admin-pagamentos"],
+      });
     },
     onError: (e: unknown) =>
       toast.error(
@@ -468,6 +480,12 @@ function AdminAprovacoes() {
       });
       qc.invalidateQueries({
         queryKey: ["admin-inscricoes"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["admin-pagamentos"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["admin-presenca-inscricoes"],
       });
     },
     onError: (e: unknown) =>
@@ -523,6 +541,9 @@ function AdminAprovacoes() {
       });
       qc.invalidateQueries({
         queryKey: ["admin-inscricoes"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["admin-pagamentos"],
       });
     },
     onError: (e: unknown) =>
