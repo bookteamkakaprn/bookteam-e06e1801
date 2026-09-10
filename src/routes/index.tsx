@@ -854,13 +854,24 @@ function LivroComplementarCard({
 /* ———————————————— EVENTOS ESPECIAIS ———————————————— */
 
 function EventosEspeciais() {
+  const [mesSelecionado, setMesSelecionado] = useState(new Date());
+  
+  // Calcular início e fim do mês
+  const primeiroDia = new Date(mesSelecionado.getFullYear(), mesSelecionado.getMonth(), 1);
+  const ultimoDia = new Date(mesSelecionado.getFullYear(), mesSelecionado.getMonth() + 1, 0);
+  const dataInicio = primeiroDia.toISOString().slice(0, 10);
+  const dataFim = ultimoDia.toISOString().slice(0, 10);
+  const nomeMes = mesSelecionado.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  
   const { data: eventos = [], isLoading } = useQuery({
-    queryKey: ["eventos-home"],
+    queryKey: ["eventos-home", mesSelecionado.toISOString().slice(0, 7)],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("eventos")
         .select("id, titulo, data, hora, local, categoria, vagas, valor")
         .is("livro_id", null)
+        .gte("data", dataInicio)
+        .lte("data", dataFim)
         .order("data", { ascending: true })
         .limit(8);
 
@@ -895,7 +906,26 @@ function EventosEspeciais() {
           <h2 className="font-serif text-2xl md:text-3xl font-semibold text-foreground mb-1">
             Momentos para todos
           </h2>
-          <p className="text-sm text-foreground/60">Próximos encontros e celebrações</p>
+          <p className="text-xs md:text-sm text-foreground/60">Próximos encontros</p>
+        </div>
+
+        {/* Navegação de mês */}
+        <div className="flex items-center justify-between mb-6 rounded-lg border border-border/40 bg-card/30 p-3">
+          <button 
+            onClick={() => setMesSelecionado(new Date(mesSelecionado.getFullYear(), mesSelecionado.getMonth() - 1, 1))}
+            className="flex items-center gap-1 text-sm hover:text-gold transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">Anterior</span>
+          </button>
+          <h3 className="font-serif text-sm md:text-base font-semibold capitalize">{nomeMes}</h3>
+          <button 
+            onClick={() => setMesSelecionado(new Date(mesSelecionado.getFullYear(), mesSelecionado.getMonth() + 1, 1))}
+            className="flex items-center gap-1 text-sm hover:text-gold transition-colors"
+          >
+            <span className="hidden sm:inline">Próximo</span>
+            <ChevronRight className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Grid POST-IT */}
