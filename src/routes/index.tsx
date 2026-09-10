@@ -860,9 +860,9 @@ function EventosEspeciais() {
       const { data, error } = await supabase
         .from("eventos")
         .select("id, titulo, data, hora, local, categoria, vagas, valor")
-        .is("livro_id", null)  // Apenas eventos puros (não vinculados a cursos)
+        .is("livro_id", null)
         .order("data", { ascending: true })
-        .limit(6);
+        .limit(8);
 
       if (error) throw error;
       return data || [];
@@ -871,108 +871,103 @@ function EventosEspeciais() {
 
   const formatarData = (data: string) => {
     const d = new Date(data + "T00:00:00");
-    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
   };
 
-  const getCategoryIcon = (category: string) => {
-    const icons: { [key: string]: React.ComponentType<{ className?: string }> } = {
-      "Homens": Users,
-      "Mulheres": Heart,
-      "Mulheres solteiras": Star,
-      "Misto": Sparkles,
-      "Família": Users,
-      "Ministério (Staff)": Award,
+  const getCategoryColor = (category: string) => {
+    const colors: { [key: string]: string } = {
+      "Homens": "bg-blue-500/20 border-blue-500/40",
+      "Mulheres": "bg-pink-500/20 border-pink-500/40",
+      "Mulheres solteiras": "bg-rose-500/20 border-rose-500/40",
+      "Misto": "bg-purple-500/20 border-purple-500/40",
+      "Família": "bg-green-500/20 border-green-500/40",
+      "Ministério (Staff)": "bg-amber-500/20 border-amber-500/40",
     };
-    return icons[category] || Calendar;
+    return colors[category] || "bg-gold/10 border-gold/20";
   };
 
   return (
-    <section className="relative py-10 md:py-14">
+    <section className="relative py-8 md:py-10">
       <div id="eventos" className="absolute -top-24" />
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="relative overflow-hidden rounded-3xl border border-gold/20 gradient-wine p-8 shadow-premium md:p-14">
-          <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-black/40 blur-3xl" />
-
-          <div className="relative">
-            {isLoading ? (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div key={i} className="h-40 rounded-2xl bg-black/20 animate-pulse" />
-                ))}
-              </div>
-            ) : eventos.length > 0 ? (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {eventos.map((evento) => {
-                  const IconComponent = getCategoryIcon(evento.categoria || "");
-                  return (
-                    <Link
-                      key={evento.id}
-                      to={`/eventos`}
-                      className="group relative overflow-hidden rounded-2xl border border-gold/20 bg-black/30 p-4 backdrop-blur transition-all hover:border-gold/60 hover:bg-black/40"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-gold/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-                      
-                      <div className="relative space-y-3">
-                        {/* Header com categoria e ícone */}
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2">
-                            <IconComponent className="h-5 w-5 text-gold shrink-0" />
-                            <span className="text-xs font-semibold uppercase tracking-wider text-gold/80">
-                              {evento.categoria || "Evento"}
-                            </span>
-                          </div>
-                          {evento.valor === 0 && (
-                            <span className="text-xs font-semibold text-green-400 bg-green-500/20 px-2 py-1 rounded-full">
-                              Gratuito
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Título */}
-                        <h3 className="font-serif text-base font-semibold text-foreground line-clamp-2 group-hover:text-gold transition-colors">
-                          {evento.titulo}
-                        </h3>
-
-                        {/* Data e Hora */}
-                        <div className="space-y-1 text-sm text-foreground/70">
-                          <p className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gold/60" />
-                            {formatarData(evento.data)}
-                          </p>
-                          {evento.hora && (
-                            <p className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-gold/60" />
-                              {evento.hora}
-                            </p>
-                          )}
-                        </div>
-
-                        {/* Local */}
-                        {evento.local && (
-                          <p className="text-xs text-foreground/60 line-clamp-1">
-                            📍 {evento.local}
-                          </p>
-                        )}
-
-                        {/* Vagas */}
-                        {evento.vagas && (
-                          <p className="text-xs text-gold/70">
-                            {evento.vagas} vagas disponíveis
-                          </p>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-foreground/60">Nenhum evento disponível no momento</p>
-              </div>
-            )}
-          </div>
+      <div className="mx-auto max-w-6xl px-4 md:px-8">
+        {/* Título */}
+        <div className="mb-6 text-center md:text-left">
+          <h2 className="font-serif text-2xl md:text-3xl font-semibold text-foreground mb-1">
+            Momentos para todos
+          </h2>
+          <p className="text-sm text-foreground/60">Próximos encontros e celebrações</p>
         </div>
+
+        {/* Grid POST-IT */}
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="h-32 rounded-lg bg-black/20 animate-pulse" />
+            ))}
+          </div>
+        ) : eventos.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            {eventos.map((evento) => (
+              <Link
+                key={evento.id}
+                to={`/eventos`}
+                className={`group relative p-3 rounded-lg border transition-all hover:shadow-lg hover:scale-105 cursor-pointer ${getCategoryColor(evento.categoria || "")}`}
+              >
+                {/* Checkbox simulado */}
+                <div className="absolute top-2 right-2 w-4 h-4 rounded border border-gold/40 group-hover:bg-gold/20" />
+
+                <div className="space-y-2 pr-6">
+                  {/* Data grande */}
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-serif text-lg font-bold text-gold">
+                      {new Date(evento.data + "T00:00:00").getDate()}
+                    </span>
+                    <span className="text-xs text-foreground/70">
+                      {formatarData(evento.data).split(" ")[1]}
+                    </span>
+                  </div>
+
+                  {/* Título */}
+                  <h3 className="text-xs font-semibold text-foreground line-clamp-2 leading-tight">
+                    {evento.titulo}
+                  </h3>
+
+                  {/* Hora */}
+                  {evento.hora && (
+                    <p className="text-[10px] text-foreground/70 flex items-center gap-1">
+                      🕐 {evento.hora}
+                    </p>
+                  )}
+
+                  {/* Local */}
+                  {evento.local && (
+                    <p className="text-[10px] text-foreground/70 line-clamp-1">
+                      📍 {evento.local}
+                    </p>
+                  )}
+
+                  {/* Badge */}
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {evento.valor === 0 && (
+                      <span className="text-[9px] font-semibold text-green-400 bg-green-500/30 px-1.5 py-0.5 rounded">
+                        Grátis
+                      </span>
+                    )}
+                    {evento.vagas && (
+                      <span className="text-[9px] text-gold/70">
+                        {evento.vagas} vagas
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-foreground/60">Nenhum evento disponível no momento</p>
+          </div>
+        )}
       </div>
     </section>
   );
