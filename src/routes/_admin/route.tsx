@@ -26,6 +26,7 @@ import {
   FolderOpen,
   ShieldCheck,
   ChevronDown,
+  MessageSquare,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_admin")({
@@ -117,6 +118,11 @@ const menuPrincipal: MenuItem[] = [
     to: "/admin/configuracoes",
     label: "Configurações",
     icon: UserCog,
+  },
+  {
+    to: "/admin/fale-com-adm",
+    label: "Fale com ADM",
+    icon: MessageSquare,
   },
 ];
 
