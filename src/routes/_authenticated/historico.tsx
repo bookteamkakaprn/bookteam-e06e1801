@@ -173,10 +173,12 @@ function HistoricoPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge variant={valido ? "default" : "destructive"} className="inline-flex items-center gap-1">
-                    {valido ? <CheckCircle2 className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                    {valido ? "Válido" : "Vencido — refazer"}
-                  </Badge>
+                  {valido && (
+                    <Badge variant="default" className="inline-flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Válido
+                    </Badge>
+                  )}
                   <Button size="icon" variant="ghost" onClick={() => remover.mutate(r.id)} aria-label="Remover registro">
                     <Trash2 className="h-4 w-4" />
                   </Button>
