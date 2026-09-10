@@ -240,7 +240,7 @@ function PagPage() {
       <h1 className="font-serif text-3xl font-bold">Pagamentos</h1>
 
       {isLoading && (
-        <p className="text-sm text-muted-foreground">Carregando…</p>
+        <p className="text-sm text-muted-foreground">Carregando...</p>
       )}
 
       {error && (

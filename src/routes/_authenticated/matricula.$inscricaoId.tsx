@@ -228,7 +228,7 @@ function MatriculaPage() {
   if (isLoading) {
     return (
       <p className="text-muted-foreground">
-        Carregando…
+        Carregando...
       </p>
     );
   }

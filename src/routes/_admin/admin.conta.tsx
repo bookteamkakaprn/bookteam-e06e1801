@@ -90,7 +90,7 @@ function AdminContaPage() {
       <Card>
         <CardHeader><CardTitle className="text-base">Dados do PIX</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
+          {isLoading && <p className="text-sm text-muted-foreground">Carregando...</p>}
           <div className="grid gap-4 sm:grid-cols-2">
             {campo("beneficiario", "Nome do beneficiário")}
             {campo("banco", "Banco")}

@@ -288,7 +288,7 @@ function AdminTurmasPage() {
 
       <div className="space-y-3">
         {isLoading && (
-          <p className="text-sm text-muted-foreground">Carregando…</p>
+          <p className="text-sm text-muted-foreground">Carregando...</p>
         )}
 
         {!isLoading && turmas.length === 0 && (

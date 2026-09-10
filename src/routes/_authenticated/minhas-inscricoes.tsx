@@ -213,7 +213,7 @@ function MinhasInscricoesPage() {
 
       {/* Conteúdo */}
       {carregandoInscricoes && (
-        <p className="text-sm text-muted-foreground">Carregando inscrições…</p>
+        <p className="text-sm text-muted-foreground">Carregando inscrições...</p>
       )}
 
       {!carregandoInscricoes && dados.length === 0 && (

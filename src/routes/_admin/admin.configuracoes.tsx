@@ -82,10 +82,10 @@ function ConfiguracoesAdmin() {
       toast.success("Configurações salvas!");
       qc.invalidateQueries({ queryKey: ["admin-config"] });
     },
-    onError: (err) => toast.error(\`Erro: \${err.message}\`),
+    onError: (err) => toast.error("Erro: " + (err?.message || "desconhecido")),
   });
 
-  if (configQuery.isLoading) return <p>Carregando…</p>;
+  if (configQuery.isLoading) return <p>Carregando...</p>;
   if (configQuery.data && !configQuery.isLoading) {
     setConfigGeral(configQuery.data);
   }
@@ -222,7 +222,7 @@ function DepoimentosTab() {
       setEditingId(null);
       qc.invalidateQueries({ queryKey: ["admin-depoimentos"] });
     },
-    onError: (err) => toast.error(\`Erro: \${err.message}\`),
+    onError: (err) => toast.error("Erro: " + (err?.message || "desconhecido")),
   });
 
   const deletarDepoimento = useMutation({
@@ -387,7 +387,7 @@ function FaqTab() {
       setEditingId(null);
       qc.invalidateQueries({ queryKey: ["admin-faq"] });
     },
-    onError: (err) => toast.error(\`Erro: \${err.message}\`),
+    onError: (err) => toast.error("Erro: " + (err?.message || "desconhecido")),
   });
 
   const deletarFaq = useMutation({

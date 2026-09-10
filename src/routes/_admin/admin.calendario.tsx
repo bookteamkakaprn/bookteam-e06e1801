@@ -309,7 +309,7 @@ function AdminCalendarioPage() {
           {carregando && (
             <p className="mt-3 text-sm text-muted-foreground">
               <Loader2 className="mr-1 inline h-4 w-4 animate-spin" />
-              Carregando calendário…
+              Carregando calendário...
             </p>
           )}
         </CardContent>

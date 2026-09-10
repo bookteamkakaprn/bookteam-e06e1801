@@ -119,7 +119,7 @@ function InscricaoEventoPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">Carregando encontro…</p>
+        <p className="text-sm text-muted-foreground">Carregando encontro...</p>
       </div>
     );
   }
@@ -246,7 +246,7 @@ function InscricaoEventoPage() {
                   onClick={() => inscrever.mutate()}
                   disabled={inscrever.isPending}
                 >
-                  {inscrever.isPending ? "Inscrevendo…" : "Confirmar"}
+                  {inscrever.isPending ? "Inscrevendo..." : "Confirmar"}
                 </Button>
               </div>
             </div>

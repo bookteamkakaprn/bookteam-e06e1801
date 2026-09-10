@@ -48,7 +48,7 @@ function TrilhaPage() {
   });
 
   if (isLoading) {
-    return <div className="mx-auto max-w-5xl px-4 py-16 text-muted-foreground">Carregando trilha…</div>;
+    return <div className="mx-auto max-w-5xl px-4 py-16 text-muted-foreground">Carregando trilha...</div>;
   }
   if (error || !data?.trilha) {
     return (

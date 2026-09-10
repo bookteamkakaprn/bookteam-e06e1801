@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,8 +120,10 @@ function CursosPage() {
             className="flex gap-4 overflow-x-auto pb-4 scrollbar-hidden"
           >
             {livrosJornada.map((livro) => (
-              <div
+              <Link
                 key={livro.id}
+                to="/livros/$id"
+                params={{ id: livro.id }}
                 className="shrink-0 w-[200px] md:w-[240px] flex flex-col gap-3 cursor-pointer group"
               >
                 <div
@@ -136,10 +138,10 @@ function CursosPage() {
                   }}
                 />
                 <div>
-                  <p className="font-semibold text-sm line-clamp-2">{livro.titulo}</p>
+                  <p className="font-semibold text-sm line-clamp-2 group-hover:text-gold transition-colors">{livro.titulo}</p>
                   {livro.autor && <p className="text-xs text-muted-foreground">{livro.autor}</p>}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
@@ -171,8 +173,10 @@ function CursosPage() {
             className="flex gap-4 overflow-x-auto pb-4 scrollbar-hidden"
           >
             {livrosComplementares.map((livro) => (
-              <div
+              <Link
                 key={livro.id}
+                to="/livros/$id"
+                params={{ id: livro.id }}
                 className="shrink-0 w-[200px] md:w-[240px] flex flex-col gap-3 cursor-pointer group"
               >
                 <div
@@ -187,17 +191,17 @@ function CursosPage() {
                   }}
                 />
                 <div>
-                  <p className="font-semibold text-sm line-clamp-2">{livro.titulo}</p>
+                  <p className="font-semibold text-sm line-clamp-2 group-hover:text-gold transition-colors">{livro.titulo}</p>
                   {livro.autor && <p className="text-xs text-muted-foreground">{livro.autor}</p>}
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
       )}
 
       {(loadingJornada || loadingComplementares) && (
-        <p className="text-sm text-muted-foreground">Carregando cursos…</p>
+        <p className="text-sm text-muted-foreground">Carregando cursos...</p>
       )}
 
       {!loadingJornada && !loadingComplementares && livrosJornada.length === 0 && livrosComplementares.length === 0 && (

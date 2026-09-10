@@ -74,7 +74,7 @@ function TurmasPage() {
       </div>
 
       {isLoading && (
-        <p className="text-sm text-muted-foreground">Carregando turmas…</p>
+        <p className="text-sm text-muted-foreground">Carregando turmas...</p>
       )}
 
       {!isLoading && turmas.length === 0 && (

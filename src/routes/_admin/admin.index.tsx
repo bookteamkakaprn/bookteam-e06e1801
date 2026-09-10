@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Calendar, CreditCard, DollarSign, CheckCircle2, Clock, BookOpen, GraduationCap, ClipboardCheck } from "lucide-react";
 
-export const Route = createFileRoute("/_admin/admin")({ head: () => ({ meta: [{ title: "Área administrativa — Book Clube" }, { name: "robots", content: "noindex" }] }), component: AdminDashboard });
+export const Route = createFileRoute("/_admin/admin/")({ head: () => ({ meta: [{ title: "Área administrativa — Book Clube" }, { name: "robots", content: "noindex" }] }), component: AdminDashboard });
 function AdminDashboard() {
   const { data: stats } = useQuery({ queryKey: ["admin-stats"], queryFn: async () => {
     const today = new Date().toISOString().slice(0, 10);

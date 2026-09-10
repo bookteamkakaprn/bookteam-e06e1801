@@ -239,7 +239,7 @@ function CalendarioPage() {
           </div>
           {isLoading && (
             <p className="mt-3 text-sm text-muted-foreground">
-              <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" /> Carregando encontros…
+              <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" /> Carregando encontros...
             </p>
           )}
         </CardContent>

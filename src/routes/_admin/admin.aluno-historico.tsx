@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_admin/admin/aluno-historico/:alunoId")({
+export const Route = createFileRoute("/_admin/admin/aluno-historico")({
   component: AdminAlunoHistorico,
 });
 
@@ -76,7 +76,7 @@ function AdminAlunoHistorico() {
 
       <div className="space-y-3">
         {historicoQ.isLoading && (
-          <p className="text-muted-foreground">Carregando…</p>
+          <p className="text-muted-foreground">Carregando...</p>
         )}
 
         {!historicoQ.isLoading && registros.length === 0 && (

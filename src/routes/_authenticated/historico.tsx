@@ -137,7 +137,7 @@ function HistoricoPage() {
           </div>
           <div className="space-y-1.5 md:col-span-2">
             <Label htmlFor="obs">Observação (opcional)</Label>
-            <Textarea id="obs" rows={2} value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Turma, professor, local…" />
+            <Textarea id="obs" rows={2} value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Turma, professor, local..." />
           </div>
           <div className="md:col-span-2">
             <Button
@@ -145,7 +145,7 @@ function HistoricoPage() {
               disabled={criar.isPending}
               onClick={() => criar.mutate()}
             >
-              {criar.isPending ? "Salvando…" : "Registrar conclusão"}
+              {criar.isPending ? "Salvando..." : "Registrar conclusão"}
             </Button>
           </div>
         </CardContent>
@@ -153,7 +153,7 @@ function HistoricoPage() {
 
       <section className="space-y-3">
         <h2 className="font-serif text-xl font-semibold">Livros registrados</h2>
-        {histQ.isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
+        {histQ.isLoading && <p className="text-sm text-muted-foreground">Carregando...</p>}
         {!histQ.isLoading && registros.length === 0 && (
           <p className="text-sm text-muted-foreground">Nenhum livro registrado ainda.</p>
         )}

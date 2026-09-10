@@ -41,7 +41,7 @@ function FaleComADM() {
         <p className="text-muted-foreground">Mensagens dos alunos</p>
       </div>
 
-      {isLoading && <p className="text-muted-foreground">Carregando…</p>}
+      {isLoading && <p className="text-muted-foreground">Carregando...</p>}
 
       {!isLoading && mensagens.length === 0 && (
         <p className="text-muted-foreground">Nenhuma mensagem.</p>

@@ -106,7 +106,7 @@ function EventosPage() {
         ))}
       </div>
 
-      {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
+      {isLoading && <p className="text-sm text-muted-foreground">Carregando...</p>}
 
       {!isLoading && eventos.length === 0 && (
         <p className="text-sm text-muted-foreground">Nenhum encontro aberto nesta categoria no momento.</p>

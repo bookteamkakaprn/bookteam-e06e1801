@@ -177,7 +177,7 @@ function PresencaPage() {
       </div>
 
       {/* Lista */}
-      {inscricoesQ.isLoading && <p className="text-muted-foreground">Carregando…</p>}
+      {inscricoesQ.isLoading && <p className="text-muted-foreground">Carregando...</p>}
 
       {!inscricoesQ.isLoading && inscricoesFiltradas.length === 0 && (
         <p className="text-muted-foreground">Nenhuma inscrição aprovada encontrada.</p>

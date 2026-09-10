@@ -9,43 +9,59 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AdminRouteRouteImport } from './routes/_admin/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as TrilhasIdRouteImport } from './routes/trilhas.$id'
-import { Route as LivrosIdRouteImport } from './routes/livros.$id'
-import { Route as CadastroTurmaIdRouteImport } from './routes/cadastro.$turmaId'
-import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
-import { Route as AuthenticatedPagamentosRouteImport } from './routes/_authenticated/pagamentos'
-import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
-import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
-import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticated/eventos'
-import { Route as AuthenticatedCertificadosRouteImport } from './routes/_authenticated/certificados'
+import { Route as AdminRouteRouteImport } from './routes/_admin/route'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedCalendarioRouteImport } from './routes/_authenticated/calendario'
+import { Route as AuthenticatedCertificadosRouteImport } from './routes/_authenticated/certificados'
+import { Route as AuthenticatedCursosRouteImport } from './routes/_authenticated/cursos'
+import { Route as AuthenticatedEventosRouteImport } from './routes/_authenticated/eventos'
+import { Route as AuthenticatedHistoricoRouteImport } from './routes/_authenticated/historico'
+import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
+import { Route as AuthenticatedMateriaisRouteImport } from './routes/_authenticated/materiais'
+import { Route as AuthenticatedMensagensRouteImport } from './routes/_authenticated/mensagens'
+import { Route as AuthenticatedMinhasInscricoesRouteImport } from './routes/_authenticated/minhas-inscricoes'
+import { Route as AuthenticatedPagamentosRouteImport } from './routes/_authenticated/pagamentos'
+import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedTurmasRouteImport } from './routes/_authenticated/turmas'
+import { Route as CadastroTurmaIdRouteImport } from './routes/cadastro.$turmaId'
+import { Route as LivrosIdRouteImport } from './routes/livros.$id'
+import { Route as TrilhasIdRouteImport } from './routes/trilhas.$id'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin/admin.index'
-import { Route as AuthenticatedMatriculaInscricaoIdRouteImport } from './routes/_authenticated/matricula.$inscricaoId'
-import { Route as AuthenticatedInscricaoEventoIdRouteImport } from './routes/_authenticated/inscricao.$eventoId'
-import { Route as AdminAdminTurmasRouteImport } from './routes/_admin/admin.turmas'
-import { Route as AdminAdminRelatoriosRouteImport } from './routes/_admin/admin.relatorios'
-import { Route as AdminAdminPresencasRouteImport } from './routes/_admin/admin.presencas'
-import { Route as AdminAdminParticipantesRouteImport } from './routes/_admin/admin.participantes'
-import { Route as AdminAdminPagamentosRouteImport } from './routes/_admin/admin.pagamentos'
-import { Route as AdminAdminLivrosRouteImport } from './routes/_admin/admin.livros'
-import { Route as AdminAdminEventosRouteImport } from './routes/_admin/admin.eventos'
-import { Route as AdminAdminContaRouteImport } from './routes/_admin/admin.conta'
+import { Route as AdminAdminAlunoHistoricoRouteImport } from './routes/_admin/admin.aluno-historico'
+import { Route as AdminAdminCadastrarLivroRouteImport } from './routes/_admin/admin.cadastrar-livro'
+import { Route as AdminAdminCalendarioRouteImport } from './routes/_admin/admin.calendario'
 import { Route as AdminAdminCertificadosRouteImport } from './routes/_admin/admin.certificados'
+import { Route as AdminAdminConfiguracoesRouteImport } from './routes/_admin/admin.configuracoes'
+import { Route as AdminAdminContaRouteImport } from './routes/_admin/admin.conta'
+import { Route as AdminAdminEventosRouteImport } from './routes/_admin/admin.eventos'
+import { Route as AdminAdminFaleComAdmRouteImport } from './routes/_admin/admin.fale-com-adm'
+import { Route as AdminAdminInscricoesRouteImport } from './routes/_admin/admin.inscricoes'
+import { Route as AdminAdminLivrosRouteImport } from './routes/_admin/admin.livros'
+import { Route as AdminAdminMateriaisRouteImport } from './routes/_admin/admin.materiais'
+import { Route as AdminAdminMensagensRouteImport } from './routes/_admin/admin.mensagens'
+import { Route as AdminAdminPagamentosRouteImport } from './routes/_admin/admin.pagamentos'
+import { Route as AdminAdminParticipantesRouteImport } from './routes/_admin/admin.participantes'
+import { Route as AdminAdminPresencasRouteImport } from './routes/_admin/admin.presencas'
+import { Route as AdminAdminRelatoriosRouteImport } from './routes/_admin/admin.relatorios'
+import { Route as AdminAdminTurmasRouteImport } from './routes/_admin/admin.turmas'
+import { Route as AuthenticatedInscricaoEventoIdRouteImport } from './routes/_authenticated/inscricao.$eventoId'
+import { Route as AuthenticatedMatriculaInscricaoIdRouteImport } from './routes/_authenticated/matricula.$inscricaoId'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const AdminRouteRoute = AdminRouteRouteImport.update({
+  id: '/_admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -53,57 +69,19 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRouteRoute = AdminRouteRouteImport.update({
-  id: '/_admin',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrilhasIdRoute = TrilhasIdRouteImport.update({
-  id: '/trilhas/$id',
-  path: '/trilhas/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LivrosIdRoute = LivrosIdRouteImport.update({
-  id: '/livros/$id',
-  path: '/livros/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CadastroTurmaIdRoute = CadastroTurmaIdRouteImport.update({
-  id: '/cadastro/$turmaId',
-  path: '/cadastro/$turmaId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPagamentosRoute = AuthenticatedPagamentosRouteImport.update({
-  id: '/pagamentos',
-  path: '/pagamentos',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedInicioRoute = AuthenticatedInicioRouteImport.update({
-  id: '/inicio',
-  path: '/inicio',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
-  id: '/historico',
-  path: '/historico',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedEventosRoute = AuthenticatedEventosRouteImport.update({
-  id: '/eventos',
-  path: '/eventos',
+const AuthenticatedCalendarioRoute = AuthenticatedCalendarioRouteImport.update({
+  id: '/calendario',
+  path: '/calendario',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCertificadosRoute =
@@ -112,66 +90,92 @@ const AuthenticatedCertificadosRoute =
     path: '/certificados',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedCalendarioRoute = AuthenticatedCalendarioRouteImport.update({
-  id: '/calendario',
-  path: '/calendario',
+const AuthenticatedCursosRoute = AuthenticatedCursosRouteImport.update({
+  id: '/cursos',
+  path: '/cursos',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEventosRoute = AuthenticatedEventosRouteImport.update({
+  id: '/eventos',
+  path: '/eventos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHistoricoRoute = AuthenticatedHistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInicioRoute = AuthenticatedInicioRouteImport.update({
+  id: '/inicio',
+  path: '/inicio',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMateriaisRoute = AuthenticatedMateriaisRouteImport.update({
+  id: '/materiais',
+  path: '/materiais',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMensagensRoute = AuthenticatedMensagensRouteImport.update({
+  id: '/mensagens',
+  path: '/mensagens',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMinhasInscricoesRoute =
+  AuthenticatedMinhasInscricoesRouteImport.update({
+    id: '/minhas-inscricoes',
+    path: '/minhas-inscricoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPagamentosRoute = AuthenticatedPagamentosRouteImport.update({
+  id: '/pagamentos',
+  path: '/pagamentos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTurmasRoute = AuthenticatedTurmasRouteImport.update({
+  id: '/turmas',
+  path: '/turmas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const CadastroTurmaIdRoute = CadastroTurmaIdRouteImport.update({
+  id: '/cadastro/$turmaId',
+  path: '/cadastro/$turmaId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LivrosIdRoute = LivrosIdRouteImport.update({
+  id: '/livros/$id',
+  path: '/livros/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrilhasIdRoute = TrilhasIdRouteImport.update({
+  id: '/trilhas/$id',
+  path: '/trilhas/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => AdminRouteRoute,
 } as any)
-const AuthenticatedMatriculaInscricaoIdRoute =
-  AuthenticatedMatriculaInscricaoIdRouteImport.update({
-    id: '/matricula/$inscricaoId',
-    path: '/matricula/$inscricaoId',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const AdminAdminAlunoHistoricoRoute =
+  AdminAdminAlunoHistoricoRouteImport.update({
+    id: '/admin/aluno-historico',
+    path: '/admin/aluno-historico',
+    getParentRoute: () => AdminRouteRoute,
   } as any)
-const AuthenticatedInscricaoEventoIdRoute =
-  AuthenticatedInscricaoEventoIdRouteImport.update({
-    id: '/inscricao/$eventoId',
-    path: '/inscricao/$eventoId',
-    getParentRoute: () => AuthenticatedRouteRoute,
+const AdminAdminCadastrarLivroRoute =
+  AdminAdminCadastrarLivroRouteImport.update({
+    id: '/admin/cadastrar-livro',
+    path: '/admin/cadastrar-livro',
+    getParentRoute: () => AdminRouteRoute,
   } as any)
-const AdminAdminTurmasRoute = AdminAdminTurmasRouteImport.update({
-  id: '/admin/turmas',
-  path: '/admin/turmas',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminAdminRelatoriosRoute = AdminAdminRelatoriosRouteImport.update({
-  id: '/admin/relatorios',
-  path: '/admin/relatorios',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminAdminPresencasRoute = AdminAdminPresencasRouteImport.update({
-  id: '/admin/presencas',
-  path: '/admin/presencas',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminAdminParticipantesRoute = AdminAdminParticipantesRouteImport.update({
-  id: '/admin/participantes',
-  path: '/admin/participantes',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminAdminPagamentosRoute = AdminAdminPagamentosRouteImport.update({
-  id: '/admin/pagamentos',
-  path: '/admin/pagamentos',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminAdminLivrosRoute = AdminAdminLivrosRouteImport.update({
-  id: '/admin/livros',
-  path: '/admin/livros',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminAdminEventosRoute = AdminAdminEventosRouteImport.update({
-  id: '/admin/eventos',
-  path: '/admin/eventos',
-  getParentRoute: () => AdminRouteRoute,
-} as any)
-const AdminAdminContaRoute = AdminAdminContaRouteImport.update({
-  id: '/admin/conta',
-  path: '/admin/conta',
+const AdminAdminCalendarioRoute = AdminAdminCalendarioRouteImport.update({
+  id: '/admin/calendario',
+  path: '/admin/calendario',
   getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminAdminCertificadosRoute = AdminAdminCertificadosRouteImport.update({
@@ -179,6 +183,83 @@ const AdminAdminCertificadosRoute = AdminAdminCertificadosRouteImport.update({
   path: '/admin/certificados',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminAdminConfiguracoesRoute = AdminAdminConfiguracoesRouteImport.update({
+  id: '/admin/configuracoes',
+  path: '/admin/configuracoes',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminContaRoute = AdminAdminContaRouteImport.update({
+  id: '/admin/conta',
+  path: '/admin/conta',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminEventosRoute = AdminAdminEventosRouteImport.update({
+  id: '/admin/eventos',
+  path: '/admin/eventos',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminFaleComAdmRoute = AdminAdminFaleComAdmRouteImport.update({
+  id: '/admin/fale-com-adm',
+  path: '/admin/fale-com-adm',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminInscricoesRoute = AdminAdminInscricoesRouteImport.update({
+  id: '/admin/inscricoes',
+  path: '/admin/inscricoes',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminLivrosRoute = AdminAdminLivrosRouteImport.update({
+  id: '/admin/livros',
+  path: '/admin/livros',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminMateriaisRoute = AdminAdminMateriaisRouteImport.update({
+  id: '/admin/materiais',
+  path: '/admin/materiais',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminMensagensRoute = AdminAdminMensagensRouteImport.update({
+  id: '/admin/mensagens',
+  path: '/admin/mensagens',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminPagamentosRoute = AdminAdminPagamentosRouteImport.update({
+  id: '/admin/pagamentos',
+  path: '/admin/pagamentos',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminParticipantesRoute = AdminAdminParticipantesRouteImport.update({
+  id: '/admin/participantes',
+  path: '/admin/participantes',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminPresencasRoute = AdminAdminPresencasRouteImport.update({
+  id: '/admin/presencas',
+  path: '/admin/presencas',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminRelatoriosRoute = AdminAdminRelatoriosRouteImport.update({
+  id: '/admin/relatorios',
+  path: '/admin/relatorios',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AdminAdminTurmasRoute = AdminAdminTurmasRouteImport.update({
+  id: '/admin/turmas',
+  path: '/admin/turmas',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
+const AuthenticatedInscricaoEventoIdRoute =
+  AuthenticatedInscricaoEventoIdRouteImport.update({
+    id: '/inscricao/$eventoId',
+    path: '/inscricao/$eventoId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedMatriculaInscricaoIdRoute =
+  AuthenticatedMatriculaInscricaoIdRouteImport.update({
+    id: '/matricula/$inscricaoId',
+    path: '/matricula/$inscricaoId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -187,18 +268,31 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/calendario': typeof AuthenticatedCalendarioRoute
   '/certificados': typeof AuthenticatedCertificadosRoute
+  '/cursos': typeof AuthenticatedCursosRoute
   '/eventos': typeof AuthenticatedEventosRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/inicio': typeof AuthenticatedInicioRoute
+  '/materiais': typeof AuthenticatedMateriaisRoute
+  '/mensagens': typeof AuthenticatedMensagensRoute
+  '/minhas-inscricoes': typeof AuthenticatedMinhasInscricoesRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/turmas': typeof AuthenticatedTurmasRoute
   '/cadastro/$turmaId': typeof CadastroTurmaIdRoute
   '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
+  '/admin/aluno-historico': typeof AdminAdminAlunoHistoricoRoute
+  '/admin/cadastrar-livro': typeof AdminAdminCadastrarLivroRoute
+  '/admin/calendario': typeof AdminAdminCalendarioRoute
   '/admin/certificados': typeof AdminAdminCertificadosRoute
+  '/admin/configuracoes': typeof AdminAdminConfiguracoesRoute
   '/admin/conta': typeof AdminAdminContaRoute
   '/admin/eventos': typeof AdminAdminEventosRoute
+  '/admin/fale-com-adm': typeof AdminAdminFaleComAdmRoute
+  '/admin/inscricoes': typeof AdminAdminInscricoesRoute
   '/admin/livros': typeof AdminAdminLivrosRoute
+  '/admin/materiais': typeof AdminAdminMateriaisRoute
+  '/admin/mensagens': typeof AdminAdminMensagensRoute
   '/admin/pagamentos': typeof AdminAdminPagamentosRoute
   '/admin/participantes': typeof AdminAdminParticipantesRoute
   '/admin/presencas': typeof AdminAdminPresencasRoute
@@ -215,18 +309,31 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/calendario': typeof AuthenticatedCalendarioRoute
   '/certificados': typeof AuthenticatedCertificadosRoute
+  '/cursos': typeof AuthenticatedCursosRoute
   '/eventos': typeof AuthenticatedEventosRoute
   '/historico': typeof AuthenticatedHistoricoRoute
   '/inicio': typeof AuthenticatedInicioRoute
+  '/materiais': typeof AuthenticatedMateriaisRoute
+  '/mensagens': typeof AuthenticatedMensagensRoute
+  '/minhas-inscricoes': typeof AuthenticatedMinhasInscricoesRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/turmas': typeof AuthenticatedTurmasRoute
   '/cadastro/$turmaId': typeof CadastroTurmaIdRoute
   '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
+  '/admin/aluno-historico': typeof AdminAdminAlunoHistoricoRoute
+  '/admin/cadastrar-livro': typeof AdminAdminCadastrarLivroRoute
+  '/admin/calendario': typeof AdminAdminCalendarioRoute
   '/admin/certificados': typeof AdminAdminCertificadosRoute
+  '/admin/configuracoes': typeof AdminAdminConfiguracoesRoute
   '/admin/conta': typeof AdminAdminContaRoute
   '/admin/eventos': typeof AdminAdminEventosRoute
+  '/admin/fale-com-adm': typeof AdminAdminFaleComAdmRoute
+  '/admin/inscricoes': typeof AdminAdminInscricoesRoute
   '/admin/livros': typeof AdminAdminLivrosRoute
+  '/admin/materiais': typeof AdminAdminMateriaisRoute
+  '/admin/mensagens': typeof AdminAdminMensagensRoute
   '/admin/pagamentos': typeof AdminAdminPagamentosRoute
   '/admin/participantes': typeof AdminAdminParticipantesRoute
   '/admin/presencas': typeof AdminAdminPresencasRoute
@@ -246,18 +353,31 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/calendario': typeof AuthenticatedCalendarioRoute
   '/_authenticated/certificados': typeof AuthenticatedCertificadosRoute
+  '/_authenticated/cursos': typeof AuthenticatedCursosRoute
   '/_authenticated/eventos': typeof AuthenticatedEventosRoute
   '/_authenticated/historico': typeof AuthenticatedHistoricoRoute
   '/_authenticated/inicio': typeof AuthenticatedInicioRoute
+  '/_authenticated/materiais': typeof AuthenticatedMateriaisRoute
+  '/_authenticated/mensagens': typeof AuthenticatedMensagensRoute
+  '/_authenticated/minhas-inscricoes': typeof AuthenticatedMinhasInscricoesRoute
   '/_authenticated/pagamentos': typeof AuthenticatedPagamentosRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/turmas': typeof AuthenticatedTurmasRoute
   '/cadastro/$turmaId': typeof CadastroTurmaIdRoute
   '/livros/$id': typeof LivrosIdRoute
   '/trilhas/$id': typeof TrilhasIdRoute
+  '/_admin/admin/aluno-historico': typeof AdminAdminAlunoHistoricoRoute
+  '/_admin/admin/cadastrar-livro': typeof AdminAdminCadastrarLivroRoute
+  '/_admin/admin/calendario': typeof AdminAdminCalendarioRoute
   '/_admin/admin/certificados': typeof AdminAdminCertificadosRoute
+  '/_admin/admin/configuracoes': typeof AdminAdminConfiguracoesRoute
   '/_admin/admin/conta': typeof AdminAdminContaRoute
   '/_admin/admin/eventos': typeof AdminAdminEventosRoute
+  '/_admin/admin/fale-com-adm': typeof AdminAdminFaleComAdmRoute
+  '/_admin/admin/inscricoes': typeof AdminAdminInscricoesRoute
   '/_admin/admin/livros': typeof AdminAdminLivrosRoute
+  '/_admin/admin/materiais': typeof AdminAdminMateriaisRoute
+  '/_admin/admin/mensagens': typeof AdminAdminMensagensRoute
   '/_admin/admin/pagamentos': typeof AdminAdminPagamentosRoute
   '/_admin/admin/participantes': typeof AdminAdminParticipantesRoute
   '/_admin/admin/presencas': typeof AdminAdminPresencasRoute
@@ -276,18 +396,31 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/calendario'
     | '/certificados'
+    | '/cursos'
     | '/eventos'
     | '/historico'
     | '/inicio'
+    | '/materiais'
+    | '/mensagens'
+    | '/minhas-inscricoes'
     | '/pagamentos'
     | '/perfil'
+    | '/turmas'
     | '/cadastro/$turmaId'
     | '/livros/$id'
     | '/trilhas/$id'
+    | '/admin/aluno-historico'
+    | '/admin/cadastrar-livro'
+    | '/admin/calendario'
     | '/admin/certificados'
+    | '/admin/configuracoes'
     | '/admin/conta'
     | '/admin/eventos'
+    | '/admin/fale-com-adm'
+    | '/admin/inscricoes'
     | '/admin/livros'
+    | '/admin/materiais'
+    | '/admin/mensagens'
     | '/admin/pagamentos'
     | '/admin/participantes'
     | '/admin/presencas'
@@ -304,18 +437,31 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/calendario'
     | '/certificados'
+    | '/cursos'
     | '/eventos'
     | '/historico'
     | '/inicio'
+    | '/materiais'
+    | '/mensagens'
+    | '/minhas-inscricoes'
     | '/pagamentos'
     | '/perfil'
+    | '/turmas'
     | '/cadastro/$turmaId'
     | '/livros/$id'
     | '/trilhas/$id'
+    | '/admin/aluno-historico'
+    | '/admin/cadastrar-livro'
+    | '/admin/calendario'
     | '/admin/certificados'
+    | '/admin/configuracoes'
     | '/admin/conta'
     | '/admin/eventos'
+    | '/admin/fale-com-adm'
+    | '/admin/inscricoes'
     | '/admin/livros'
+    | '/admin/materiais'
+    | '/admin/mensagens'
     | '/admin/pagamentos'
     | '/admin/participantes'
     | '/admin/presencas'
@@ -334,18 +480,31 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/calendario'
     | '/_authenticated/certificados'
+    | '/_authenticated/cursos'
     | '/_authenticated/eventos'
     | '/_authenticated/historico'
     | '/_authenticated/inicio'
+    | '/_authenticated/materiais'
+    | '/_authenticated/mensagens'
+    | '/_authenticated/minhas-inscricoes'
     | '/_authenticated/pagamentos'
     | '/_authenticated/perfil'
+    | '/_authenticated/turmas'
     | '/cadastro/$turmaId'
     | '/livros/$id'
     | '/trilhas/$id'
+    | '/_admin/admin/aluno-historico'
+    | '/_admin/admin/cadastrar-livro'
+    | '/_admin/admin/calendario'
     | '/_admin/admin/certificados'
+    | '/_admin/admin/configuracoes'
     | '/_admin/admin/conta'
     | '/_admin/admin/eventos'
+    | '/_admin/admin/fale-com-adm'
+    | '/_admin/admin/inscricoes'
     | '/_admin/admin/livros'
+    | '/_admin/admin/materiais'
+    | '/_admin/admin/mensagens'
     | '/_admin/admin/pagamentos'
     | '/_admin/admin/participantes'
     | '/_admin/admin/presencas'
@@ -370,32 +529,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
+    '/': {
+      id: '/'
+      path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_admin': {
@@ -405,67 +543,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/trilhas/$id': {
-      id: '/trilhas/$id'
-      path: '/trilhas/$id'
-      fullPath: '/trilhas/$id'
-      preLoaderRoute: typeof TrilhasIdRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/livros/$id': {
-      id: '/livros/$id'
-      path: '/livros/$id'
-      fullPath: '/livros/$id'
-      preLoaderRoute: typeof LivrosIdRouteImport
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/cadastro/$turmaId': {
-      id: '/cadastro/$turmaId'
-      path: '/cadastro/$turmaId'
-      fullPath: '/cadastro/$turmaId'
-      preLoaderRoute: typeof CadastroTurmaIdRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/perfil': {
-      id: '/_authenticated/perfil'
-      path: '/perfil'
-      fullPath: '/perfil'
-      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/pagamentos': {
-      id: '/_authenticated/pagamentos'
-      path: '/pagamentos'
-      fullPath: '/pagamentos'
-      preLoaderRoute: typeof AuthenticatedPagamentosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/inicio': {
-      id: '/_authenticated/inicio'
-      path: '/inicio'
-      fullPath: '/inicio'
-      preLoaderRoute: typeof AuthenticatedInicioRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/historico': {
-      id: '/_authenticated/historico'
-      path: '/historico'
-      fullPath: '/historico'
-      preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/eventos': {
-      id: '/_authenticated/eventos'
-      path: '/eventos'
-      fullPath: '/eventos'
-      preLoaderRoute: typeof AuthenticatedEventosRouteImport
+    '/_authenticated/calendario': {
+      id: '/_authenticated/calendario'
+      path: '/calendario'
+      fullPath: '/calendario'
+      preLoaderRoute: typeof AuthenticatedCalendarioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/certificados': {
@@ -475,12 +585,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCertificadosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/calendario': {
-      id: '/_authenticated/calendario'
-      path: '/calendario'
-      fullPath: '/calendario'
-      preLoaderRoute: typeof AuthenticatedCalendarioRouteImport
+    '/_authenticated/cursos': {
+      id: '/_authenticated/cursos'
+      path: '/cursos'
+      fullPath: '/cursos'
+      preLoaderRoute: typeof AuthenticatedCursosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/eventos': {
+      id: '/_authenticated/eventos'
+      path: '/eventos'
+      fullPath: '/eventos'
+      preLoaderRoute: typeof AuthenticatedEventosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/historico': {
+      id: '/_authenticated/historico'
+      path: '/historico'
+      fullPath: '/historico'
+      preLoaderRoute: typeof AuthenticatedHistoricoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inicio': {
+      id: '/_authenticated/inicio'
+      path: '/inicio'
+      fullPath: '/inicio'
+      preLoaderRoute: typeof AuthenticatedInicioRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/materiais': {
+      id: '/_authenticated/materiais'
+      path: '/materiais'
+      fullPath: '/materiais'
+      preLoaderRoute: typeof AuthenticatedMateriaisRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mensagens': {
+      id: '/_authenticated/mensagens'
+      path: '/mensagens'
+      fullPath: '/mensagens'
+      preLoaderRoute: typeof AuthenticatedMensagensRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/minhas-inscricoes': {
+      id: '/_authenticated/minhas-inscricoes'
+      path: '/minhas-inscricoes'
+      fullPath: '/minhas-inscricoes'
+      preLoaderRoute: typeof AuthenticatedMinhasInscricoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pagamentos': {
+      id: '/_authenticated/pagamentos'
+      path: '/pagamentos'
+      fullPath: '/pagamentos'
+      preLoaderRoute: typeof AuthenticatedPagamentosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/perfil': {
+      id: '/_authenticated/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/turmas': {
+      id: '/_authenticated/turmas'
+      path: '/turmas'
+      fullPath: '/turmas'
+      preLoaderRoute: typeof AuthenticatedTurmasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/cadastro/$turmaId': {
+      id: '/cadastro/$turmaId'
+      path: '/cadastro/$turmaId'
+      fullPath: '/cadastro/$turmaId'
+      preLoaderRoute: typeof CadastroTurmaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/livros/$id': {
+      id: '/livros/$id'
+      path: '/livros/$id'
+      fullPath: '/livros/$id'
+      preLoaderRoute: typeof LivrosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trilhas/$id': {
+      id: '/trilhas/$id'
+      path: '/trilhas/$id'
+      fullPath: '/trilhas/$id'
+      preLoaderRoute: typeof TrilhasIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_admin/admin/': {
       id: '/_admin/admin/'
@@ -489,74 +683,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminIndexRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/_authenticated/matricula/$inscricaoId': {
-      id: '/_authenticated/matricula/$inscricaoId'
-      path: '/matricula/$inscricaoId'
-      fullPath: '/matricula/$inscricaoId'
-      preLoaderRoute: typeof AuthenticatedMatriculaInscricaoIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/inscricao/$eventoId': {
-      id: '/_authenticated/inscricao/$eventoId'
-      path: '/inscricao/$eventoId'
-      fullPath: '/inscricao/$eventoId'
-      preLoaderRoute: typeof AuthenticatedInscricaoEventoIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_admin/admin/turmas': {
-      id: '/_admin/admin/turmas'
-      path: '/admin/turmas'
-      fullPath: '/admin/turmas'
-      preLoaderRoute: typeof AdminAdminTurmasRouteImport
+    '/_admin/admin/aluno-historico': {
+      id: '/_admin/admin/aluno-historico'
+      path: '/admin/aluno-historico'
+      fullPath: '/admin/aluno-historico'
+      preLoaderRoute: typeof AdminAdminAlunoHistoricoRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/_admin/admin/relatorios': {
-      id: '/_admin/admin/relatorios'
-      path: '/admin/relatorios'
-      fullPath: '/admin/relatorios'
-      preLoaderRoute: typeof AdminAdminRelatoriosRouteImport
+    '/_admin/admin/cadastrar-livro': {
+      id: '/_admin/admin/cadastrar-livro'
+      path: '/admin/cadastrar-livro'
+      fullPath: '/admin/cadastrar-livro'
+      preLoaderRoute: typeof AdminAdminCadastrarLivroRouteImport
       parentRoute: typeof AdminRouteRoute
     }
-    '/_admin/admin/presencas': {
-      id: '/_admin/admin/presencas'
-      path: '/admin/presencas'
-      fullPath: '/admin/presencas'
-      preLoaderRoute: typeof AdminAdminPresencasRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
-    '/_admin/admin/participantes': {
-      id: '/_admin/admin/participantes'
-      path: '/admin/participantes'
-      fullPath: '/admin/participantes'
-      preLoaderRoute: typeof AdminAdminParticipantesRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
-    '/_admin/admin/pagamentos': {
-      id: '/_admin/admin/pagamentos'
-      path: '/admin/pagamentos'
-      fullPath: '/admin/pagamentos'
-      preLoaderRoute: typeof AdminAdminPagamentosRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
-    '/_admin/admin/livros': {
-      id: '/_admin/admin/livros'
-      path: '/admin/livros'
-      fullPath: '/admin/livros'
-      preLoaderRoute: typeof AdminAdminLivrosRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
-    '/_admin/admin/eventos': {
-      id: '/_admin/admin/eventos'
-      path: '/admin/eventos'
-      fullPath: '/admin/eventos'
-      preLoaderRoute: typeof AdminAdminEventosRouteImport
-      parentRoute: typeof AdminRouteRoute
-    }
-    '/_admin/admin/conta': {
-      id: '/_admin/admin/conta'
-      path: '/admin/conta'
-      fullPath: '/admin/conta'
-      preLoaderRoute: typeof AdminAdminContaRouteImport
+    '/_admin/admin/calendario': {
+      id: '/_admin/admin/calendario'
+      path: '/admin/calendario'
+      fullPath: '/admin/calendario'
+      preLoaderRoute: typeof AdminAdminCalendarioRouteImport
       parentRoute: typeof AdminRouteRoute
     }
     '/_admin/admin/certificados': {
@@ -566,14 +711,127 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminCertificadosRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/_admin/admin/configuracoes': {
+      id: '/_admin/admin/configuracoes'
+      path: '/admin/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AdminAdminConfiguracoesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_admin/admin/conta': {
+      id: '/_admin/admin/conta'
+      path: '/admin/conta'
+      fullPath: '/admin/conta'
+      preLoaderRoute: typeof AdminAdminContaRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_admin/admin/eventos': {
+      id: '/_admin/admin/eventos'
+      path: '/admin/eventos'
+      fullPath: '/admin/eventos'
+      preLoaderRoute: typeof AdminAdminEventosRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_admin/admin/fale-com-adm': {
+      id: '/_admin/admin/fale-com-adm'
+      path: '/admin/fale-com-adm'
+      fullPath: '/admin/fale-com-adm'
+      preLoaderRoute: typeof AdminAdminFaleComAdmRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_admin/admin/inscricoes': {
+      id: '/_admin/admin/inscricoes'
+      path: '/admin/inscricoes'
+      fullPath: '/admin/inscricoes'
+      preLoaderRoute: typeof AdminAdminInscricoesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_admin/admin/livros': {
+      id: '/_admin/admin/livros'
+      path: '/admin/livros'
+      fullPath: '/admin/livros'
+      preLoaderRoute: typeof AdminAdminLivrosRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_admin/admin/materiais': {
+      id: '/_admin/admin/materiais'
+      path: '/admin/materiais'
+      fullPath: '/admin/materiais'
+      preLoaderRoute: typeof AdminAdminMateriaisRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_admin/admin/mensagens': {
+      id: '/_admin/admin/mensagens'
+      path: '/admin/mensagens'
+      fullPath: '/admin/mensagens'
+      preLoaderRoute: typeof AdminAdminMensagensRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_admin/admin/pagamentos': {
+      id: '/_admin/admin/pagamentos'
+      path: '/admin/pagamentos'
+      fullPath: '/admin/pagamentos'
+      preLoaderRoute: typeof AdminAdminPagamentosRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_admin/admin/participantes': {
+      id: '/_admin/admin/participantes'
+      path: '/admin/participantes'
+      fullPath: '/admin/participantes'
+      preLoaderRoute: typeof AdminAdminParticipantesRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_admin/admin/presencas': {
+      id: '/_admin/admin/presencas'
+      path: '/admin/presencas'
+      fullPath: '/admin/presencas'
+      preLoaderRoute: typeof AdminAdminPresencasRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_admin/admin/relatorios': {
+      id: '/_admin/admin/relatorios'
+      path: '/admin/relatorios'
+      fullPath: '/admin/relatorios'
+      preLoaderRoute: typeof AdminAdminRelatoriosRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_admin/admin/turmas': {
+      id: '/_admin/admin/turmas'
+      path: '/admin/turmas'
+      fullPath: '/admin/turmas'
+      preLoaderRoute: typeof AdminAdminTurmasRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
+    '/_authenticated/inscricao/$eventoId': {
+      id: '/_authenticated/inscricao/$eventoId'
+      path: '/inscricao/$eventoId'
+      fullPath: '/inscricao/$eventoId'
+      preLoaderRoute: typeof AuthenticatedInscricaoEventoIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/matricula/$inscricaoId': {
+      id: '/_authenticated/matricula/$inscricaoId'
+      path: '/matricula/$inscricaoId'
+      fullPath: '/matricula/$inscricaoId'
+      preLoaderRoute: typeof AuthenticatedMatriculaInscricaoIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AdminRouteRouteChildren {
+  AdminAdminAlunoHistoricoRoute: typeof AdminAdminAlunoHistoricoRoute
+  AdminAdminCadastrarLivroRoute: typeof AdminAdminCadastrarLivroRoute
+  AdminAdminCalendarioRoute: typeof AdminAdminCalendarioRoute
   AdminAdminCertificadosRoute: typeof AdminAdminCertificadosRoute
+  AdminAdminConfiguracoesRoute: typeof AdminAdminConfiguracoesRoute
   AdminAdminContaRoute: typeof AdminAdminContaRoute
   AdminAdminEventosRoute: typeof AdminAdminEventosRoute
+  AdminAdminFaleComAdmRoute: typeof AdminAdminFaleComAdmRoute
+  AdminAdminInscricoesRoute: typeof AdminAdminInscricoesRoute
   AdminAdminLivrosRoute: typeof AdminAdminLivrosRoute
+  AdminAdminMateriaisRoute: typeof AdminAdminMateriaisRoute
+  AdminAdminMensagensRoute: typeof AdminAdminMensagensRoute
   AdminAdminPagamentosRoute: typeof AdminAdminPagamentosRoute
   AdminAdminParticipantesRoute: typeof AdminAdminParticipantesRoute
   AdminAdminPresencasRoute: typeof AdminAdminPresencasRoute
@@ -583,10 +841,18 @@ interface AdminRouteRouteChildren {
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
+  AdminAdminAlunoHistoricoRoute: AdminAdminAlunoHistoricoRoute,
+  AdminAdminCadastrarLivroRoute: AdminAdminCadastrarLivroRoute,
+  AdminAdminCalendarioRoute: AdminAdminCalendarioRoute,
   AdminAdminCertificadosRoute: AdminAdminCertificadosRoute,
+  AdminAdminConfiguracoesRoute: AdminAdminConfiguracoesRoute,
   AdminAdminContaRoute: AdminAdminContaRoute,
   AdminAdminEventosRoute: AdminAdminEventosRoute,
+  AdminAdminFaleComAdmRoute: AdminAdminFaleComAdmRoute,
+  AdminAdminInscricoesRoute: AdminAdminInscricoesRoute,
   AdminAdminLivrosRoute: AdminAdminLivrosRoute,
+  AdminAdminMateriaisRoute: AdminAdminMateriaisRoute,
+  AdminAdminMensagensRoute: AdminAdminMensagensRoute,
   AdminAdminPagamentosRoute: AdminAdminPagamentosRoute,
   AdminAdminParticipantesRoute: AdminAdminParticipantesRoute,
   AdminAdminPresencasRoute: AdminAdminPresencasRoute,
@@ -602,11 +868,16 @@ const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCalendarioRoute: typeof AuthenticatedCalendarioRoute
   AuthenticatedCertificadosRoute: typeof AuthenticatedCertificadosRoute
+  AuthenticatedCursosRoute: typeof AuthenticatedCursosRoute
   AuthenticatedEventosRoute: typeof AuthenticatedEventosRoute
   AuthenticatedHistoricoRoute: typeof AuthenticatedHistoricoRoute
   AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
+  AuthenticatedMateriaisRoute: typeof AuthenticatedMateriaisRoute
+  AuthenticatedMensagensRoute: typeof AuthenticatedMensagensRoute
+  AuthenticatedMinhasInscricoesRoute: typeof AuthenticatedMinhasInscricoesRoute
   AuthenticatedPagamentosRoute: typeof AuthenticatedPagamentosRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedTurmasRoute: typeof AuthenticatedTurmasRoute
   AuthenticatedInscricaoEventoIdRoute: typeof AuthenticatedInscricaoEventoIdRoute
   AuthenticatedMatriculaInscricaoIdRoute: typeof AuthenticatedMatriculaInscricaoIdRoute
 }
@@ -614,11 +885,16 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCalendarioRoute: AuthenticatedCalendarioRoute,
   AuthenticatedCertificadosRoute: AuthenticatedCertificadosRoute,
+  AuthenticatedCursosRoute: AuthenticatedCursosRoute,
   AuthenticatedEventosRoute: AuthenticatedEventosRoute,
   AuthenticatedHistoricoRoute: AuthenticatedHistoricoRoute,
   AuthenticatedInicioRoute: AuthenticatedInicioRoute,
+  AuthenticatedMateriaisRoute: AuthenticatedMateriaisRoute,
+  AuthenticatedMensagensRoute: AuthenticatedMensagensRoute,
+  AuthenticatedMinhasInscricoesRoute: AuthenticatedMinhasInscricoesRoute,
   AuthenticatedPagamentosRoute: AuthenticatedPagamentosRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedTurmasRoute: AuthenticatedTurmasRoute,
   AuthenticatedInscricaoEventoIdRoute: AuthenticatedInscricaoEventoIdRoute,
   AuthenticatedMatriculaInscricaoIdRoute:
     AuthenticatedMatriculaInscricaoIdRoute,
