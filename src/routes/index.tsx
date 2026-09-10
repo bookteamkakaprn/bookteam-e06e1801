@@ -23,7 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-
+  Clock,
   Menu,
   X,
   Play,
@@ -841,6 +841,39 @@ function LivroComplementarCard({
 /* ———————————————— EVENTOS ESPECIAIS ———————————————— */
 
 function EventosEspeciais() {
+  const { data: eventos = [], isLoading } = useQuery({
+    queryKey: ["eventos-home"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("eventos")
+        .select("id, titulo, data, hora, local, categoria, vagas, valor")
+        .eq("status", "ativo")
+        .is("livro_id", null)  // Apenas eventos puros (não vinculados a cursos)
+        .order("data", { ascending: true })
+        .limit(6);
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const formatarData = (data: string) => {
+    const d = new Date(data + "T00:00:00");
+    return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+  };
+
+  const getCategoryIcon = (category: string) => {
+    const icons: { [key: string]: React.ComponentType<{ className?: string }> } = {
+      "Homens": Users,
+      "Mulheres": Heart,
+      "Mulheres solteiras": Star,
+      "Misto": Sparkles,
+      "Família": Users,
+      "Ministério (Staff)": Award,
+    };
+    return icons[category] || Calendar;
+  };
+
   return (
     <section className="relative py-10 md:py-14">
       <div id="eventos" className="absolute -top-24" />
@@ -849,49 +882,83 @@ function EventosEspeciais() {
           <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-gold/10 blur-3xl" />
           <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-black/40 blur-3xl" />
 
-          <div className="relative grid gap-10 md:grid-cols-[1.2fr_1fr] md:items-center">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-black/20 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-gold backdrop-blur">
-                <Sparkles className="h-3 w-3" /> Momentos para todos
-              </span>
-              <h2 className="mt-4 font-serif text-3xl font-semibold text-foreground md:text-4xl">
-                Aba momentos aberto para todos
-              </h2>
-
-              <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-foreground/80">
-                Além das trilhas dos livros, promovemos retiros, conferências e
-                celebrações abertos ao público — um convite para viver a
-                cultura de amor e honra.
-              </p>
-              <div className="mt-7 flex flex-wrap gap-3">
-                <Button asChild className="bg-gold text-primary-foreground hover:bg-gold/90">
-                  <a href="#contato">Reservar um evento</a>
-                </Button>
-                <Button asChild variant="outline" className="border-foreground/30 bg-transparent text-foreground hover:bg-white/10">
-                  <a href="#contato">Falar com a gente</a>
-                </Button>
+          <div className="relative">
+            {isLoading ? (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <div key={i} className="h-40 rounded-2xl bg-black/20 animate-pulse" />
+                ))}
               </div>
-            </div>
+            ) : eventos.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {eventos.map((evento) => {
+                  const IconComponent = getCategoryIcon(evento.categoria || "");
+                  return (
+                    <Link
+                      key={evento.id}
+                      to={`/eventos`}
+                      className="group relative overflow-hidden rounded-2xl border border-gold/20 bg-black/30 p-4 backdrop-blur transition-all hover:border-gold/60 hover:bg-black/40"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-gold/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                      
+                      <div className="relative space-y-3">
+                        {/* Header com categoria e ícone */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <IconComponent className="h-5 w-5 text-gold shrink-0" />
+                            <span className="text-xs font-semibold uppercase tracking-wider text-gold/80">
+                              {evento.categoria || "Evento"}
+                            </span>
+                          </div>
+                          {evento.valor === 0 && (
+                            <span className="text-xs font-semibold text-green-400 bg-green-500/20 px-2 py-1 rounded-full">
+                              Gratuito
+                            </span>
+                          )}
+                        </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: "Open House", icon: Heart },
-                { label: "Bazar", icon: Users },
-                { label: "Café Colonial", icon: Sparkles },
-                { label: "Mulheres de Valor", icon: Star },
-                { label: "Cantar", icon: Calendar },
-                { label: "Encontro de Casais", icon: Users },
-              ].map((tag) => (
+                        {/* Título */}
+                        <h3 className="font-serif text-base font-semibold text-foreground line-clamp-2 group-hover:text-gold transition-colors">
+                          {evento.titulo}
+                        </h3>
 
-                <div
-                  key={tag.label}
-                  className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border border-gold/20 bg-black/25 backdrop-blur transition-all hover:border-gold/60"
-                >
-                  <tag.icon className="h-6 w-6 text-gold" />
-                  <p className="font-serif text-sm font-semibold text-foreground">{tag.label}</p>
-                </div>
-              ))}
-            </div>
+                        {/* Data e Hora */}
+                        <div className="space-y-1 text-sm text-foreground/70">
+                          <p className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-gold/60" />
+                            {formatarData(evento.data)}
+                          </p>
+                          {evento.hora && (
+                            <p className="flex items-center gap-2">
+                              <Clock className="h-4 w-4 text-gold/60" />
+                              {evento.hora}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Local */}
+                        {evento.local && (
+                          <p className="text-xs text-foreground/60 line-clamp-1">
+                            📍 {evento.local}
+                          </p>
+                        )}
+
+                        {/* Vagas */}
+                        {evento.vagas && (
+                          <p className="text-xs text-gold/70">
+                            {evento.vagas} vagas disponíveis
+                          </p>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-foreground/60">Nenhum evento disponível no momento</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
