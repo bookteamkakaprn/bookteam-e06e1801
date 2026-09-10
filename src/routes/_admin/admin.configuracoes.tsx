@@ -70,12 +70,14 @@ function ConfiguracoesAdmin() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Configurações</h1>
-        <p className="text-muted-foreground">Gerencie dados do site</p>
+        <p className="text-muted-foreground">Gerencie depoimentos, FAQ e dados do site</p>
       </div>
 
       <Tabs defaultValue="config" className="w-full">
-        <TabsList className="grid w-full grid-cols-1">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="config">Configurações Gerais</TabsTrigger>
+          <TabsTrigger value="depoimentos">Depoimentos</TabsTrigger>
+          <TabsTrigger value="faq">FAQ</TabsTrigger>
         </TabsList>
 
         {/* ===== CONFIG GERAL ===== */}
@@ -153,6 +155,36 @@ function ConfiguracoesAdmin() {
                 <Save className="mr-2 h-4 w-4" />
                 Salvar Configurações
               </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ===== DEPOIMENTOS ===== */}
+        <TabsContent value="depoimentos" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Depoimentos</CardTitle>
+              <CardDescription>Gerenciamento de depoimentos (tabela depoimentos)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Funcionalidade em desenvolvimento. A tabela de depoimentos precisa ser criada no Supabase.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ===== FAQ ===== */}
+        <TabsContent value="faq" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>FAQ</CardTitle>
+              <CardDescription>Gerenciamento de perguntas frequentes (tabela faq)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Funcionalidade em desenvolvimento. A tabela de FAQ precisa ser criada no Supabase.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
