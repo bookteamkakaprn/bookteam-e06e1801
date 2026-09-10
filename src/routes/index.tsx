@@ -707,11 +707,24 @@ function LivrosComplementares() {
   const { data: livros = [], isLoading } = useQuery({
     queryKey: ["livros-complementares"],
     queryFn: async () => {
+      // Primeiro buscar a trilha "Cursos Complementares"
+      const { data: trilhas, error: trilhaError } = await supabase
+        .from("trilhas")
+        .select("id")
+        .ilike("nome", "%Cursos Complementares%")
+        .single();
+
+      if (trilhaError || !trilhas) {
+        console.log("Trilha não encontrada");
+        return [];
+      }
+
+      // Depois buscar livros dessa trilha
       const { data, error } = await supabase
         .from("livros")
         .select("id, titulo, autor, imagem_url, capa_url")
-        .eq("categoria", "complementar")  // Filtrar apenas "Cursos Complementares"
-        .order("titulo", { ascending: true })
+        .eq("trilha_id", trilhas.id)
+        .order("ordem", { ascending: true })
         .limit(20);
 
       if (error) throw error;
@@ -847,7 +860,6 @@ function EventosEspeciais() {
       const { data, error } = await supabase
         .from("eventos")
         .select("id, titulo, data, hora, local, categoria, vagas, valor")
-        .eq("status", "ativo")
         .is("livro_id", null)  // Apenas eventos puros (não vinculados a cursos)
         .order("data", { ascending: true })
         .limit(6);
