@@ -976,11 +976,33 @@ function EventosEspeciais() {
 /* ———————————————— DEPOIMENTOS ———————————————— */
 
 function Testimonials() {
-  const items = [
-    { q: "Voltei a ler no ritmo que sempre quis, com gente que topa conversar de verdade.", a: "Marina R.", cidade: "Curitiba - PR", nota: 5 },
-    { q: "Os encontros presenciais são o diferencial. Saio de cada um com ideias novas.", a: "Bruno L.", cidade: "São Paulo - SP", nota: 5 },
-    { q: "A cultura de honra mudou como eu conduzo meu casamento e meu trabalho.", a: "Camila F.", cidade: "Curitiba - PR", nota: 5 },
-  ];
+  const { data: depoimentos = [], isLoading } = useQuery({
+    queryKey: ["depoimentos-home"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("depoimentos")
+        .select("id, pergunta, resposta, autor, cidade, nota")
+        .order("created_at", { ascending: false })
+        .limit(3);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <section className="relative border-t border-border/40 bg-gradient-to-b from-card/40 to-background py-10 md:py-14">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <p className="text-center text-muted-foreground">Carregando depoimentos...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (depoimentos.length === 0) {
+    return null;
+  }
+
   return (
     <section className="relative border-t border-border/40 bg-gradient-to-b from-card/40 to-background py-10 md:py-14">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
@@ -994,26 +1016,26 @@ function Testimonials() {
         </div>
 
         <div className="mt-14 grid gap-6 md:grid-cols-3">
-          {items.map((i) => (
+          {depoimentos.map((d: any) => (
             <blockquote
-              key={i.a}
+              key={d.id}
               className="group relative rounded-3xl border border-border/60 bg-card p-8 transition-all hover:border-gold/30 hover:shadow-premium"
             >
               <div className="flex gap-0.5">
-                {Array.from({ length: i.nota }).map((_, idx) => (
+                {Array.from({ length: d.nota || 5 }).map((_, idx) => (
                   <Star key={idx} className="h-4 w-4 fill-gold text-gold" />
                 ))}
               </div>
               <p className="mt-5 font-serif text-[17px] italic leading-relaxed text-foreground/90">
-                "{i.q}"
+                "{d.resposta}"
               </p>
               <footer className="mt-6 flex items-center gap-3 border-t border-border/50 pt-5">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-wine font-serif text-sm font-semibold text-foreground">
-                  {i.a.slice(0, 1)}
+                  {d.autor?.slice(0, 1) || "A"}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">{i.a}</p>
-                  <p className="text-[11px] text-foreground/60">{i.cidade}</p>
+                  <p className="text-sm font-semibold text-foreground">{d.autor}</p>
+                  <p className="text-[11px] text-foreground/60">{d.cidade}</p>
                 </div>
               </footer>
             </blockquote>
@@ -1029,12 +1051,32 @@ function Testimonials() {
 /* ———————————————— FAQ ———————————————— */
 
 function FaqSection() {
-  const items = [
-    { q: "Preciso pagar mensalidade?", a: "Não. Você paga apenas pelos encontros em que se inscrever, via PIX." },
-    { q: "Os encontros são online?", a: "Não. Todos os encontros são presenciais. A cidade é indicada em cada evento." },
-    { q: "Como recebo o certificado?", a: "Ao concluir uma trilha (todos os encontros com presença registrada), o certificado é emitido pela administração e fica disponível na sua área." },
-    { q: "Posso escolher qualquer livro?", a: "As leituras seguem a ordem da trilha escolhida — assim a comunidade caminha junta." },
-  ];
+  const { data: faqs = [], isLoading } = useQuery({
+    queryKey: ["faq-home"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("faq")
+        .select("id, pergunta, resposta, ordem")
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <section id="faq" className="border-t border-border/40 py-10 md:py-14">
+        <div className="mx-auto max-w-3xl px-4 md:px-8">
+          <p className="text-center text-muted-foreground">Carregando FAQ...</p>
+        </div>
+      </section>
+    );
+  }
+
+  if (faqs.length === 0) {
+    return null;
+  }
+
   return (
     <section id="faq" className="border-t border-border/40 py-10 md:py-14">
       <div className="mx-auto max-w-3xl px-4 md:px-8">
@@ -1047,17 +1089,17 @@ function FaqSection() {
           </h2>
         </div>
         <Accordion type="single" collapsible className="mt-8">
-          {items.map((i, idx) => (
+          {faqs.map((f: any, idx) => (
             <AccordionItem
-              key={idx}
+              key={f.id || idx}
               value={`item-${idx}`}
               className="border-border/60"
             >
               <AccordionTrigger className="text-left text-[15px] font-medium hover:text-gold hover:no-underline">
-                {i.q}
+                {f.pergunta}
               </AccordionTrigger>
               <AccordionContent className="text-[14px] leading-relaxed text-foreground/70">
-                {i.a}
+                {f.resposta}
               </AccordionContent>
             </AccordionItem>
           ))}
@@ -1070,6 +1112,24 @@ function FaqSection() {
 /* ———————————————— FOOTER ———————————————— */
 
 function Footer() {
+  const { data: config } = useQuery({
+    queryKey: ["config-geral"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("config_geral")
+        .select("instagram, whatsapp, email, endereco, telefone")
+        .eq("id", "1")
+        .single();
+      if (error) return null;
+      return data;
+    },
+  });
+
+  const telefonePadrao = config?.telefone || "41 3082-5553";
+  const whatsappPadrao = config?.whatsapp || "554130825553";
+  const instagramPadrao = config?.instagram || "bookteamamor";
+  const emailPadrao = config?.email || "contato@bookteam.com.br";
+
   return (
     <footer className="relative border-t border-border/60 bg-gradient-to-b from-background to-black/50 pt-20 pb-10">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
@@ -1107,16 +1167,16 @@ function Footer() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">Contato</p>
             <ul className="mt-4 space-y-2.5 text-sm text-foreground/70">
               <li className="flex items-center gap-2">
-                <Phone className="h-3.5 w-3.5 text-gold" /> 41 3082-5553
+                <Phone className="h-3.5 w-3.5 text-gold" /> {telefonePadrao}
               </li>
               <li>
-                <a href="https://wa.me/554130825553" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-foreground">
+                <a href={`https://wa.me/${whatsappPadrao}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-foreground">
                   <MessageCircle className="h-3.5 w-3.5 text-gold" /> WhatsApp
                 </a>
               </li>
               <li>
-                <a href="https://instagram.com/bookteamamor" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-foreground">
-                  <Instagram className="h-3.5 w-3.5 text-gold" /> @bookteamamor
+                <a href={`https://instagram.com/${instagramPadrao}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-foreground">
+                  <Instagram className="h-3.5 w-3.5 text-gold" /> @{instagramPadrao}
                 </a>
               </li>
             </ul>
