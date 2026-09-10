@@ -9,6 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Heart,
   Instagram,
@@ -78,6 +79,8 @@ function LandingPage() {
       <LivrosComplementares />
 
       <EventosEspeciais />
+      <Testimonials />
+      <FaqSection />
       <Footer />
     </div>
   );
@@ -846,6 +849,110 @@ function LivroComplementarCard({
         )}
       </div>
     </article>
+  );
+}
+
+/* ———————————————— DEPOIMENTOS ———————————————— */
+
+function Testimonials() {
+  const { data: depoimentos = [] } = useQuery({
+    queryKey: ["depoimentos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("depoimentos")
+        .select("*")
+        .eq("ativo", true)
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        id: string;
+        nome: string;
+        cargo: string;
+        depoimento: string;
+        imagem_url: string | null;
+      }>;
+    },
+  });
+
+  if (depoimentos.length === 0) return null;
+
+  return (
+    <section className="space-y-12 bg-muted/30 px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 className="font-serif text-4xl font-bold">O que as pessoas falam</h2>
+        <p className="mt-4 text-lg text-muted-foreground">
+          Histórias reais de quem faz parte da comunidade Book Team
+        </p>
+      </div>
+
+      <div className="mx-auto grid max-w-3xl gap-8 md:grid-cols-2">
+        {depoimentos.map((dep) => (
+          <Card key={dep.id} className="border-none bg-background shadow-sm">
+            <CardContent className="space-y-4 p-6">
+              <div className="flex gap-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 fill-gold text-gold" />
+                ))}
+              </div>
+              <p className="text-sm italic text-muted-foreground">"{dep.depoimento}"</p>
+              <div className="border-t pt-4">
+                <p className="font-bold">{dep.nome}</p>
+                <p className="text-xs text-muted-foreground">{dep.cargo}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ———————————————— FAQ ———————————————— */
+
+function FaqSection() {
+  const { data: faqs = [] } = useQuery({
+    queryKey: ["faq"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("faq")
+        .select("*")
+        .eq("ativo", true)
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        id: string;
+        pergunta: string;
+        resposta: string;
+      }>;
+    },
+  });
+
+  if (faqs.length === 0) return null;
+
+  return (
+    <section className="space-y-12 px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 className="font-serif text-4xl font-bold">Perguntas Frequentes</h2>
+        <p className="mt-4 text-lg text-muted-foreground">
+          Tire suas dúvidas sobre o Book Team
+        </p>
+      </div>
+
+      <div className="mx-auto max-w-2xl">
+        <Accordion type="single" collapsible className="w-full">
+          {faqs.map((f) => (
+            <AccordionItem key={f.id} value={f.id}>
+              <AccordionTrigger className="text-left font-semibold hover:no-underline">
+                {f.pergunta}
+              </AccordionTrigger>
+              <AccordionContent className="text-muted-foreground">
+                {f.resposta}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+    </section>
   );
 }
 
