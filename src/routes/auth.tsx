@@ -500,7 +500,8 @@ function SignUpForm() {
 
 
     toast.success(
-      "Conta criada! Verifique seu email para confirmar o cadastro."
+      "Conta criada! 📧 Verifique sua CAIXA DE ENTRADA e também a pasta SPAM do seu email para confirmar o cadastro.",
+      { duration: 8000 }
     );
 
 
