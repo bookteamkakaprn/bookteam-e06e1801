@@ -119,6 +119,11 @@ const menuPrincipal: MenuItem[] = [
     label: "Conta PIX",
     icon: Wallet,
   },
+  {
+    to: "/admin/configuracoes",
+    label: "Configurações",
+    icon: UserCog,
+  },
 ];
 
 function AdminLayout() {
