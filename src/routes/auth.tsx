@@ -333,6 +333,15 @@ const signUpSchema = z.object({
     .trim()
     .email("Email inválido"),
 
+  data_nascimento: z
+    .string()
+    .refine((d) => {
+      const data = new Date(d);
+      const hoje = new Date();
+      const idade = hoje.getFullYear() - data.getFullYear();
+      return idade >= 13;
+    }, "Você deve ter pelo menos 13 anos"),
+
   cpf: z
     .string()
     .trim()
@@ -375,6 +384,7 @@ function SignUpForm() {
 
     nome: "",
     email: "",
+    data_nascimento: "",
     cpf: "",
     telefone: "",
     cidade: "",
@@ -457,6 +467,8 @@ function SignUpForm() {
           data: {
 
             nome: form.nome,
+
+            data_nascimento: form.data_nascimento,
 
             cpf: form.cpf,
 
@@ -640,6 +652,30 @@ function SignUpForm() {
           }
           autoComplete="email"
         />
+
+      </div>
+
+
+      {/* DATA DE NASCIMENTO */}
+      <div className="space-y-2">
+
+        <Label htmlFor="data-nascimento">
+          Data de nascimento
+        </Label>
+
+        <Input
+          id="data-nascimento"
+          type="date"
+          required
+          value={form.data_nascimento}
+          onChange={(e) =>
+            set("data_nascimento", e.target.value)
+          }
+        />
+
+        <p className="text-xs text-muted-foreground">
+          Você deve ter pelo menos 13 anos.
+        </p>
 
       </div>
 
