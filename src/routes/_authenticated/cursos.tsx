@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { BookOpen, User } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/cursos")({
   head: () => ({
@@ -15,113 +14,195 @@ export const Route = createFileRoute("/_authenticated/cursos")({
   component: CursosPage,
 });
 
-type Nivel = {
-  id: string;
-  nome: string | null;
-};
-
 type Livro = {
   id: string;
   titulo: string | null;
-  descricao: string | null;
-  nivel_id: string | null;
   autor: string | null;
-  status?: string | null;
-  nivel?: Nivel | null;
+  imagem_url?: string | null;
+  capa_url?: string | null;
+  trilha_id?: string | null;
 };
 
 function CursosPage() {
-  const { data: livros = [], isLoading } = useQuery({
-    queryKey: ["cursos"],
+  const scrollerRefJornada = useRef<HTMLDivElement>(null);
+  const scrollerRefComplementares = useRef<HTMLDivElement>(null);
+
+  // Buscar jornada (excluir complementares)
+  const { data: livrosJornada = [], isLoading: loadingJornada } = useQuery({
+    queryKey: ["cursos-jornada"],
     queryFn: async () => {
+      // Buscar trilha "Jornada"
+      const { data: trilhas } = await supabase
+        .from("trilhas")
+        .select("id")
+        .ilike("nome", "%Jornada%")
+        .not("nome", "ilike", "%Complementares%")
+        .single();
+
+      if (!trilhas) return [];
+
+      // Buscar livros dessa trilha
       const { data, error } = await supabase
         .from("livros")
-        .select("id, titulo, descricao, nivel_id, autor, status, nivel:niveis_trilha(id, nome)")
+        .select("id, titulo, autor, imagem_url, capa_url")
+        .eq("trilha_id", trilhas.id)
         .eq("status", "ativo")
-        .order("titulo");
+        .order("ordem", { ascending: true });
 
       if (error) throw error;
-      return (data ?? []) as unknown as Livro[];
+      return data || [];
     },
   });
 
-  // Agrupar por nível
-  const porNivel = livros.reduce(
-    (acc, livro) => {
-      const nivel = livro.nivel?.nome || "Sem categoria";
-      if (!acc[nivel]) acc[nivel] = [];
-      acc[nivel].push(livro);
-      return acc;
-    },
-    {} as Record<string, Livro[]>
-  );
+  // Buscar complementares
+  const { data: livrosComplementares = [], isLoading: loadingComplementares } = useQuery({
+    queryKey: ["cursos-complementares"],
+    queryFn: async () => {
+      // Buscar trilha "Cursos Complementares"
+      const { data: trilhas } = await supabase
+        .from("trilhas")
+        .select("id")
+        .ilike("nome", "%Cursos Complementares%")
+        .single();
 
-  const niveis = Object.keys(porNivel).sort();
+      if (!trilhas) return [];
+
+      // Buscar livros dessa trilha
+      const { data, error } = await supabase
+        .from("livros")
+        .select("id, titulo, autor, imagem_url, capa_url")
+        .eq("trilha_id", trilhas.id)
+        .eq("status", "ativo")
+        .order("ordem", { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const scrollBy = (ref: React.RefObject<HTMLDivElement>, dir: 1 | -1) => {
+    if (!ref.current) return;
+    ref.current.scrollBy({ left: dir * ref.current.clientWidth * 0.8, behavior: "smooth" });
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="font-serif text-3xl font-bold">Cursos</h1>
         <p className="text-sm text-muted-foreground">
-          Conheça todos os cursos disponíveis na plataforma.
+          Explore sua jornada de aprendizado
         </p>
       </div>
 
-      {isLoading && (
+      {/* SEÇÃO 1: JORNADA */}
+      {!loadingJornada && livrosJornada.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-serif text-2xl font-semibold">JORNADA DE CURSOS</h2>
+            <div className="flex gap-2">
+              <button
+                onClick={() => scrollBy(scrollerRefJornada, -1)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-card/60 hover:border-gold/40 hover:text-gold transition-all"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => scrollBy(scrollerRefJornada, 1)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-card/60 hover:border-gold/40 hover:text-gold transition-all"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          <div
+            ref={scrollerRefJornada}
+            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hidden"
+          >
+            {livrosJornada.map((livro) => (
+              <div
+                key={livro.id}
+                className="shrink-0 w-[200px] md:w-[240px] flex flex-col gap-3 cursor-pointer group"
+              >
+                <div
+                  className="aspect-[2/3] rounded-lg overflow-hidden bg-black/20 group-hover:shadow-lg transition-shadow"
+                  style={{
+                    backgroundImage:
+                      livro.imagem_url || livro.capa_url
+                        ? `url('${livro.imagem_url || livro.capa_url}')`
+                        : undefined,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                />
+                <div>
+                  <p className="font-semibold text-sm line-clamp-2">{livro.titulo}</p>
+                  {livro.autor && <p className="text-xs text-muted-foreground">{livro.autor}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* SEÇÃO 2: CURSOS COMPLEMENTARES */}
+      {!loadingComplementares && livrosComplementares.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-serif text-2xl font-semibold">CURSOS COMPLEMENTARES</h2>
+            <div className="flex gap-2">
+              <button
+                onClick={() => scrollBy(scrollerRefComplementares, -1)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-card/60 hover:border-gold/40 hover:text-gold transition-all"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => scrollBy(scrollerRefComplementares, 1)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-card/60 hover:border-gold/40 hover:text-gold transition-all"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          <div
+            ref={scrollerRefComplementares}
+            className="flex gap-4 overflow-x-auto pb-4 scrollbar-hidden"
+          >
+            {livrosComplementares.map((livro) => (
+              <div
+                key={livro.id}
+                className="shrink-0 w-[200px] md:w-[240px] flex flex-col gap-3 cursor-pointer group"
+              >
+                <div
+                  className="aspect-[2/3] rounded-lg overflow-hidden bg-black/20 group-hover:shadow-lg transition-shadow"
+                  style={{
+                    backgroundImage:
+                      livro.imagem_url || livro.capa_url
+                        ? `url('${livro.imagem_url || livro.capa_url}')`
+                        : undefined,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                />
+                <div>
+                  <p className="font-semibold text-sm line-clamp-2">{livro.titulo}</p>
+                  {livro.autor && <p className="text-xs text-muted-foreground">{livro.autor}</p>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {(loadingJornada || loadingComplementares) && (
         <p className="text-sm text-muted-foreground">Carregando cursos…</p>
       )}
 
-      {!isLoading && livros.length === 0 && (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            Nenhum curso disponível no momento.
-          </CardContent>
-        </Card>
+      {!loadingJornada && !loadingComplementares && livrosJornada.length === 0 && livrosComplementares.length === 0 && (
+        <p className="text-sm text-muted-foreground">Nenhum curso disponível no momento.</p>
       )}
-
-      {!isLoading && niveis.map((nivel) => (
-        <div key={nivel} className="space-y-3">
-          <h2 className="font-serif text-xl font-semibold text-gold">{nivel}</h2>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {porNivel[nivel].map((livro) => (
-              <Card key={livro.id} className="flex flex-col">
-                <CardContent className="flex-1 space-y-3 p-4">
-                  {/* Status */}
-                  <div>
-                    <Badge className="bg-green-500 gap-1">
-                      <BookOpen className="h-3 w-3" />
-                      Disponível
-                    </Badge>
-                  </div>
-
-                  {/* Título */}
-                  <div>
-                    <p className="font-serif text-lg font-semibold line-clamp-2">
-                      {livro.titulo || "Sem título"}
-                    </p>
-                  </div>
-
-                  {/* Autor */}
-                  {livro.autor && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <User className="h-3 w-3" />
-                      {livro.autor}
-                    </div>
-                  )}
-
-                  {/* Descrição */}
-                  {livro.descricao && (
-                    <p className="text-xs text-muted-foreground line-clamp-3">
-                      {livro.descricao}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      ))}
     </div>
   );
 }
