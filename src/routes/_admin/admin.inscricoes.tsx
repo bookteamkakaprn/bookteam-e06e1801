@@ -24,7 +24,7 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
-import { emailPagamentoAprovado, emailPagamentoRecusado } from "@/lib/email-service";
+import { emailPagamentoAprovado, emailPagamentoRecusado, emailInicioCurso } from "@/lib/email-service";
 
 export const Route = createFileRoute("/_admin/admin/inscricoes")({
   head: () => ({
@@ -618,9 +618,34 @@ function AdminAprovacoes() {
         .eq("id", participanteId);
 
       if (error) throw error;
+
+      // 📧 ENVIAR EMAIL: CURSO INICIADO
+      if (inscricao.participante?.email) {
+        try {
+          await emailInicioCurso(
+            inscricao.participante.email,
+            inscricao.participante.nome || "Aluno(a)",
+            inscricao.livro?.titulo || "Curso",
+            inscricao.turma?.nome || "Turma",
+            inscricao.turma?.data_inicio || new Date().toISOString().split("T")[0]
+          );
+        } catch (emailError) {
+          console.error("Erro ao enviar email:", emailError);
+          // Não interrompe o fluxo se o email falhar
+        }
+      }
     },
     onSuccess: () => {
-      toast.success("Aluno liberado para iniciar.");
+      toast.success(
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-5 w-5 text-green-500" />
+          <div>
+            <p className="font-semibold">Aluno Liberado! 🚀</p>
+            <p className="text-sm text-muted-foreground">Email "Seu curso começou!" enviado</p>
+          </div>
+        </div>,
+        { duration: 5000 }
+      );
 
       qc.invalidateQueries({
         queryKey: ["admin-aprovacoes-inscricoes-final"],

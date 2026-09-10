@@ -4,12 +4,13 @@ const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers
 
 interface EmailPayload {
   to: string;
-  tipo: "pagamento_aprovado" | "pagamento_recusado" | "inscricao_aprovada" | "inscricao_recusada" | "customizado";
+  tipo: "pagamento_aprovado" | "pagamento_recusado" | "inscricao_aprovada" | "inscricao_recusada" | "curso_iniciado" | "customizado";
   nome: string;
   livro?: string;
   turma?: string;
   motivo?: string;
   valor?: number;
+  data_inicio?: string;
   assunto?: string;
   mensagem?: string;
 }
@@ -35,6 +36,11 @@ const getTemplate = (payload: EmailPayload) => {
       return {
         subject: "⚠️ Sua inscrição foi recusada",
         html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f9f9f9;padding:20px"><div style="background:white;border-radius:12px;padding:30px"><h1 style="color:#ef4444;margin:0">⚠️ Inscrição Recusada</h1><p style="font-size:16px;color:#333;margin:20px 0">Olá <strong>${payload.nome}</strong>,</p><p style="font-size:16px;color:#333;margin:20px 0">Sua inscrição foi <strong style="color:#ef4444">RECUSADA</strong>.</p><div style="background:#fff5f5;padding:20px;border-left:4px solid #ef4444;border-radius:4px;margin:30px 0"><p style="margin:10px 0;font-size:15px"><strong>Motivo:</strong> ${payload.motivo || "Pré-requisitos não atendidos"}</p></div><p style="font-size:16px;color:#333;margin:20px 0">Entre em contato conosco para mais informações.</p><hr style="border:none;border-top:1px solid #ddd;margin:30px 0"><p style="font-size:12px;color:#999;text-align:center;margin:0">Dúvidas? Entre em contato conosco.</p></div></div>`
+      };
+    case "curso_iniciado":
+      return {
+        subject: "🚀 Seu curso começou!",
+        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f9f9f9;padding:20px"><div style="background:white;border-radius:12px;padding:30px"><h1 style="color:#d4af37;margin:0">🚀 Seu Curso Começou!</h1><p style="font-size:16px;color:#333;margin:20px 0">Olá <strong>${payload.nome}</strong>,</p><p style="font-size:16px;color:#333;margin:20px 0">Seu curso foi <strong style="color:#27ae60">LIBERADO</strong>! É hora de começar sua jornada de transformação! 🎊</p><div style="background:#f5f5f5;padding:20px;border-left:4px solid #d4af37;border-radius:4px;margin:30px 0"><p style="margin:10px 0;font-size:15px"><strong>Curso:</strong> ${payload.livro}</p><p style="margin:10px 0;font-size:15px"><strong>Turma:</strong> ${payload.turma}</p>${payload.data_inicio ? `<p style="margin:10px 0;font-size:15px"><strong>Inicia em:</strong> ${new Date(payload.data_inicio).toLocaleDateString("pt-BR")}</p>` : ""}</div><p style="font-size:16px;color:#333;margin:20px 0"><strong>Você tem acesso total agora!</strong></p><ol style="font-size:15px;color:#333;line-height:1.8"><li>Acesse sua conta</li><li>Vá para "Minhas Inscrições"</li><li>Comece a leitura e transforme sua vida! 📚</li></ol><div style="text-align:center;margin:30px 0"><a href="https://ministeriobookteam.com.br/minhas-inscricoes" style="background:#d4af37;color:#000;padding:12px 30px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold">✨ Acessar Curso</a></div><hr style="border:none;border-top:1px solid #ddd;margin:30px 0"><p style="font-size:12px;color:#999;text-align:center;margin:0">Book Team — Jornada de Transformação<br>ministeriobookteam.com.br</p></div></div>`
       };
     case "customizado":
     default:

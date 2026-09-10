@@ -5,6 +5,7 @@ export type EmailTipo =
   | "pagamento_recusado"
   | "inscricao_aprovada"
   | "inscricao_recusada"
+  | "curso_iniciado"
   | "customizado";
 
 interface EmailPayload {
@@ -15,6 +16,7 @@ interface EmailPayload {
   turma?: string;
   motivo?: string;
   valor?: number;
+  data_inicio?: string;
   assunto?: string;
   mensagem?: string;
 }
@@ -154,5 +156,33 @@ export async function emailCustomizado(
     nome,
     assunto,
     mensagem,
+  });
+}
+
+/**
+ * Enviar email: Curso iniciado! (quando admin libera)
+ * @example
+ * await emailInicioCurso(
+ *   "kelly@email.com",
+ *   "Kelly",
+ *   "Mantenha seu Amor Aceso",
+ *   "Turma 2 — Terças",
+ *   "2025-01-15"
+ * );
+ */
+export async function emailInicioCurso(
+  email: string,
+  nome: string,
+  livro: string,
+  turma: string,
+  dataInicio: string
+) {
+  return enviarEmail({
+    to: email,
+    tipo: "curso_iniciado",
+    nome,
+    livro,
+    turma,
+    data_inicio: dataInicio,
   });
 }
