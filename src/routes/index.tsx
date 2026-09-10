@@ -78,7 +78,6 @@ function LandingPage() {
       <LivrosComplementares />
 
       <EventosEspeciais />
-      <Testimonials />
       <Footer />
     </div>
   );
@@ -997,79 +996,6 @@ function EventosEspeciais() {
             <p className="text-foreground/60">Nenhum evento disponível no momento</p>
           </div>
         )}
-      </div>
-    </section>
-  );
-}
-
-/* ———————————————— DEPOIMENTOS ———————————————— */
-
-function Testimonials() {
-  const { data: depoimentos = [], isLoading } = useQuery({
-    queryKey: ["depoimentos-home"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("depoimentos")
-        .select("id, pergunta, resposta, autor, cidade, nota")
-        .order("created_at", { ascending: false })
-        .limit(3);
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  if (isLoading) {
-    return (
-      <section className="relative border-t border-border/40 bg-gradient-to-b from-card/40 to-background py-10 md:py-14">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <p className="text-center text-muted-foreground">Carregando depoimentos...</p>
-        </div>
-      </section>
-    );
-  }
-
-  if (depoimentos.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="relative border-t border-border/40 bg-gradient-to-b from-card/40 to-background py-10 md:py-14">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
-            Depoimentos
-          </span>
-          <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
-            Quem vive, conta
-          </h2>
-        </div>
-
-        <div className="mt-14 grid gap-6 md:grid-cols-3">
-          {depoimentos.map((d: any) => (
-            <blockquote
-              key={d.id}
-              className="group relative rounded-3xl border border-border/60 bg-card p-8 transition-all hover:border-gold/30 hover:shadow-premium"
-            >
-              <div className="flex gap-0.5">
-                {Array.from({ length: d.nota || 5 }).map((_, idx) => (
-                  <Star key={idx} className="h-4 w-4 fill-gold text-gold" />
-                ))}
-              </div>
-              <p className="mt-5 font-serif text-[17px] italic leading-relaxed text-foreground/90">
-                "{d.resposta}"
-              </p>
-              <footer className="mt-6 flex items-center gap-3 border-t border-border/50 pt-5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-wine font-serif text-sm font-semibold text-foreground">
-                  {d.autor?.slice(0, 1) || "A"}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{d.autor}</p>
-                  <p className="text-[11px] text-foreground/60">{d.cidade}</p>
-                </div>
-              </footer>
-            </blockquote>
-          ))}
-        </div>
       </div>
     </section>
   );
