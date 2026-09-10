@@ -20,7 +20,6 @@ import {
   LogOut,
   GraduationCap,
   BookOpen,
-  Wallet,
   UserPlus,
   ClipboardCheck,
   UserCog,
@@ -113,11 +112,6 @@ const menuPrincipal: MenuItem[] = [
     to: "/admin/pagamentos",
     label: "Controle de pagamentos",
     icon: CreditCard,
-  },
-  {
-    to: "/admin/conta",
-    label: "Conta PIX",
-    icon: Wallet,
   },
   {
     to: "/admin/configuracoes",
