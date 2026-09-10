@@ -79,7 +79,6 @@ function LandingPage() {
 
       <EventosEspeciais />
       <Testimonials />
-      <FaqSection />
       <Footer />
     </div>
   );
@@ -1077,67 +1076,6 @@ function Testimonials() {
 }
 
 /* ———————————————— CONTATO ———————————————— */
-
-/* ———————————————— FAQ ———————————————— */
-
-function FaqSection() {
-  const { data: faqs = [], isLoading } = useQuery({
-    queryKey: ["faq-home"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("faq")
-        .select("id, pergunta, resposta, ordem")
-        .order("ordem", { ascending: true });
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  if (isLoading) {
-    return (
-      <section id="faq" className="border-t border-border/40 py-10 md:py-14">
-        <div className="mx-auto max-w-3xl px-4 md:px-8">
-          <p className="text-center text-muted-foreground">Carregando FAQ...</p>
-        </div>
-      </section>
-    );
-  }
-
-  if (faqs.length === 0) {
-    return null;
-  }
-
-  return (
-    <section id="faq" className="border-t border-border/40 py-10 md:py-14">
-      <div className="mx-auto max-w-3xl px-4 md:px-8">
-        <div className="text-center">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
-            Perguntas frequentes
-          </span>
-          <h2 className="mt-3 font-serif text-3xl font-semibold md:text-4xl lg:text-5xl">
-            Dúvidas comuns
-          </h2>
-        </div>
-        <Accordion type="single" collapsible className="mt-8">
-          {faqs.map((f: any, idx) => (
-            <AccordionItem
-              key={f.id || idx}
-              value={`item-${idx}`}
-              className="border-border/60"
-            >
-              <AccordionTrigger className="text-left text-[15px] font-medium hover:text-gold hover:no-underline">
-                {f.pergunta}
-              </AccordionTrigger>
-              <AccordionContent className="text-[14px] leading-relaxed text-foreground/70">
-                {f.resposta}
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </div>
-    </section>
-  );
-}
 
 /* ———————————————— FOOTER ———————————————— */
 

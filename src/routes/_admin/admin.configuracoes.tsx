@@ -82,18 +82,22 @@ function ConfiguracoesAdmin() {
         if (error) throw error;
       } else {
         // Criar
-        const { error } = await supabase.from("depoimentos").insert([depo]);
+        const { error, data } = await supabase.from("depoimentos").insert([depo]);
         if (error) throw error;
       }
     },
     onSuccess: () => {
       toast.success("Depoimento salvo!");
-      depoimentosQuery.refetch();
       setEditingDepoimento(null);
       setNovoDepoimento({ pergunta: "", resposta: "", autor: "", cidade: "", nota: 5 });
+      // Forçar reload dos depoimentos
+      setTimeout(() => {
+        depoimentosQuery.refetch();
+      }, 500);
     },
-    onError: (err) => {
-      toast.error(`Erro ao salvar: ${err.message}`);
+    onError: (err: any) => {
+      console.error("Erro ao salvar depoimento:", err);
+      toast.error(`Erro ao salvar: ${err?.message || "Desconhecido"}`);
     },
   });
 
