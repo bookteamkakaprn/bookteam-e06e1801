@@ -23,13 +23,6 @@ interface Depoimento {
   nota: number;
 }
 
-interface Faq {
-  id?: string;
-  pergunta: string;
-  resposta: string;
-  ordem: number;
-}
-
 interface ConfigGeral {
   id: string;
   instagram: string;
@@ -41,9 +34,7 @@ interface ConfigGeral {
 
 function ConfiguracoesAdmin() {
   const [editingDepoimento, setEditingDepoimento] = useState<Depoimento | null>(null);
-  const [editingFaq, setEditingFaq] = useState<Faq | null>(null);
   const [novoDepoimento, setNovoDepoimento] = useState<Depoimento>({ pergunta: "", resposta: "", autor: "", cidade: "", nota: 5 });
-  const [novaFaq, setNovaFaq] = useState<Faq>({ pergunta: "", resposta: "", ordem: 0 });
   const [configGeral, setConfigGeral] = useState<ConfigGeral>({
     id: "1",
     instagram: "",
@@ -63,19 +54,6 @@ function ConfiguracoesAdmin() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Depoimento[];
-    },
-  });
-
-  // Query FAQ
-  const faqQuery = useQuery({
-    queryKey: ["admin-faq"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("faq")
-        .select("*")
-        .order("ordem", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as Faq[];
     },
   });
 
@@ -134,43 +112,6 @@ function ConfiguracoesAdmin() {
     },
   });
 
-  // Mutation FAQ
-  const salvarFaq = useMutation({
-    mutationFn: async (faq: Faq) => {
-      if (faq.id) {
-        const { error } = await supabase.from("faq").update(faq).eq("id", faq.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("faq").insert([faq]);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      toast.success("FAQ salvo!");
-      faqQuery.refetch();
-      setEditingFaq(null);
-      setNovaFaq({ pergunta: "", resposta: "", ordem: 0 });
-    },
-    onError: (err) => {
-      toast.error(`Erro ao salvar: ${err.message}`);
-    },
-  });
-
-  // Mutation Delete FAQ
-  const deletarFaq = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("faq").delete().eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("FAQ removido!");
-      faqQuery.refetch();
-    },
-    onError: (err) => {
-      toast.error(`Erro ao deletar: ${err.message}`);
-    },
-  });
-
   // Mutation Config
   const salvarConfig = useMutation({
     mutationFn: async (config: ConfigGeral) => {
@@ -195,14 +136,13 @@ function ConfiguracoesAdmin() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Configurações</h1>
-        <p className="text-muted-foreground">Gerencie depoimentos, FAQ e dados do site</p>
+        <p className="text-muted-foreground">Gerencie depoimentos e dados do site</p>
       </div>
 
       <Tabs defaultValue="config" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="config">Configurações Gerais</TabsTrigger>
           <TabsTrigger value="depoimentos">Depoimentos</TabsTrigger>
-          <TabsTrigger value="faq">FAQ</TabsTrigger>
         </TabsList>
 
         {/* ===== CONFIG GERAL ===== */}
@@ -394,92 +334,6 @@ function ConfiguracoesAdmin() {
                       size="sm"
                       variant="destructive"
                       onClick={() => depo.id && deletarDepoimento.mutate(depo.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* ===== FAQ ===== */}
-        <TabsContent value="faq" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Nova Pergunta FAQ</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Pergunta</label>
-                  <Input
-                    placeholder="Ex: Como funciona a inscrição?"
-                    value={novaFaq.pergunta}
-                    onChange={(e) =>
-                      setNovaFaq({ ...novaFaq, pergunta: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Resposta</label>
-                  <Textarea
-                    placeholder="Resposta detalhada..."
-                    value={novaFaq.resposta}
-                    onChange={(e) =>
-                      setNovaFaq({ ...novaFaq, resposta: e.target.value })
-                    }
-                    rows={4}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium">Ordem de Exibição</label>
-                  <Input
-                    type="number"
-                    placeholder="1"
-                    value={novaFaq.ordem}
-                    onChange={(e) =>
-                      setNovaFaq({ ...novaFaq, ordem: parseInt(e.target.value) })
-                    }
-                  />
-                </div>
-              </div>
-
-              <Button
-                onClick={() => salvarFaq.mutate(novaFaq)}
-                disabled={salvarFaq.isPending}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar FAQ
-              </Button>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-3">
-            {faqQuery.data?.map((faq) => (
-              <Card key={faq.id} className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 space-y-2">
-                    <h3 className="font-semibold">{faq.pergunta}</h3>
-                    <p className="text-sm text-foreground/80">{faq.resposta}</p>
-                    <p className="text-xs text-muted-foreground">Ordem: {faq.ordem}</p>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditingFaq(faq)}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => faq.id && deletarFaq.mutate(faq.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
