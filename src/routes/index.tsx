@@ -545,11 +545,16 @@ function JornadaLivroCard({ l }: { l: JornadaLivroCardProps }) {
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_60%)]" />
 
-      {l.imagem_url ? (
+      {l.imagem_url || l.capa_url ? (
         <img
-          src={l.imagem_url}
+          src={l.imagem_url || l.capa_url}
           alt={l.titulo}
           loading="lazy"
+          onError={(e) => {
+            console.error(`Erro ao carregar imagem: ${l.imagem_url || l.capa_url}`);
+            e.currentTarget.style.display = 'none';
+            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+          }}
           className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
       ) : (
@@ -723,14 +728,21 @@ function LivrosComplementares() {
       // Depois buscar livros dessa trilha (order by ordem, depois by id para consistência)
       const { data, error } = await supabase
         .from("livros")
-        .select("id, titulo, autor, imagem_url, capa_url, status")
+        .select("id, titulo, autor, imagem_url, capa_url, status, ordem")
         .eq("trilha_id", trilhas.id)
         .eq("status", "ativo")  // Apenas livros ativos
-        .order("ordem", { ascending: true })
+        .order("ordem", { ascending: true, nullsLast: true })
         .order("id", { ascending: true })
-        .limit(20);
+        .limit(50);  // Aumentado para 50 para garantir que pega todos
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro buscando complementares:", error);
+        throw error;
+      }
+      
+      // Debug: Log de quantos livros foram encontrados
+      console.log(`Livros complementares encontrados: ${data?.length || 0}`);
+      
       return data || [];
     },
   });
@@ -818,10 +830,18 @@ function LivroComplementarCard({
 }) {
   // Debug: Log se a capa não está preenchida
   if (!livro.imagem_url && !livro.capa_url) {
-    console.warn(`Livro sem capa: ${livro.titulo} (ID: ${livro.id})`);
+    console.warn(`⚠️ Livro SEM CAPA no banco: "${livro.titulo}" (ID: ${livro.id}) - Preencha imagem_url em Supabase`);
+  } else {
+    console.log(`✅ Livro com capa: "${livro.titulo}" → ${livro.imagem_url || livro.capa_url}`);
   }
   
-  const capa = livro.imagem_url || livro.capa_url;
+  // Validar que a URL é válida (deve começar com http)
+  const capaValida = (url: string | null): boolean => {
+    if (!url) return false;
+    return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:');
+  };
+  
+  const capa = capaValida(livro.imagem_url) ? livro.imagem_url : capaValida(livro.capa_url) ? livro.capa_url : null;
 
   return (
     <article className="group poster-hover relative aspect-[2/3] w-[58vw] max-w-[240px] shrink-0 snap-start overflow-hidden rounded-r-2xl rounded-l-md bg-gradient-to-br from-[oklch(0.4_0.12_25)] to-[oklch(0.22_0.06_25)] shadow-book transition-transform duration-300 hover:-translate-y-1 hover:shadow-premium sm:w-[200px] md:w-[240px] lg:w-[280px]">
