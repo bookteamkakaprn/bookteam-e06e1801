@@ -42,7 +42,7 @@ type Inscricao = {
 function MinhasInscricoesPage() {
   const { user } = useAuth();
   const [abaSelecionada, setAbaSelecionada] = useState<
-    "confirmadas" | "rejeitadas" | "canceladas" | "pagamentos-aprovados" | "pagamentos-rejeitados" | "estornos"
+    "confirmadas" | "aguardando" | "rejeitadas" | "canceladas" | "pagamentos-aprovados" | "pagamentos-rejeitados" | "estornos"
   >("confirmadas");
   const [mostrarArquivados, setMostrarArquivados] = useState(false);
 
@@ -119,6 +119,7 @@ function MinhasInscricoesPage() {
 
   // Filtrar inscrições por status
   const confirmadasFiltradas = inscricoes.filter((i) => i.status === "confirmada");
+  const aguardandoFiltradas = inscricoes.filter((i) => i.status === "aguardando" || i.status === "aguardando_pagamento");
   const rejeitadasFiltradas = inscricoes.filter((i) => i.status === "cancelada" && i.motivo_rejeicao);
   const canceladasFiltradas = inscricoes.filter((i) => i.status === "cancelada" && !i.motivo_rejeicao);
 
@@ -144,6 +145,7 @@ function MinhasInscricoesPage() {
   // Abas
   const abas = [
     { id: "confirmadas", label: "Confirmadas", count: confirmadasFiltradas.length },
+    { id: "aguardando", label: "Aguardando", count: aguardandoFiltradas.length },
     { id: "rejeitadas", label: "Rejeitadas", count: rejeitadasFiltradas.length },
     { id: "canceladas", label: "Canceladas", count: canceladasFiltradas.length },
     { id: "pagamentos-aprovados", label: "Pagamentos Aprovados", count: pagamentosAprovados.length },
@@ -154,6 +156,8 @@ function MinhasInscricoesPage() {
     switch (abaSelecionada) {
       case "confirmadas":
         return confirmadasFiltradas;
+      case "aguardando":
+        return aguardandoFiltradas;
       case "rejeitadas":
         return rejeitadasFiltradas;
       case "canceladas":
@@ -271,6 +275,12 @@ function MinhasInscricoesPage() {
                             <Badge className="gap-1 bg-green-500">
                               <CheckCircle2 className="h-3 w-3" />
                               Confirmada
+                            </Badge>
+                          )}
+                          {(inscricao.status === "aguardando" || inscricao.status === "aguardando_pagamento") && (
+                            <Badge className="gap-1 bg-yellow-500">
+                              <AlertCircle className="h-3 w-3" />
+                              Aguardando
                             </Badge>
                           )}
                           {inscricao.status === "cancelada" && inscricao.motivo_rejeicao && (
