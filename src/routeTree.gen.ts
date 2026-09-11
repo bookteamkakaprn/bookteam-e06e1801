@@ -26,6 +26,7 @@ import { Route as AuthenticatedMensagensRouteImport } from './routes/_authentica
 import { Route as AuthenticatedMinhasInscricoesRouteImport } from './routes/_authenticated/minhas-inscricoes'
 import { Route as AuthenticatedPagamentosRouteImport } from './routes/_authenticated/pagamentos'
 import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedPresencaRouteImport } from './routes/_authenticated/presenca'
 import { Route as AuthenticatedTurmasRouteImport } from './routes/_authenticated/turmas'
 import { Route as CadastroTurmaIdRouteImport } from './routes/cadastro.$turmaId'
 import { Route as LivrosIdRouteImport } from './routes/livros.$id'
@@ -134,6 +135,11 @@ const AuthenticatedPagamentosRoute = AuthenticatedPagamentosRouteImport.update({
 const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPresencaRoute = AuthenticatedPresencaRouteImport.update({
+  id: '/presenca',
+  path: '/presenca',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedTurmasRoute = AuthenticatedTurmasRouteImport.update({
@@ -277,6 +283,7 @@ export interface FileRoutesByFullPath {
   '/minhas-inscricoes': typeof AuthenticatedMinhasInscricoesRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/presenca': typeof AuthenticatedPresencaRoute
   '/turmas': typeof AuthenticatedTurmasRoute
   '/cadastro/$turmaId': typeof CadastroTurmaIdRoute
   '/livros/$id': typeof LivrosIdRoute
@@ -318,6 +325,7 @@ export interface FileRoutesByTo {
   '/minhas-inscricoes': typeof AuthenticatedMinhasInscricoesRoute
   '/pagamentos': typeof AuthenticatedPagamentosRoute
   '/perfil': typeof AuthenticatedPerfilRoute
+  '/presenca': typeof AuthenticatedPresencaRoute
   '/turmas': typeof AuthenticatedTurmasRoute
   '/cadastro/$turmaId': typeof CadastroTurmaIdRoute
   '/livros/$id': typeof LivrosIdRoute
@@ -362,6 +370,7 @@ export interface FileRoutesById {
   '/_authenticated/minhas-inscricoes': typeof AuthenticatedMinhasInscricoesRoute
   '/_authenticated/pagamentos': typeof AuthenticatedPagamentosRoute
   '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/_authenticated/presenca': typeof AuthenticatedPresencaRoute
   '/_authenticated/turmas': typeof AuthenticatedTurmasRoute
   '/cadastro/$turmaId': typeof CadastroTurmaIdRoute
   '/livros/$id': typeof LivrosIdRoute
@@ -405,6 +414,7 @@ export interface FileRouteTypes {
     | '/minhas-inscricoes'
     | '/pagamentos'
     | '/perfil'
+    | '/presenca'
     | '/turmas'
     | '/cadastro/$turmaId'
     | '/livros/$id'
@@ -446,6 +456,7 @@ export interface FileRouteTypes {
     | '/minhas-inscricoes'
     | '/pagamentos'
     | '/perfil'
+    | '/presenca'
     | '/turmas'
     | '/cadastro/$turmaId'
     | '/livros/$id'
@@ -489,6 +500,7 @@ export interface FileRouteTypes {
     | '/_authenticated/minhas-inscricoes'
     | '/_authenticated/pagamentos'
     | '/_authenticated/perfil'
+    | '/_authenticated/presenca'
     | '/_authenticated/turmas'
     | '/cadastro/$turmaId'
     | '/livros/$id'
@@ -646,6 +658,13 @@ declare module '@tanstack/react-router' {
       path: '/perfil'
       fullPath: '/perfil'
       preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/presenca': {
+      id: '/_authenticated/presenca'
+      path: '/presenca'
+      fullPath: '/presenca'
+      preLoaderRoute: typeof AuthenticatedPresencaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/turmas': {
@@ -877,6 +896,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMinhasInscricoesRoute: typeof AuthenticatedMinhasInscricoesRoute
   AuthenticatedPagamentosRoute: typeof AuthenticatedPagamentosRoute
   AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+  AuthenticatedPresencaRoute: typeof AuthenticatedPresencaRoute
   AuthenticatedTurmasRoute: typeof AuthenticatedTurmasRoute
   AuthenticatedInscricaoEventoIdRoute: typeof AuthenticatedInscricaoEventoIdRoute
   AuthenticatedMatriculaInscricaoIdRoute: typeof AuthenticatedMatriculaInscricaoIdRoute
@@ -894,6 +914,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMinhasInscricoesRoute: AuthenticatedMinhasInscricoesRoute,
   AuthenticatedPagamentosRoute: AuthenticatedPagamentosRoute,
   AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+  AuthenticatedPresencaRoute: AuthenticatedPresencaRoute,
   AuthenticatedTurmasRoute: AuthenticatedTurmasRoute,
   AuthenticatedInscricaoEventoIdRoute: AuthenticatedInscricaoEventoIdRoute,
   AuthenticatedMatriculaInscricaoIdRoute:
