@@ -314,7 +314,7 @@ function HeroQuemSomos() {
       </div>
 
       {/* ———— PILARES: Visão / Missão / Objetivo ———— */}
-      <div id="quem-somos" className="relative mx-auto max-w-7xl px-4 pb-16 pt-4 md:px-8 md:pb-20">
+      <div id="quem-somos" className="relative mx-auto max-w-7xl px-4 pb-8 pt-4 md:px-8 md:pb-10">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
             Quem somos
@@ -645,7 +645,7 @@ function HowItWorks() {
   ];
 
   return (
-    <section id="como-funciona" className="relative border-t border-border/40 py-6 md:py-8">
+    <section id="como-funciona" className="relative border-t border-border/40 py-4 md:py-6">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="max-w-2xl">
           <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-gold/80">
@@ -675,7 +675,7 @@ function HowItWorks() {
                   </span>
                 </span>
 
-                <div className="rounded-lg border border-border/50 bg-card/50 p-3 text-left shadow-book backdrop-blur transition-all group-hover:border-gold/30 md:text-center">
+                <div className="rounded-lg border border-border/50 bg-card/50 p-3 text-center shadow-book backdrop-blur transition-all group-hover:border-gold/30 animate-fade-in" style={{animationDelay: `${i * 200}ms`}}>
                   <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-gold/70">
                     Passo {i + 1}
                   </p>
@@ -720,12 +720,14 @@ function LivrosComplementares() {
         return [];
       }
 
-      // Depois buscar livros dessa trilha
+      // Depois buscar livros dessa trilha (order by ordem, depois by id para consistência)
       const { data, error } = await supabase
         .from("livros")
-        .select("id, titulo, autor, imagem_url, capa_url")
+        .select("id, titulo, autor, imagem_url, capa_url, status")
         .eq("trilha_id", trilhas.id)
+        .eq("status", "ativo")  // Apenas livros ativos
         .order("ordem", { ascending: true })
+        .order("id", { ascending: true })
         .limit(20);
 
       if (error) throw error;
@@ -814,6 +816,11 @@ function LivroComplementarCard({
 }: {
   livro: { id: string; titulo: string; autor: string | null; imagem_url: string | null; capa_url: string | null };
 }) {
+  // Debug: Log se a capa não está preenchida
+  if (!livro.imagem_url && !livro.capa_url) {
+    console.warn(`Livro sem capa: ${livro.titulo} (ID: ${livro.id})`);
+  }
+  
   const capa = livro.imagem_url || livro.capa_url;
 
   return (
