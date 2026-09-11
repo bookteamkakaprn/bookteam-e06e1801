@@ -261,15 +261,24 @@ function AdminAprovacoes() {
       if (error) throw error;
 
       // 📧 ENVIAR EMAIL AUTOMÁTICO
-      if (pagamento.inscricao?.participante?.email) {
+      // Recarregar dados da inscrição para ter dados frescos
+      if (pagamento.inscricao_id) {
         try {
-          await emailPagamentoAprovado(
-            pagamento.inscricao.participante.email,
-            pagamento.inscricao.participante.nome || "Aluno(a)",
-            pagamento.inscricao.livro?.titulo || "Curso",
-            pagamento.inscricao.turma?.nome || "Turma",
-            pagamento.valor
-          );
+          const { data: inscricaoFresca } = await supabase
+            .from("inscricoes")
+            .select("*, participante:participantes(*), livro:livros(*), turma:turmas(*)")
+            .eq("id", pagamento.inscricao_id)
+            .maybeSingle();
+
+          if (inscricaoFresca?.participante?.email) {
+            await emailPagamentoAprovado(
+              inscricaoFresca.participante.email,
+              inscricaoFresca.participante.nome || "Aluno(a)",
+              inscricaoFresca.livro?.titulo || "Curso",
+              inscricaoFresca.turma?.nome || "Turma",
+              pagamento.valor
+            );
+          }
         } catch (emailError) {
           console.error("Erro ao enviar email:", emailError);
           // Não interrompe o fluxo se o email falhar
@@ -332,15 +341,24 @@ function AdminAprovacoes() {
       if (error) throw error;
 
       // 📧 ENVIAR EMAIL AUTOMÁTICO COM MOTIVO
-      if (pagamento.inscricao?.participante?.email) {
+      // Recarregar dados da inscrição para ter dados frescos
+      if (pagamento.inscricao_id) {
         try {
-          await emailPagamentoRecusado(
-            pagamento.inscricao.participante.email,
-            pagamento.inscricao.participante.nome || "Aluno(a)",
-            pagamento.inscricao.livro?.titulo || "Curso",
-            pagamento.inscricao.turma?.nome || "Turma",
-            texto // motivo já foi validado acima
-          );
+          const { data: inscricaoFresca } = await supabase
+            .from("inscricoes")
+            .select("*, participante:participantes(*), livro:livros(*), turma:turmas(*)")
+            .eq("id", pagamento.inscricao_id)
+            .maybeSingle();
+
+          if (inscricaoFresca?.participante?.email) {
+            await emailPagamentoRecusado(
+              inscricaoFresca.participante.email,
+              inscricaoFresca.participante.nome || "Aluno(a)",
+              inscricaoFresca.livro?.titulo || "Curso",
+              inscricaoFresca.turma?.nome || "Turma",
+              texto // motivo já foi validado acima
+            );
+          }
         } catch (emailError) {
           console.error("Erro ao enviar email:", emailError);
           // Não interrompe o fluxo se o email falhar
@@ -620,15 +638,24 @@ function AdminAprovacoes() {
       if (error) throw error;
 
       // 📧 ENVIAR EMAIL: CURSO INICIADO
-      if (inscricao.participante?.email) {
+      // Recarregar dados da inscrição para ter dados frescos
+      if (inscricao.id) {
         try {
-          await emailInicioCurso(
-            inscricao.participante.email,
-            inscricao.participante.nome || "Aluno(a)",
-            inscricao.livro?.titulo || "Curso",
-            inscricao.turma?.nome || "Turma",
-            inscricao.turma?.data_inicio || new Date().toISOString().split("T")[0]
-          );
+          const { data: inscricaoFresca } = await supabase
+            .from("inscricoes")
+            .select("*, participante:participantes(*), livro:livros(*), turma:turmas(*)")
+            .eq("id", inscricao.id)
+            .maybeSingle();
+
+          if (inscricaoFresca?.participante?.email) {
+            await emailInicioCurso(
+              inscricaoFresca.participante.email,
+              inscricaoFresca.participante.nome || "Aluno(a)",
+              inscricaoFresca.livro?.titulo || "Curso",
+              inscricaoFresca.turma?.nome || "Turma",
+              inscricaoFresca.turma?.data_inicio || new Date().toISOString().split("T")[0]
+            );
+          }
         } catch (emailError) {
           console.error("Erro ao enviar email:", emailError);
           // Não interrompe o fluxo se o email falhar
