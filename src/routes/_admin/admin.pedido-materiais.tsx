@@ -55,14 +55,21 @@ function AdminPedidoMateriaisPage() {
   const livrosQ = useQuery({
     queryKey: ["admin-pedidos-livros"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("livros")
-        .select("id, titulo")
-        .eq("status", "ativo")
-        .order("ordem");
+      try {
+        const { data, error } = await supabase
+          .from("livros")
+          .select("id, titulo")
+          .order("ordem", { ascending: true });
 
-      if (error) throw error;
-      return (data || []) as Livro[];
+        if (error) {
+          console.error("Erro ao carregar livros:", error);
+          throw error;
+        }
+        return (data || []) as Livro[];
+      } catch (err) {
+        console.error("Erro na query livros:", err);
+        throw err;
+      }
     },
   });
 
@@ -73,29 +80,46 @@ function AdminPedidoMateriaisPage() {
     queryFn: async () => {
       if (!filtroLivroId) return [];
 
-      const { data, error } = await supabase
-        .from("inscricoes")
-        .select(
-          `id, 
-           participante_id,
-           participante:participante_id(id, nome, email),
-           status`
-        )
-        .eq("livro_id", filtroLivroId)
-        .eq("status", "confirmada")
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("inscricoes")
+          .select("id, participante_id, livro_id, status")
+          .eq("livro_id", filtroLivroId)
+          .eq("status", "confirmada")
+          .order("created_at", { ascending: false });
 
-      if (error) throw error;
+        if (error) {
+          console.error("Erro ao carregar alunos:", error);
+          throw error;
+        }
 
-      return (
-        data?.map((item: any) => ({
-          id: item.participante_id,
-          nome: item.participante?.nome || "Sem nome",
-          email: item.participante?.email || "Sem email",
-          inscricao_id: item.id,
-          inscricao_status: item.status,
-        })) || []
-      );
+        // Buscar dados dos participantes separadamente
+        if (!data || data.length === 0) return [];
+
+        const participanteIds = data.map((d: any) => d.participante_id);
+        const { data: participantes, error: partError } = await supabase
+          .from("participantes")
+          .select("id, nome, email")
+          .in("id", participanteIds);
+
+        if (partError) throw partError;
+
+        return (
+          data?.map((item: any) => {
+            const part = participantes?.find((p: any) => p.id === item.participante_id);
+            return {
+              id: item.participante_id,
+              nome: part?.nome || "Sem nome",
+              email: part?.email || "Sem email",
+              inscricao_id: item.id,
+              inscricao_status: item.status,
+            };
+          }) || []
+        );
+      } catch (err) {
+        console.error("Erro na query alunos:", err);
+        throw err;
+      }
     },
   });
 
@@ -106,15 +130,22 @@ function AdminPedidoMateriaisPage() {
     queryFn: async () => {
       if (!filtroLivroId) return [];
 
-      const { data, error } = await supabase
-        .from("materiais_compra")
-        .select("id, livro_id, nome, descricao, quantidade")
-        .eq("livro_id", filtroLivroId)
-        .eq("ativo", true)
-        .order("ordem");
+      try {
+        const { data, error } = await supabase
+          .from("materiais_compra")
+          .select("id, livro_id, nome, descricao, quantidade, ordem")
+          .eq("livro_id", filtroLivroId)
+          .order("ordem", { ascending: true });
 
-      if (error) throw error;
-      return (data || []) as MaterialCompra[];
+        if (error) {
+          console.error("Erro ao carregar materiais:", error);
+          throw error;
+        }
+        return (data || []) as MaterialCompra[];
+      } catch (err) {
+        console.error("Erro na query materiais:", err);
+        throw err;
+      }
     },
   });
 
@@ -142,18 +173,32 @@ function AdminPedidoMateriaisPage() {
         throw new Error("Selecione um curso e informe o nome do material");
       }
 
-      const { error } = await supabase
+      console.log("🔵 Adicionando material:", {
+        livro_id: filtroLivroId,
+        nome: novoMaterialNome.trim(),
+        descricao: novoMaterialDesc.trim(),
+        quantidade: 1,
+        ordem: (materiaisQ.data?.length || 0) + 1,
+      });
+
+      const { data, error } = await supabase
         .from("materiais_compra")
         .insert({
           livro_id: filtroLivroId,
           nome: novoMaterialNome.trim(),
-          descricao: novoMaterialDesc.trim() || null,
+          descricao: novoMaterialDesc.trim() || "",
           quantidade: 1,
           ordem: (materiaisQ.data?.length || 0) + 1,
-          ativo: true,
-        });
+        })
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("❌ Erro Supabase:", error);
+        throw error;
+      }
+
+      console.log("✅ Material adicionado:", data);
+      return data;
     },
     onSuccess: () => {
       toast.success("Material adicionado!");
@@ -164,6 +209,7 @@ function AdminPedidoMateriaisPage() {
       });
     },
     onError: (err) => {
+      console.error("Erro total:", err);
       toast.error(err instanceof Error ? err.message : "Erro ao adicionar material");
     },
   });
