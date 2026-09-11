@@ -78,7 +78,7 @@ function AdminPedidoMateriaisPage() {
         .select(
           `id, 
            participante_id,
-           participantes(id, nome, email),
+           participante:participante_id(id, nome, email),
            status`
         )
         .eq("livro_id", filtroLivroId)
@@ -89,9 +89,9 @@ function AdminPedidoMateriaisPage() {
 
       return (
         data?.map((item: any) => ({
-          id: item.participantes.id,
-          nome: item.participantes.nome,
-          email: item.participantes.email,
+          id: item.participante_id,
+          nome: item.participante?.nome || "Sem nome",
+          email: item.participante?.email || "Sem email",
           inscricao_id: item.id,
           inscricao_status: item.status,
         })) || []
@@ -150,6 +150,7 @@ function AdminPedidoMateriaisPage() {
           descricao: novoMaterialDesc.trim() || null,
           quantidade: 1,
           ordem: (materiaisQ.data?.length || 0) + 1,
+          ativo: true,
         });
 
       if (error) throw error;
