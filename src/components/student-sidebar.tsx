@@ -14,6 +14,7 @@ import {
   Award,
   User,
   CheckCircle2,
+  HelpCircle,
 } from "lucide-react";
 
 interface NavItem {
@@ -85,9 +86,9 @@ const navItems: NavItem[] = [
     icon: CreditCard,
   },
   {
-    to: "/certificados",
-    label: "Certificados",
-    icon: Award,
+    to: "/tutorial",
+    label: "Tutorial",
+    icon: HelpCircle,
   },
   {
     to: "/perfil",

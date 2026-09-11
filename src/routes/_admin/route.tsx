@@ -28,6 +28,7 @@ import {
   ChevronDown,
   MessageSquare,
   ShoppingCart,
+  HelpCircle,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_admin")({
@@ -129,6 +130,11 @@ const menuPrincipal: MenuItem[] = [
     to: "/admin/fale-com-adm",
     label: "Fale com ADM",
     icon: MessageSquare,
+  },
+  {
+    to: "/admin/tutorial",
+    label: "Tutorial",
+    icon: HelpCircle,
   },
 ];
 
