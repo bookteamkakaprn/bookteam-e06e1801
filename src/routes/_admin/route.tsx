@@ -27,6 +27,7 @@ import {
   ShieldCheck,
   ChevronDown,
   MessageSquare,
+  ShoppingCart,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_admin")({
@@ -93,6 +94,11 @@ const menuPrincipal: MenuItem[] = [
     to: "/admin/materiais",
     label: "Materiais dos cursos",
     icon: FolderOpen,
+  },
+  {
+    to: "/admin/pedido-materiais",
+    label: "Pedido de materiais",
+    icon: ShoppingCart,
   },
   {
     to: "/admin/presencas",

@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteRouteImport } from './routes/_admin/route'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as LivrosRouteImport } from './routes/livros'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedCalendarioRouteImport } from './routes/_authenticated/calendario'
@@ -46,6 +47,7 @@ import { Route as AdminAdminMateriaisRouteImport } from './routes/_admin/admin.m
 import { Route as AdminAdminMensagensRouteImport } from './routes/_admin/admin.mensagens'
 import { Route as AdminAdminPagamentosRouteImport } from './routes/_admin/admin.pagamentos'
 import { Route as AdminAdminParticipantesRouteImport } from './routes/_admin/admin.participantes'
+import { Route as AdminAdminPedidoMateriaisRouteImport } from './routes/_admin/admin.pedido-materiais'
 import { Route as AdminAdminPresencasRouteImport } from './routes/_admin/admin.presencas'
 import { Route as AdminAdminRelatoriosRouteImport } from './routes/_admin/admin.relatorios'
 import { Route as AdminAdminTurmasRouteImport } from './routes/_admin/admin.turmas'
@@ -68,6 +70,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LivrosRoute = LivrosRouteImport.update({
+  id: '/livros',
+  path: '/livros',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -153,9 +160,9 @@ const CadastroTurmaIdRoute = CadastroTurmaIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const LivrosIdRoute = LivrosIdRouteImport.update({
-  id: '/livros/$id',
-  path: '/livros/$id',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => LivrosRoute,
 } as any)
 const TrilhasIdRoute = TrilhasIdRouteImport.update({
   id: '/trilhas/$id',
@@ -239,6 +246,12 @@ const AdminAdminParticipantesRoute = AdminAdminParticipantesRouteImport.update({
   path: '/admin/participantes',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminAdminPedidoMateriaisRoute =
+  AdminAdminPedidoMateriaisRouteImport.update({
+    id: '/admin/pedido-materiais',
+    path: '/admin/pedido-materiais',
+    getParentRoute: () => AdminRouteRoute,
+  } as any)
 const AdminAdminPresencasRoute = AdminAdminPresencasRouteImport.update({
   id: '/admin/presencas',
   path: '/admin/presencas',
@@ -270,6 +283,7 @@ const AuthenticatedMatriculaInscricaoIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/livros': typeof LivrosRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/calendario': typeof AuthenticatedCalendarioRoute
@@ -302,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/admin/mensagens': typeof AdminAdminMensagensRoute
   '/admin/pagamentos': typeof AdminAdminPagamentosRoute
   '/admin/participantes': typeof AdminAdminParticipantesRoute
+  '/admin/pedido-materiais': typeof AdminAdminPedidoMateriaisRoute
   '/admin/presencas': typeof AdminAdminPresencasRoute
   '/admin/relatorios': typeof AdminAdminRelatoriosRoute
   '/admin/turmas': typeof AdminAdminTurmasRoute
@@ -312,6 +327,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/livros': typeof LivrosRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/calendario': typeof AuthenticatedCalendarioRoute
@@ -344,6 +360,7 @@ export interface FileRoutesByTo {
   '/admin/mensagens': typeof AdminAdminMensagensRoute
   '/admin/pagamentos': typeof AdminAdminPagamentosRoute
   '/admin/participantes': typeof AdminAdminParticipantesRoute
+  '/admin/pedido-materiais': typeof AdminAdminPedidoMateriaisRoute
   '/admin/presencas': typeof AdminAdminPresencasRoute
   '/admin/relatorios': typeof AdminAdminRelatoriosRoute
   '/admin/turmas': typeof AdminAdminTurmasRoute
@@ -357,6 +374,7 @@ export interface FileRoutesById {
   '/_admin': typeof AdminRouteRouteWithChildren
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/livros': typeof LivrosRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/calendario': typeof AuthenticatedCalendarioRoute
@@ -389,6 +407,7 @@ export interface FileRoutesById {
   '/_admin/admin/mensagens': typeof AdminAdminMensagensRoute
   '/_admin/admin/pagamentos': typeof AdminAdminPagamentosRoute
   '/_admin/admin/participantes': typeof AdminAdminParticipantesRoute
+  '/_admin/admin/pedido-materiais': typeof AdminAdminPedidoMateriaisRoute
   '/_admin/admin/presencas': typeof AdminAdminPresencasRoute
   '/_admin/admin/relatorios': typeof AdminAdminRelatoriosRoute
   '/_admin/admin/turmas': typeof AdminAdminTurmasRoute
@@ -401,6 +420,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/livros'
     | '/reset-password'
     | '/sitemap.xml'
     | '/calendario'
@@ -433,6 +453,7 @@ export interface FileRouteTypes {
     | '/admin/mensagens'
     | '/admin/pagamentos'
     | '/admin/participantes'
+    | '/admin/pedido-materiais'
     | '/admin/presencas'
     | '/admin/relatorios'
     | '/admin/turmas'
@@ -443,6 +464,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/livros'
     | '/reset-password'
     | '/sitemap.xml'
     | '/calendario'
@@ -475,6 +497,7 @@ export interface FileRouteTypes {
     | '/admin/mensagens'
     | '/admin/pagamentos'
     | '/admin/participantes'
+    | '/admin/pedido-materiais'
     | '/admin/presencas'
     | '/admin/relatorios'
     | '/admin/turmas'
@@ -487,6 +510,7 @@ export interface FileRouteTypes {
     | '/_admin'
     | '/_authenticated'
     | '/auth'
+    | '/livros'
     | '/reset-password'
     | '/sitemap.xml'
     | '/_authenticated/calendario'
@@ -519,6 +543,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/mensagens'
     | '/_admin/admin/pagamentos'
     | '/_admin/admin/participantes'
+    | '/_admin/admin/pedido-materiais'
     | '/_admin/admin/presencas'
     | '/_admin/admin/relatorios'
     | '/_admin/admin/turmas'
@@ -532,10 +557,10 @@ export interface RootRouteChildren {
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  LivrosRoute: typeof LivrosRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   CadastroTurmaIdRoute: typeof CadastroTurmaIdRoute
-  LivrosIdRoute: typeof LivrosIdRoute
   TrilhasIdRoute: typeof TrilhasIdRoute
 }
 
@@ -567,6 +592,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/livros': {
+      id: '/livros'
+      path: '/livros'
+      fullPath: '/livros'
+      preLoaderRoute: typeof LivrosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -683,10 +715,10 @@ declare module '@tanstack/react-router' {
     }
     '/livros/$id': {
       id: '/livros/$id'
-      path: '/livros/$id'
+      path: '/$id'
       fullPath: '/livros/$id'
       preLoaderRoute: typeof LivrosIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof LivrosRoute
     }
     '/trilhas/$id': {
       id: '/trilhas/$id'
@@ -800,6 +832,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminParticipantesRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/_admin/admin/pedido-materiais': {
+      id: '/_admin/admin/pedido-materiais'
+      path: '/admin/pedido-materiais'
+      fullPath: '/admin/pedido-materiais'
+      preLoaderRoute: typeof AdminAdminPedidoMateriaisRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/_admin/admin/presencas': {
       id: '/_admin/admin/presencas'
       path: '/admin/presencas'
@@ -853,6 +892,7 @@ interface AdminRouteRouteChildren {
   AdminAdminMensagensRoute: typeof AdminAdminMensagensRoute
   AdminAdminPagamentosRoute: typeof AdminAdminPagamentosRoute
   AdminAdminParticipantesRoute: typeof AdminAdminParticipantesRoute
+  AdminAdminPedidoMateriaisRoute: typeof AdminAdminPedidoMateriaisRoute
   AdminAdminPresencasRoute: typeof AdminAdminPresencasRoute
   AdminAdminRelatoriosRoute: typeof AdminAdminRelatoriosRoute
   AdminAdminTurmasRoute: typeof AdminAdminTurmasRoute
@@ -874,6 +914,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAdminMensagensRoute: AdminAdminMensagensRoute,
   AdminAdminPagamentosRoute: AdminAdminPagamentosRoute,
   AdminAdminParticipantesRoute: AdminAdminParticipantesRoute,
+  AdminAdminPedidoMateriaisRoute: AdminAdminPedidoMateriaisRoute,
   AdminAdminPresencasRoute: AdminAdminPresencasRoute,
   AdminAdminRelatoriosRoute: AdminAdminRelatoriosRoute,
   AdminAdminTurmasRoute: AdminAdminTurmasRoute,
@@ -924,15 +965,26 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface LivrosRouteChildren {
+  LivrosIdRoute: typeof LivrosIdRoute
+}
+
+const LivrosRouteChildren: LivrosRouteChildren = {
+  LivrosIdRoute: LivrosIdRoute,
+}
+
+const LivrosRouteWithChildren =
+  LivrosRoute._addFileChildren(LivrosRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  LivrosRoute: LivrosRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   CadastroTurmaIdRoute: CadastroTurmaIdRoute,
-  LivrosIdRoute: LivrosIdRoute,
   TrilhasIdRoute: TrilhasIdRoute,
 }
 export const routeTree = rootRouteImport
