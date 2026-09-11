@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { PagamentoRecusaDialog } from "@/components/pagamento-recusa-dialog";
 
 export const Route = createFileRoute("/_authenticated/pagamentos")({
   head: () => ({
@@ -31,8 +32,12 @@ type PagRow = {
   status: string;
   valor: number;
   comprovante_url: string | null;
+  comprovante_resubmissao_url: string | null;
   comprovante_enviado_em: string | null;
   observacao: string | null;
+  resposta_aluno: string | null;
+  data_resubmissao: string | null;
+  status_resubmissao: string | null;
   created_at: string;
   inscricao:
     | {
@@ -61,6 +66,9 @@ function PagPage() {
   const [uploadandoComprovante, setUploadandoComprovante] = useState<
     string | null
   >(null);
+  const [dialogRecusaAberto, setDialogRecusaAberto] = useState<string | null>(
+    null
+  );
 
   const { data, isLoading, error, refetch } = useQuery({
     enabled: !!user,
@@ -85,7 +93,7 @@ function PagPage() {
       const pagamentosRes = await supabase
         .from("pagamentos")
         .select(
-          "id,status,valor,comprovante_url,observacao,created_at,comprovante_enviado_em,inscricao:inscricoes(id,evento:eventos(id,titulo,data),livro:livros(titulo))"
+          "id,status,valor,comprovante_url,comprovante_resubmissao_url,observacao,resposta_aluno,data_resubmissao,status_resubmissao,created_at,comprovante_enviado_em,inscricao:inscricoes(id,evento:eventos(id,titulo,data),livro:livros(titulo))"
         )
         .in("inscricao_id", ids)
         .order("created_at", { ascending: false });
@@ -312,13 +320,22 @@ function PagPage() {
                 )}
 
                 {p.status === "rejeitado" && p.observacao && (
-                  <div className="mt-3 rounded-md border border-destructive/30 bg-destructive/5 p-3">
-                    <p className="text-xs font-semibold text-destructive">
-                      Motivo da recusa:
-                    </p>
-                    <p className="mt-1 text-sm text-destructive">
-                      {p.observacao}
-                    </p>
+                  <div className="mt-3 space-y-3">
+                    <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+                      <p className="text-xs font-semibold text-destructive">
+                        Motivo da recusa:
+                      </p>
+                      <p className="mt-1 text-sm text-destructive">
+                        {p.observacao}
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => setDialogRecusaAberto(p.id)}
+                      className="gap-2 bg-orange-600 hover:bg-orange-700"
+                    >
+                      📄 Responder com Novo Comprovante
+                    </Button>
                   </div>
                 )}
 
@@ -392,6 +409,30 @@ function PagPage() {
               </div>
             </CardContent>
           </Card>
+        );
+      })}
+
+      {/* Dialogs de Resposta a Recusa */}
+      {pagamentos.map((p) => {
+        if (p.status !== "rejeitado" || !p.inscricao?.livro?.titulo) return null;
+
+        return (
+          <PagamentoRecusaDialog
+            key={`recusa-dialog-${p.id}`}
+            open={dialogRecusaAberto === p.id}
+            onOpenChange={(open) =>
+              setDialogRecusaAberto(open ? p.id : null)
+            }
+            pagamentoId={p.id}
+            aluno={{
+              nome: user?.user_metadata?.nome_completo || "Aluno",
+              email: user?.email || "",
+            }}
+            livroTitulo={p.inscricao.livro.titulo || "Book Team"}
+            valor={p.valor}
+            motivoRecusa={p.observacao || ""}
+            onSuccess={() => refetch()}
+          />
         );
       })}
     </div>

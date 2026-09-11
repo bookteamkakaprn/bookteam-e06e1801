@@ -2,13 +2,15 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 interface EmailPayload {
   to: string;
-  tipo: "pagamento_aprovado" | "pagamento_recusado" | "curso_iniciado" | "inscricao_aprovada" | "inscricao_recusada" | "turma_aberta" | "customizado";
+  tipo: "pagamento_aprovado" | "pagamento_recusado" | "curso_iniciado" | "inscricao_aprovada" | "inscricao_recusada" | "turma_aberta" | "comprovante_resubmetido" | "customizado";
   nome: string;
   livro?: string;
   turma?: string;
   motivo?: string;
   valor?: number;
   data_inicio?: string;
+  aluno_email?: string;
+  pagamento_id?: string;
   assunto?: string;
   mensagem?: string;
 }
@@ -49,6 +51,11 @@ function getEmailTemplate(payload: EmailPayload) {
       return {
         subject: "🎉 A Turma Que Você Aguardava Abriu!",
         html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f9f9f9;padding:20px"><div style="background:white;border-radius:12px;padding:30px"><h1 style="color:#d4af37;margin:0">🎉 TURMA ABERTA!</h1><p style="font-size:16px;color:#333;margin:20px 0">Olá <strong>${payload.nome}</strong>,</p><p style="font-size:16px;color:#333;margin:20px 0">A turma que você aguardava agora está aberta! 🚀</p><div style="background:#f5f5f5;padding:20px;border-left:4px solid #d4af37;border-radius:4px;margin:30px 0"><p style="margin:10px 0;font-size:15px"><strong>Curso:</strong> ${payload.livro}</p><p style="margin:10px 0;font-size:15px"><strong>Turma:</strong> ${payload.turma}</p>${payload.data_inicio ? `<p style="margin:10px 0;font-size:15px"><strong>Inicia em:</strong> ${new Date(payload.data_inicio).toLocaleDateString("pt-BR")}</p>` : ""}</div><p style="font-size:16px;color:#333;margin:20px 0"><strong>Não perca! Vagas são limitadas!</strong></p><div style="text-align:center;margin:30px 0"><a href="https://ministeriobookteam.com.br" style="background:#d4af37;color:#000;padding:12px 30px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold">✨ Inscreva-se Agora</a></div><hr style="border:none;border-top:1px solid #ddd;margin:30px 0"><p style="font-size:12px;color:#999;text-align:center;margin:0">Book Team — Jornada de Transformação<br>ministeriobookteam.com.br</p></div></div>`
+      };
+    case "comprovante_resubmetido":
+      return {
+        subject: `📄 Novo Comprovante Enviado — ${payload.nome}`,
+        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f9f9f9;padding:20px"><div style="background:white;border-radius:12px;padding:30px"><h1 style="color:#d4af37;margin:0">📄 COMPROVANTE REENVIADO</h1><p style="font-size:16px;color:#333;margin:20px 0">Um aluno resubmeteu o comprovante de pagamento!</p><div style="background:#f5f5f5;padding:20px;border-left:4px solid #d4af37;border-radius:4px;margin:30px 0"><p style="margin:10px 0;font-size:15px"><strong>Aluno:</strong> ${payload.nome}</p><p style="margin:10px 0;font-size:15px"><strong>Email:</strong> <a href="mailto:${payload.aluno_email}">${payload.aluno_email}</a></p><p style="margin:10px 0;font-size:15px"><strong>Curso:</strong> ${payload.livro}</p><p style="margin:10px 0;font-size:15px"><strong>Valor:</strong> R$ ${payload.valor?.toFixed(2) || "0,00"}</p><p style="margin:10px 0;font-size:15px"><strong>ID Pagamento:</strong> ${payload.pagamento_id}</p></div><p style="font-size:16px;color:#333;margin:20px 0"><strong>⚠️ Ação Necessária:</strong> Revise o novo comprovante no painel de aprovações.</p><div style="text-align:center;margin:30px 0"><a href="https://ministeriobookteam.com.br/admin/inscricoes" style="background:#d4af37;color:#000;padding:12px 30px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:bold">🔍 Ver Aprovações</a></div><hr style="border:none;border-top:1px solid #ddd;margin:30px 0"><p style="font-size:12px;color:#999;text-align:center;margin:0">Book Team — Jornada de Transformação</p></div></div>`
       };
     default:
       return {
