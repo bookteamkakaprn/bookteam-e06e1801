@@ -146,8 +146,6 @@ function MinhasInscricoesPage() {
   const abas = [
     { id: "confirmadas", label: "Confirmadas", count: confirmadasFiltradas.length },
     { id: "aguardando", label: "Aguardando", count: aguardandoFiltradas.length },
-    { id: "presenca", label: "Presença", count: confirmadasFiltradas.length },
-    { id: "certificado", label: "Certificados", count: 1 },
     { id: "rejeitadas", label: "Rejeitadas", count: rejeitadasFiltradas.length },
     { id: "canceladas", label: "Canceladas", count: canceladasFiltradas.length },
     { id: "pagamentos-aprovados", label: "Pagamentos Aprovados", count: pagamentosAprovados.length },
@@ -160,10 +158,6 @@ function MinhasInscricoesPage() {
         return confirmadasFiltradas;
       case "aguardando":
         return aguardandoFiltradas;
-      case "presenca":
-        return confirmadasFiltradas; // Mostrar cursos confirmados para marcar presença
-      case "certificado":
-        return []; // Vai ser tratado de forma especial abaixo
       case "rejeitadas":
         return rejeitadasFiltradas;
       case "canceladas":
@@ -226,49 +220,7 @@ function MinhasInscricoesPage() {
         <p className="text-sm text-muted-foreground">Carregando inscrições...</p>
       )}
 
-      {abaSelecionada === "certificado" && !carregandoInscricoes && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Jornada Book Team — 10 Cursos</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-sm font-semibold">Progresso da Jornada</p>
-                <p className="text-sm text-muted-foreground">{confirmadasFiltradas.length} de 10 cursos completos</p>
-              </div>
-              <div className="h-3 w-full overflow-hidden rounded-full bg-secondary">
-                <div
-                  className="h-full bg-green-500 transition-all duration-500"
-                  style={{ width: `${(confirmadasFiltradas.length / 10) * 100}%` }}
-                />
-              </div>
-            </div>
 
-            {confirmadasFiltradas.length === 10 && (
-              <div className="rounded-lg bg-green-500/10 p-4 text-green-700">
-                <p className="font-semibold">✅ Parabéns! Você completou a Jornada!</p>
-                <p className="text-sm">Seu certificado está pronto para download.</p>
-              </div>
-            )}
-
-            {confirmadasFiltradas.length < 10 && (
-              <div className="rounded-lg bg-yellow-500/10 p-4 text-yellow-700">
-                <p className="font-semibold">⏳ Faltam {10 - confirmadasFiltradas.length} cursos para completar a jornada</p>
-                <p className="text-sm">O certificado será entregue após completar todos os 10 cursos.</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {abaSelecionada === "presenca" && !carregandoInscricoes && confirmadasFiltradas.length === 0 && (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            Você ainda não tem nenhum curso confirmado. Quando confirmar, sua presença aparecerá aqui.
-          </CardContent>
-        </Card>
-      )}
 
       {abaSelecionada !== "certificado" && !carregandoInscricoes && dados.length === 0 && (
         <Card>
@@ -279,12 +231,6 @@ function MinhasInscricoesPage() {
       )}
 
       <div className="space-y-3">
-        {abaSelecionada === "presenca" && !carregandoInscricoes && confirmadasFiltradas.length > 0 && (
-          <div className="rounded-lg bg-blue-500/10 p-4 text-blue-700">
-            <p className="text-sm font-semibold">📋 Sua Presença nos Cursos</p>
-            <p className="text-xs">A presença é marcada pelo admin durante as aulas. Você pode acompanhar aqui.</p>
-          </div>
-        )}
         {dados.map((inscricao) => {
           const pag = temPagamento ? inscricao.pagamentos?.[0] : null;
           const titulo = inscricao.evento?.titulo || inscricao.livro?.titulo || inscricao.turma?.nome || "Inscrição não informada";
@@ -374,13 +320,6 @@ function MinhasInscricoesPage() {
                       <div className="mt-2 rounded-md border border-destructive/30 bg-destructive/5 p-2">
                         <p className="text-xs font-semibold text-destructive">Observação do admin:</p>
                         <p className="text-xs text-destructive">{pag.observacao}</p>
-                      </div>
-                    )}
-
-                    {abaSelecionada === "presenca" && (
-                      <div className="mt-2 rounded-md border border-blue-500/30 bg-blue-500/5 p-2">
-                        <p className="text-xs font-semibold text-blue-600">Presença:</p>
-                        <p className="text-xs text-blue-600">✓ Você está inscrito neste curso. Presença marcada pelo admin.</p>
                       </div>
                     )}
                   </div>

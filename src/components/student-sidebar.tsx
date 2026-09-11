@@ -13,6 +13,7 @@ import {
   CreditCard,
   Award,
   User,
+  CheckCircle2,
 } from "lucide-react";
 
 interface NavItem {
@@ -32,6 +33,16 @@ const navItems: NavItem[] = [
     to: "/minhas-inscricoes",
     label: "Minhas inscrições",
     icon: BookOpen,
+  },
+  {
+    to: "/presenca",
+    label: "Presença",
+    icon: CheckCircle2,
+  },
+  {
+    to: "/certificados",
+    label: "Certificados",
+    icon: Award,
   },
   {
     to: "/cursos",
