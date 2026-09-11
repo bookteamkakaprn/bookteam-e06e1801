@@ -144,7 +144,7 @@ function LivroDetalhesPage() {
         <BookOpen className="mx-auto h-12 w-12 text-gold" />
         <h1 className="mt-5 font-serif text-3xl font-semibold">Livro não encontrado</h1>
         <Button asChild className="mt-6 bg-gold text-primary-foreground">
-          <Link to="/">Voltar para os livros</Link>
+          <Link to="/livros">Voltar para os livros</Link>
         </Button>
       </div>
     );
@@ -172,7 +172,7 @@ function LivroDetalhesPage() {
       <header className="border-b border-border/50 bg-background/95 backdrop-blur">
         <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-3 px-3 sm:px-4 md:px-8">
           <Link
-            to="/"
+            to="/livros"
             className="inline-flex min-w-0 items-center gap-2 text-xs text-foreground/70 hover:text-gold sm:text-sm"
           >
             <ArrowLeft className="h-4 w-4 shrink-0" />
