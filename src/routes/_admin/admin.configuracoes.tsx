@@ -98,10 +98,26 @@ function ConfiguracoesAdmin() {
       </div>
 
       <Tabs defaultValue="config" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="config">Configurações Gerais</TabsTrigger>
-          <TabsTrigger value="depoimentos">Depoimentos</TabsTrigger>
-          <TabsTrigger value="faq">FAQ</TabsTrigger>
+        <TabsList className="grid h-auto w-full grid-cols-3 gap-1 p-1">
+          <TabsTrigger
+            value="config"
+            className="min-w-0 px-2 py-2 text-xs leading-tight sm:text-sm"
+          >
+            <span className="sm:hidden">Geral</span>
+            <span className="hidden sm:inline">Configurações Gerais</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="depoimentos"
+            className="min-w-0 px-2 py-2 text-xs leading-tight sm:text-sm"
+          >
+            Depoimentos
+          </TabsTrigger>
+          <TabsTrigger
+            value="faq"
+            className="min-w-0 px-2 py-2 text-xs leading-tight sm:text-sm"
+          >
+            FAQ
+          </TabsTrigger>
         </TabsList>
 
         {/* ===== CONFIG GERAL ===== */}
@@ -112,7 +128,7 @@ function ConfiguracoesAdmin() {
               <CardDescription>Informações que aparecem no rodapé da página</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Instagram</Label>
                   <Input
