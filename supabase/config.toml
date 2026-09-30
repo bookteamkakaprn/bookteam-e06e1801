@@ -1,1 +1,4 @@
 project_id = "emkgunwduespgukytkae"
+
+[functions.cleanup-bookteam-comprovantes]
+verify_jwt = false
