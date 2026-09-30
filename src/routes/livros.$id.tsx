@@ -28,6 +28,18 @@ type Livro = {
   categoria: string | null;
   ordem: number | null;
   capa_url: string | null;
+  descricao: string | null;
+  objetivo: string | null;
+  publico_alvo: string | null;
+  conteudo_programatico: string | null;
+  competencias: string | null;
+  qtd_encontros: number | null;
+  duracao: string | null;
+  material_necessario: string | null;
+  professor: string | null;
+  coordenador: string | null;
+  ano: number | null;
+  datas_curriculo: string | null;
 };
 type Turma = {
   id: string;
@@ -55,7 +67,7 @@ function LivroDetalhesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("livros")
-        .select("id,titulo,autor,categoria,ordem,capa_url")
+        .select("id,titulo,autor,categoria,ordem,capa_url,descricao,objetivo,publico_alvo,conteudo_programatico,competencias,qtd_encontros,duracao,material_necessario,professor,coordenador,ano,datas_curriculo")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
@@ -229,6 +241,28 @@ function LivroDetalhesPage() {
                 {livro.autor}
               </p>
             )}
+            {(livro?.descricao || livro?.objetivo || livro?.publico_alvo || livro?.conteudo_programatico || livro?.competencias || livro?.qtd_encontros || livro?.duracao || livro?.material_necessario || livro?.professor || livro?.coordenador || livro?.ano || livro?.datas_curriculo) && (
+              <section className="mt-7 space-y-4">
+                <h2 className="font-serif text-xl font-semibold sm:text-2xl">Sobre este curso</h2>
+                {livro.descricao && <p className="text-sm leading-6 text-muted-foreground">{livro.descricao}</p>}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {livro.objetivo && <div className="rounded-xl border border-border/60 bg-card/50 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-gold">Objetivo</p><p className="mt-1 text-sm leading-6 text-muted-foreground">{livro.objetivo}</p></div>}
+                  {livro.publico_alvo && <div className="rounded-xl border border-border/60 bg-card/50 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-gold">Público-alvo</p><p className="mt-1 text-sm leading-6 text-muted-foreground">{livro.publico_alvo}</p></div>}
+                  {livro.conteudo_programatico && <div className="rounded-xl border border-border/60 bg-card/50 p-4 sm:col-span-2"><p className="text-xs font-semibold uppercase tracking-wider text-gold">Conteúdo programático</p><p className="mt-1 whitespace-pre-line text-sm leading-6 text-muted-foreground">{livro.conteudo_programatico}</p></div>}
+                  {livro.competencias && <div className="rounded-xl border border-border/60 bg-card/50 p-4 sm:col-span-2"><p className="text-xs font-semibold uppercase tracking-wider text-gold">Competências</p><p className="mt-1 whitespace-pre-line text-sm leading-6 text-muted-foreground">{livro.competencias}</p></div>}
+                </div>
+                <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                  {livro.qtd_encontros != null && <span>Encontros: {livro.qtd_encontros}</span>}
+                  {livro.duracao && <span>Duração: {livro.duracao}</span>}
+                  {livro.material_necessario && <span>Material necessário: {livro.material_necessario}</span>}
+                  {livro.professor && <span>Professor: {livro.professor}</span>}
+                  {livro.coordenador && <span>Coordenador: {livro.coordenador}</span>}
+                  {livro.ano && <span>Ano: {livro.ano}</span>}
+                  {livro.datas_curriculo && <span className="sm:col-span-2">Datas: {livro.datas_curriculo}</span>}
+                </div>
+              </section>
+            )}
+
             <section className="mt-7">
               <h2 className="font-serif text-xl font-semibold sm:text-2xl">Próximas turmas</h2>
               <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
