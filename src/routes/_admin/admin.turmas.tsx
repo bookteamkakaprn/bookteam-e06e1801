@@ -355,7 +355,7 @@ function AdminTurmasPage() {
                       </option>
                     ))}
                   </select>
-
+                </div>
 
                 <div className="space-y-1.5">
                   <Label htmlFor="dia_semana">Dia da semana</Label>
@@ -382,7 +382,7 @@ function AdminTurmasPage() {
                   <p className="text-xs text-muted-foreground">
                     Usado para gerar automaticamente os dias de aula na lista de presença.
                   </p>
-                </div>                </div>
+                </div>
               </div>
 
               <div className="flex gap-2">
