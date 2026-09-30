@@ -183,7 +183,7 @@ function AdminControlePagamentos() {
     return {
       aprovados: pagamentos.filter((p) => p.status === "aprovado"),
       rejeitados: pagamentos.filter((p) => p.status === "rejeitado"),
-      estornados: pagamentos.filter((p) => p.status === "rejeitado"),
+      estornados: pagamentos.filter((p) => p.status === "aguardando"),
     };
   }, [pagamentos]);
 
