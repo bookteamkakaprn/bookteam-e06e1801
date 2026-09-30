@@ -111,49 +111,27 @@ function AdminControlePagamentos() {
   const [expandedAluno, setExpandedAluno] = useState<string | null>(null);
 
   // Query Pagamentos
-  // Mantemos a consulta de pagamentos independente dos relacionamentos
-  // para que um problema no JOIN de inscrição/livro nunca esconda
-  // um pagamento aprovado do total financeiro.
+  // Usa o mesmo relacionamento já utilizado no módulo de aprovação,
+  // garantindo que curso, aluno e valor do pagamento venham juntos.
   const pagamentosQ = useQuery({
     queryKey: ["admin-pagamentos"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pagamentos")
-        .select("id, valor, status, created_at, participante_id, evento_id, inscricao_id")
+        .select(
+          `id, status, valor, created_at, participante_id, evento_id, inscricao_id,
+           inscricao:inscricoes(
+             id, status, livro_id,
+             participante:participantes(id, nome, email, data_nascimento),
+             livro:livros(id, titulo),
+             turma:turmas(id, nome)
+           )`
+        )
         .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      const pagamentosBase = (data ?? []) as Pagamento[];
-      const inscricaoIds = Array.from(
-        new Set(
-          pagamentosBase
-            .map((p) => p.inscricao_id)
-            .filter((id): id is string => Boolean(id))
-        )
-      );
-
-      if (inscricaoIds.length === 0) return pagamentosBase;
-
-      const { data: inscricoesRelacionadas, error: inscricoesError } = await supabase
-        .from("inscricoes")
-        .select(
-          `id, status, livro_id,
-           livro:livros(id, titulo),
-           participante:participantes(id, nome, email, data_nascimento)`
-        )
-        .in("id", inscricaoIds);
-
-      if (inscricoesError) throw inscricoesError;
-
-      const porId = new Map(
-        (inscricoesRelacionadas ?? []).map((i: any) => [i.id, i])
-      );
-
-      return pagamentosBase.map((p) => ({
-        ...p,
-        inscricao: p.inscricao_id ? porId.get(p.inscricao_id) ?? null : null,
-      })) as Pagamento[];
+      return (data ?? []) as unknown as Pagamento[];
     },
   });
 
