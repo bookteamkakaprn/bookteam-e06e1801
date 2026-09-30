@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Archive, Download, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Turma = Tables<"turmas">;
@@ -140,6 +140,103 @@ function AdminTurmasPage() {
     },
     onError: (e: unknown) =>
       toast.error(e instanceof Error ? e.message : "Erro ao salvar"),
+  });
+
+  const baixarComprovantes = useMutation({
+    mutationFn: async (turma: Turma) => {
+      const { data: inscricoes, error: inscricoesError } = await supabase
+        .from("inscricoes")
+        .select("id")
+        .eq("turma_id", turma.id);
+
+      if (inscricoesError) throw inscricoesError;
+
+      const inscricaoIds = (inscricoes ?? []).map((i) => i.id);
+      if (inscricaoIds.length === 0) return 0;
+
+      const { data: comprovantes, error: comprovantesError } = await supabase
+        .from("pagamentos")
+        .select("id, comprovante_url, inscricao_id, participante:participantes(nome)")
+        .in("inscricao_id", inscricaoIds)
+        .not("comprovante_url", "is", null);
+
+      if (comprovantesError) throw comprovantesError;
+
+      let baixados = 0;
+
+      for (const pagamento of comprovantes ?? []) {
+        if (!pagamento.comprovante_url) continue;
+
+        const { data: arquivo, error: downloadError } = await supabase.storage
+          .from("comprovantes")
+          .download(pagamento.comprovante_url);
+
+        if (downloadError || !arquivo) continue;
+
+        const participante = Array.isArray(pagamento.participante)
+          ? pagamento.participante[0]
+          : pagamento.participante;
+
+        const nome = (participante?.nome ?? "aluno")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9]+/g, "-")
+          .replace(/^-|-$/g, "")
+          .toLowerCase();
+
+        const ext = pagamento.comprovante_url.split(".").pop() ?? "bin";
+        const link = document.createElement("a");
+        const objectUrl = URL.createObjectURL(arquivo);
+
+        link.href = objectUrl;
+        link.download = "BookTeam-" + (turma.nome ?? "Turma") + "-" + nome + "-" + pagamento.id + "." + ext;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(objectUrl);
+
+        baixados += 1;
+        await new Promise((resolve) => setTimeout(resolve, 350));
+      }
+
+      return baixados;
+    },
+    onSuccess: (total) => {
+      toast.success(
+        total > 0
+          ? total + " comprovante(s) baixado(s). Salve-os na pasta da turma antes de finalizar."
+          : "Nenhum comprovante encontrado para esta turma.",
+      );
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Erro ao baixar comprovantes"),
+  });
+
+  const finalizarTurma = useMutation({
+    mutationFn: async (turma: Turma) => {
+      if (
+        !window.confirm(
+          "Finalizar " + (turma.nome ?? "esta turma") + "?\n\nA turma deixará de aparecer para novas inscrições. Baixe os comprovantes antes de finalizar.",
+        )
+      ) {
+        return false;
+      }
+
+      const { error } = await supabase
+        .from("turmas")
+        .update({ status: "finalizada", ativo: false })
+        .eq("id", turma.id);
+
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: (ok) => {
+      if (!ok) return;
+      toast.success("Turma finalizada e fechada para novas inscrições.");
+      qc.invalidateQueries({ queryKey: ["admin-turmas", livroAtual] });
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Erro ao finalizar turma"),
   });
 
   const excluir = useMutation({
@@ -331,23 +428,51 @@ function AdminTurmasPage() {
                   </p>
                 </div>
 
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setEditando(t)}
-                  >
-                    Editar
-                  </Button>
+                <div className="flex flex-wrap justify-end gap-2">
+                  {t.status === "finalizada" ? (
+                    <Badge variant="secondary" className="gap-1">
+                      <Archive className="h-3.5 w-3.5" />
+                      Finalizada
+                    </Badge>
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => baixarComprovantes.mutate(t)}
+                        disabled={baixarComprovantes.isPending}
+                      >
+                        <Download className="mr-1 h-4 w-4" />
+                        Baixar comprovantes
+                      </Button>
 
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => excluir.mutate(t.id)}
-                    disabled={excluir.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => finalizarTurma.mutate(t)}
+                        disabled={finalizarTurma.isPending}
+                      >
+                        <Archive className="mr-1 h-4 w-4" />
+                        Finalizar turma
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditando(t)}
+                      >
+                        Editar
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => excluir.mutate(t.id)}
+                        disabled={excluir.isPending}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
