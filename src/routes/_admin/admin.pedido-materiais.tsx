@@ -1,11 +1,9 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -14,15 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Loader2, CheckCircle2, Clock, Package, Plus, Trash2 } from "lucide-react";
+import { Loader2, Download, Package } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_admin/admin/pedido-materiais")({
@@ -30,480 +20,325 @@ export const Route = createFileRoute("/_admin/admin/pedido-materiais")({
 });
 
 type Livro = { id: string; titulo: string };
-type Aluno = { 
+type Turma = {
   id: string;
   nome: string;
-  email: string;
-  inscricao_id: string;
-  inscricao_status: string;
+  livro_id: string;
+  data_inicio: string | null;
+  data_fim: string | null;
 };
-type MaterialCompra = {
+type Material = {
   id: string;
   livro_id: string;
-  nome: string;
+  modulo: number;
+  titulo: string;
   descricao: string | null;
-  quantidade: number;
+  arquivo_nome: string | null;
 };
 
 function AdminPedidoMateriaisPage() {
-  const qc = useQueryClient();
-  const [filtroLivroId, setFiltroLivroId] = useState("");
-  const [novoMaterialNome, setNovoMaterialNome] = useState("");
-  const [novoMaterialDesc, setNovoMaterialDesc] = useState("");
+  const [livroId, setLivroId] = useState("");
+  const [turmaId, setTurmaId] = useState("");
 
-  // Carregar livros/cursos
   const livrosQ = useQuery({
-    queryKey: ["admin-pedidos-livros"],
+    queryKey: ["admin-pedido-materiais-livros"],
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from("livros")
-          .select("id, titulo")
-          .order("ordem", { ascending: true });
-
-        if (error) {
-          console.error("Erro ao carregar livros:", error);
-          throw error;
-        }
-        return (data || []) as Livro[];
-      } catch (err) {
-        console.error("Erro na query livros:", err);
-        throw err;
-      }
+      const { data, error } = await supabase
+        .from("livros")
+        .select("id, titulo")
+        .order("ordem", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Livro[];
     },
   });
 
-  // Carregar alunos inscritos no curso selecionado
+  const turmasQ = useQuery({
+    queryKey: ["admin-pedido-materiais-turmas", livroId],
+    enabled: !!livroId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("turmas")
+        .select("id, nome, livro_id, data_inicio, data_fim")
+        .eq("livro_id", livroId)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Turma[];
+    },
+  });
+
+  const turmaSelecionada = useMemo(
+    () => (turmasQ.data ?? []).find((turma) => turma.id === turmaId) ?? null,
+    [turmasQ.data, turmaId],
+  );
+
   const alunosQ = useQuery({
-    queryKey: ["admin-pedidos-alunos", filtroLivroId],
-    enabled: !!filtroLivroId,
+    queryKey: ["admin-pedido-materiais-alunos", turmaId],
+    enabled: !!turmaId,
     queryFn: async () => {
-      if (!filtroLivroId) return [];
-
-      try {
-        const { data, error } = await supabase
-          .from("inscricoes")
-          .select("id, participante_id, livro_id, status")
-          .eq("livro_id", filtroLivroId)
-          .eq("status", "confirmada")
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error("Erro ao carregar alunos:", error);
-          throw error;
-        }
-
-        // Buscar dados dos participantes separadamente
-        if (!data || data.length === 0) return [];
-
-        const participanteIds = data.map((d: any) => d.participante_id);
-        const { data: participantes, error: partError } = await supabase
-          .from("participantes")
-          .select("id, nome, email")
-          .in("id", participanteIds);
-
-        if (partError) throw partError;
-
-        return (
-          data?.map((item: any) => {
-            const part = participantes?.find((p: any) => p.id === item.participante_id);
-            return {
-              id: item.participante_id,
-              nome: part?.nome || "Sem nome",
-              email: part?.email || "Sem email",
-              inscricao_id: item.id,
-              inscricao_status: item.status,
-            };
-          }) || []
-        );
-      } catch (err) {
-        console.error("Erro na query alunos:", err);
-        throw err;
-      }
-    },
-  });
-
-  // Carregar materiais de compra do curso
-  const materiaisQ = useQuery({
-    queryKey: ["admin-pedidos-materiais", filtroLivroId],
-    enabled: !!filtroLivroId,
-    queryFn: async () => {
-      if (!filtroLivroId) return [];
-
-      try {
-        const { data, error } = await supabase
-          .from("materiais_compra")
-          .select("id, livro_id, nome, descricao, quantidade, ordem")
-          .eq("livro_id", filtroLivroId)
-          .order("ordem", { ascending: true });
-
-        if (error) {
-          console.error("Erro ao carregar materiais:", error);
-          throw error;
-        }
-        return (data || []) as MaterialCompra[];
-      } catch (err) {
-        console.error("Erro na query materiais:", err);
-        throw err;
-      }
-    },
-  });
-
-  // Carregar pedidos dos alunos
-  const pedidosQ = useQuery({
-    queryKey: ["admin-pedidos-status", filtroLivroId],
-    enabled: !!filtroLivroId,
-    queryFn: async () => {
-      if (!filtroLivroId) return [];
-
       const { data, error } = await supabase
-        .from("pedidos_alunos")
-        .select("id, inscricao_id, participante_id, status, data_entrega")
-        .eq("livro_id", filtroLivroId);
-
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  // Adicionar novo material ao curso
-  const adicionarMaterial = useMutation({
-    mutationFn: async () => {
-      if (!filtroLivroId || !novoMaterialNome.trim()) {
-        throw new Error("Selecione um curso e informe o nome do material");
-      }
-
-      console.log("🔵 Adicionando material:", {
-        livro_id: filtroLivroId,
-        nome: novoMaterialNome.trim(),
-        descricao: novoMaterialDesc.trim(),
-        quantidade: 1,
-        ordem: (materiaisQ.data?.length || 0) + 1,
-      });
-
-      const { data, error } = await supabase
-        .from("materiais_compra")
-        .insert({
-          livro_id: filtroLivroId,
-          nome: novoMaterialNome.trim(),
-          descricao: novoMaterialDesc.trim() || "",
-          quantidade: 1,
-          ordem: (materiaisQ.data?.length || 0) + 1,
-        })
-        .select();
-
-      if (error) {
-        console.error("❌ Erro Supabase:", error);
-        throw error;
-      }
-
-      console.log("✅ Material adicionado:", data);
-      return data;
-    },
-    onSuccess: () => {
-      toast.success("Material adicionado!");
-      setNovoMaterialNome("");
-      setNovoMaterialDesc("");
-      qc.invalidateQueries({
-        queryKey: ["admin-pedidos-materiais", filtroLivroId],
-      });
-    },
-    onError: (err) => {
-      console.error("Erro total:", err);
-      toast.error(err instanceof Error ? err.message : "Erro ao adicionar material");
-    },
-  });
-
-  // Criar pedido para aluno
-  const criarPedido = useMutation({
-    mutationFn: async (aluno: Aluno) => {
-      // Verifica se já existe pedido
-      const { data: existente } = await supabase
-        .from("pedidos_alunos")
+        .from("inscricoes")
         .select("id")
-        .eq("inscricao_id", aluno.inscricao_id)
-        .eq("livro_id", filtroLivroId)
-        .single();
-
-      if (existente) {
-        throw new Error("Pedido já existe para este aluno");
-      }
-
-      const { error } = await supabase
-        .from("pedidos_alunos")
-        .insert({
-          inscricao_id: aluno.inscricao_id,
-          participante_id: aluno.id,
-          livro_id: filtroLivroId,
-          status: "pendente",
-        });
-
+        .eq("turma_id", turmaId)
+        .eq("status", "confirmada");
       if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({
-        queryKey: ["admin-pedidos-status", filtroLivroId],
-      });
-    },
-    onError: (err) => {
-      toast.error(err instanceof Error ? err.message : "Erro ao criar pedido");
+      return data ?? [];
     },
   });
 
-  // Marcar como entregue
-  const marcarEntregue = useMutation({
-    mutationFn: async (pedidoId: string) => {
-      const { error } = await supabase
-        .from("pedidos_alunos")
-        .update({ status: "entregue", data_entrega: new Date().toISOString() })
-        .eq("id", pedidoId);
-
+  const materiaisQ = useQuery({
+    queryKey: ["admin-pedido-materiais-materiais", livroId],
+    enabled: !!livroId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("materiais")
+        .select("id, livro_id, modulo, titulo, descricao, arquivo_nome")
+        .eq("livro_id", livroId)
+        .order("modulo", { ascending: true })
+        .order("created_at", { ascending: true });
       if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({
-        queryKey: ["admin-pedidos-status", filtroLivroId],
-      });
-      toast.success("Marcado como entregue!");
+      return (data ?? []) as Material[];
     },
   });
 
-  // Deletar material
-  const deletarMaterial = useMutation({
-    mutationFn: async (materialId: string) => {
-      const { error } = await supabase
-        .from("materiais_compra")
-        .delete()
-        .eq("id", materialId);
+  const quantidadeAlunos = alunosQ.data?.length ?? 0;
 
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({
-        queryKey: ["admin-pedidos-materiais", filtroLivroId],
-      });
-      toast.success("Material removido!");
-    },
-  });
+  const gerarPedido = () => {
+    if (!turmaSelecionada) {
+      toast.error("Selecione uma turma.");
+      return;
+    }
 
-  const getPedido = (inscricaoId: string) => {
-    return (pedidosQ.data || []).find((p: any) => p.inscricao_id === inscricaoId);
+    if (quantidadeAlunos === 0) {
+      toast.error("Esta turma não possui alunos confirmados.");
+      return;
+    }
+
+    window.print();
   };
 
   return (
-    <div className="space-y-6">
-      <div>
+    <div className="space-y-6 print:space-y-4">
+      <div className="print:hidden">
         <h1 className="text-2xl font-bold">Pedido de Materiais</h1>
         <p className="text-sm text-muted-foreground">
-          Gerencie os materiais que os alunos precisam comprar (livros, agendas, etc)
+          Gere a quantidade de materiais necessária para cada turma com base nos alunos confirmados.
         </p>
       </div>
 
-      {/* FILTRO POR CURSO */}
-      <Card>
+      <Card className="print:hidden">
         <CardHeader>
-          <CardTitle className="text-base">Selecionar Curso</CardTitle>
+          <CardTitle className="text-base">Selecionar turma</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Select value={filtroLivroId} onValueChange={setFiltroLivroId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Escolha um curso..." />
-            </SelectTrigger>
-            <SelectContent>
-              {(livrosQ.data || []).map((livro) => (
-                <SelectItem key={livro.id} value={livro.id}>
-                  {livro.titulo}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label>Curso / Livro</Label>
+            <Select
+              value={livroId}
+              onValueChange={(value) => {
+                setLivroId(value);
+                setTurmaId("");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o curso..." />
+              </SelectTrigger>
+              <SelectContent>
+                {(livrosQ.data ?? []).map((livro) => (
+                  <SelectItem key={livro.id} value={livro.id}>
+                    {livro.titulo}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Turma</Label>
+            <Select
+              value={turmaId}
+              onValueChange={setTurmaId}
+              disabled={!livroId || turmasQ.isLoading}
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    turmasQ.isLoading
+                      ? "Carregando turmas..."
+                      : "Selecione a turma..."
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {(turmasQ.data ?? []).map((turma) => (
+                  <SelectItem key={turma.id} value={turma.id}>
+                    {turma.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
-      {filtroLivroId && (
+      {turmaSelecionada && (
         <>
-          {/* ADICIONAR NOVO MATERIAL */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Adicionar Material ao Curso</CardTitle>
+              <CardTitle className="text-lg">
+                Pedido — {turmaSelecionada.nome}
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label>Nome do material</Label>
-                  <Input
-                    placeholder="Ex: Livro do Consórcio"
-                    value={novoMaterialNome}
-                    onChange={(e) => setNovoMaterialNome(e.target.value)}
-                  />
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border p-4">
+                  <p className="text-xs text-muted-foreground">Curso</p>
+                  <p className="mt-1 font-medium">
+                    {livrosQ.data?.find((l) => l.id === livroId)?.titulo ?? "Curso"}
+                  </p>
                 </div>
-                <div className="space-y-1.5">
-                  <Label>Descrição (opcional)</Label>
-                  <Input
-                    placeholder="Ex: Edição 2025"
-                    value={novoMaterialDesc}
-                    onChange={(e) => setNovoMaterialDesc(e.target.value)}
-                  />
+
+                <div className="rounded-lg border p-4">
+                  <p className="text-xs text-muted-foreground">
+                    Alunos confirmados
+                  </p>
+                  <p className="mt-1 text-2xl font-bold">
+                    {alunosQ.isLoading ? "..." : quantidadeAlunos}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border p-4">
+                  <p className="text-xs text-muted-foreground">
+                    Materiais cadastrados
+                  </p>
+                  <p className="mt-1 text-2xl font-bold">
+                    {materiaisQ.isLoading ? "..." : materiaisQ.data?.length ?? 0}
+                  </p>
                 </div>
               </div>
-              <Button
-                className="mt-4 gap-2"
-                onClick={() => adicionarMaterial.mutate()}
-                disabled={adicionarMaterial.isPending || !novoMaterialNome}
-              >
-                {adicionarMaterial.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-                Adicionar Material
-              </Button>
             </CardContent>
           </Card>
 
-          {/* MATERIAIS DO CURSO */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">
-                Materiais de Compra ({materiaisQ.data?.length || 0})
+                Quantidade para compra
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {materiaisQ.isLoading ? (
-                <div className="flex gap-2 py-6 text-muted-foreground">
+              {alunosQ.isLoading || materiaisQ.isLoading ? (
+                <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Carregando materiais...
+                  Calculando quantidade...
                 </div>
               ) : materiaisQ.data?.length === 0 ? (
-                <p className="py-6 text-sm text-muted-foreground">
+                <div className="py-8 text-center text-sm text-muted-foreground">
                   Nenhum material cadastrado para este curso.
-                </p>
+                </div>
+              ) : quantidadeAlunos === 0 ? (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                  Esta turma ainda não possui alunos com inscrição confirmada.
+                </div>
               ) : (
-                <div className="space-y-2">
-                  {materiaisQ.data?.map((mat) => (
-                    <div
-                      key={mat.id}
-                      className="flex items-center justify-between rounded-lg border p-3"
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{mat.nome}</p>
-                        {mat.descricao && (
-                          <p className="text-xs text-muted-foreground">{mat.descricao}</p>
-                        )}
-                      </div>
-                      <Badge variant="outline" className="mr-3">
-                        Qtd: {mat.quantidade}
-                      </Badge>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => deletarMaterial.mutate(mat.id)}
-                        disabled={deletarMaterial.isPending}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                <div className="space-y-3">
+                  <div className="overflow-x-auto rounded-lg border">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="px-4 py-3 text-left">Material</th>
+                          <th className="px-4 py-3 text-left">Descrição</th>
+                          <th className="px-4 py-3 text-center">Quantidade</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(materiaisQ.data ?? []).map((material) => (
+                          <tr key={material.id} className="border-t">
+                            <td className="px-4 py-3 font-medium">
+                              {material.titulo}
+                            </td>
+                            <td className="px-4 py-3 text-muted-foreground">
+                              {material.descricao || material.arquivo_nome || "—"}
+                            </td>
+                            <td className="px-4 py-3 text-center font-bold">
+                              {quantidadeAlunos}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="flex flex-col gap-3 rounded-lg border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-semibold">Total de materiais</p>
+                      <p className="text-sm text-muted-foreground">
+                        {materiaisQ.data?.length ?? 0} tipos × {quantidadeAlunos} alunos
+                      </p>
                     </div>
-                  ))}
+                    <p className="text-xl font-bold">
+                      {(materiaisQ.data?.length ?? 0) * quantidadeAlunos} unidades
+                    </p>
+                  </div>
+
+                  <div className="flex justify-end print:hidden">
+                    <Button onClick={gerarPedido} className="gap-2">
+                      <Download className="h-4 w-4" />
+                      Gerar / Imprimir pedido
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* ALUNOS E PEDIDOS */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">
-                Alunos Inscritos ({alunosQ.data?.length || 0})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {alunosQ.isLoading ? (
-                <div className="flex gap-2 py-6 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Carregando alunos...
-                </div>
-              ) : alunosQ.data?.length === 0 ? (
-                <p className="py-6 text-sm text-muted-foreground">
-                  Nenhum aluno inscrito neste curso.
-                </p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead className="text-center">Status</TableHead>
-                        <TableHead>Ação</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {alunosQ.data?.map((aluno) => {
-                        const pedido = getPedido(aluno.inscricao_id);
-                        return (
-                          <TableRow key={aluno.id}>
-                            <TableCell className="font-medium text-sm">
-                              {aluno.nome}
-                            </TableCell>
-                            <TableCell className="text-xs text-muted-foreground">
-                              {aluno.email}
-                            </TableCell>
-                            <TableCell className="text-center">
-                              {!pedido ? (
-                                <Badge variant="secondary" className="gap-1">
-                                  <Package className="h-3 w-3" />
-                                  Sem pedido
-                                </Badge>
-                              ) : pedido.status === "entregue" ? (
-                                <Badge variant="default" className="gap-1 bg-green-600">
-                                  <CheckCircle2 className="h-3 w-3" />
-                                  Entregue
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  Pendente
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex gap-2">
-                                {!pedido ? (
-                                  <Button
-                                    size="sm"
-                                    onClick={() => criarPedido.mutate(aluno)}
-                                    disabled={criarPedido.isPending}
-                                  >
-                                    Criar Pedido
-                                  </Button>
-                                ) : pedido.status === "pendente" ? (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => marcarEntregue.mutate(pedido.id)}
-                                    disabled={marcarEntregue.isPending}
-                                    className="gap-1"
-                                  >
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    Marcar Entregue
-                                  </Button>
-                                ) : (
-                                  <Badge variant="default" className="bg-green-600">
-                                    ✓ Entregue
-                                  </Badge>
-                                )}
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <div className="hidden print:block">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold">Pedido de Materiais</h1>
+              <p className="mt-1">
+                {livrosQ.data?.find((l) => l.id === livroId)?.titulo ?? "Curso"}
+                {" — "}
+                {turmaSelecionada.nome}
+              </p>
+              <p className="mt-1">
+                Alunos confirmados: <strong>{quantidadeAlunos}</strong>
+              </p>
+            </div>
+
+            <table className="w-full text-sm">
+              <thead>
+                <tr>
+                  <th className="border px-3 py-2 text-left">Material</th>
+                  <th className="border px-3 py-2 text-left">Descrição</th>
+                  <th className="border px-3 py-2 text-center">Quantidade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(materiaisQ.data ?? []).map((material) => (
+                  <tr key={material.id}>
+                    <td className="border px-3 py-2">{material.titulo}</td>
+                    <td className="border px-3 py-2">
+                      {material.descricao || material.arquivo_nome || "—"}
+                    </td>
+                    <td className="border px-3 py-2 text-center font-bold">
+                      {quantidadeAlunos}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </>
+      )}
+
+      {!turmaId && (
+        <Card className="print:hidden">
+          <CardContent className="flex min-h-40 flex-col items-center justify-center text-center">
+            <Package className="mb-3 h-9 w-9 text-muted-foreground" />
+            <p className="font-medium">Selecione o curso e a turma</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              A quantidade será calculada automaticamente pelos alunos confirmados.
+            </p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
