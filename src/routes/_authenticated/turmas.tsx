@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -150,16 +150,26 @@ function TurmasPage() {
                   </div>
                 </div>
 
-                {/* Valor */}
-                {turma.valor !== null && (
-                  <div className="flex items-center gap-1 font-serif text-lg font-semibold">
-                    <DollarSign className="h-4 w-4" />
-                    {Number(turma.valor).toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
-                  </div>
-                )}
+                <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                  {/* Valor */}
+                  {turma.valor !== null && (
+                    <div className="flex items-center gap-1 font-serif text-lg font-semibold">
+                      <DollarSign className="h-4 w-4" />
+                      {Number(turma.valor).toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      })}
+                    </div>
+                  )}
+
+                  <Link
+                    to="/cadastro/$turmaId"
+                    params={{ turmaId: turma.id }}
+                    className="inline-flex h-10 items-center justify-center rounded-md bg-gold px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-gold/90"
+                  >
+                    Inscrever-se
+                  </Link>
+                </div>
               </div>
             </CardContent>
           </Card>
