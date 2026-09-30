@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/select";
 import {
   Download,
-  FileText,
   Users,
   CreditCard,
   CheckCircle,
@@ -112,22 +111,49 @@ function AdminControlePagamentos() {
   const [expandedAluno, setExpandedAluno] = useState<string | null>(null);
 
   // Query Pagamentos
+  // Mantemos a consulta de pagamentos independente dos relacionamentos
+  // para que um problema no JOIN de inscrição/livro nunca esconda
+  // um pagamento aprovado do total financeiro.
   const pagamentosQ = useQuery({
     queryKey: ["admin-pagamentos"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("pagamentos")
-        .select(
-          `id, valor, status, created_at, participante_id, evento_id, inscricao_id,
-           inscricao:inscricoes(
-             id, status, livro_id,
-             livro:livros(id, titulo),
-             participante:participantes(id, nome, email, data_nascimento)
-           )`
-        )
+        .select("id, valor, status, created_at, participante_id, evento_id, inscricao_id")
         .order("created_at", { ascending: false });
+
       if (error) throw error;
-      return (data ?? []) as Pagamento[];
+
+      const pagamentosBase = (data ?? []) as Pagamento[];
+      const inscricaoIds = Array.from(
+        new Set(
+          pagamentosBase
+            .map((p) => p.inscricao_id)
+            .filter((id): id is string => Boolean(id))
+        )
+      );
+
+      if (inscricaoIds.length === 0) return pagamentosBase;
+
+      const { data: inscricoesRelacionadas, error: inscricoesError } = await supabase
+        .from("inscricoes")
+        .select(
+          `id, status, livro_id,
+           livro:livros(id, titulo),
+           participante:participantes(id, nome, email, data_nascimento)`
+        )
+        .in("id", inscricaoIds);
+
+      if (inscricoesError) throw inscricoesError;
+
+      const porId = new Map(
+        (inscricoesRelacionadas ?? []).map((i: any) => [i.id, i])
+      );
+
+      return pagamentosBase.map((p) => ({
+        ...p,
+        inscricao: p.inscricao_id ? porId.get(p.inscricao_id) ?? null : null,
+      })) as Pagamento[];
     },
   });
 
@@ -157,7 +183,7 @@ function AdminControlePagamentos() {
     return {
       aprovados: pagamentos.filter((p) => p.status === "aprovado"),
       rejeitados: pagamentos.filter((p) => p.status === "rejeitado"),
-      estornados: pagamentos.filter((p) => p.status === "aguardando"),
+      estornados: pagamentos.filter((p) => p.status === "rejeitado"),
     };
   }, [pagamentos]);
 
@@ -200,13 +226,27 @@ function AdminControlePagamentos() {
   }, [pagamentos, inscritos, aba]);
 
   const resumo = useMemo(() => {
+    const cursoSelecionado = cursoFilter !== "todos" ? cursoFilter : null;
+
+    const pagamentosDoCurso = (lista: Pagamento[]) =>
+      cursoSelecionado
+        ? lista.filter((p) => p.inscricao?.livro?.titulo === cursoSelecionado)
+        : lista;
+
+    const aprovados = pagamentosDoCurso(pagamentosPorStatus.aprovados);
+    const rejeitados = pagamentosDoCurso(pagamentosPorStatus.rejeitados);
+    const estornados = pagamentosDoCurso(pagamentosPorStatus.estornados);
+    const inscritosDoCurso = cursoSelecionado
+      ? inscritos.filter((i) => i.livro?.titulo === cursoSelecionado)
+      : inscritos;
+
     return {
-      aprovados: pagamentosPorStatus.aprovados.reduce((s, p) => s + Number(p.valor ?? 0), 0),
-      rejeitados: pagamentosPorStatus.rejeitados.length,
-      estornados: pagamentosPorStatus.estornados.length,
-      inscritos: inscritos.length,
+      aprovados: aprovados.reduce((s, p) => s + Number(p.valor ?? 0), 0),
+      rejeitados: rejeitados.length,
+      estornados: estornados.length,
+      inscritos: inscritosDoCurso.length,
     };
-  }, [pagamentosPorStatus, inscritos]);
+  }, [pagamentosPorStatus, inscritos, cursoFilter]);
 
   const handleExportar = () => {
     const dadosExportacao = filtrados.map((d) => ({
@@ -277,6 +317,31 @@ function AdminControlePagamentos() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Resumo por curso */}
+      {pagamentosPorStatus.aprovados.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total aprovado por curso</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {Array.from(
+              pagamentosPorStatus.aprovados.reduce((map, pagamento) => {
+                const curso = pagamento.inscricao?.livro?.titulo || "Curso não identificado";
+                map.set(curso, (map.get(curso) ?? 0) + Number(pagamento.valor ?? 0));
+                return map;
+              }, new Map<string, number>())
+            )
+              .sort((a, b) => a[0].localeCompare(b[0]))
+              .map(([curso, total]) => (
+                <div key={curso} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="truncate">{curso}</span>
+                  <span className="font-semibold whitespace-nowrap">{moeda(total)}</span>
+                </div>
+              ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Abas */}
       <Tabs value={aba} onValueChange={(v) => setAba(v as any)} className="w-full">
