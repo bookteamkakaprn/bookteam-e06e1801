@@ -94,27 +94,30 @@ function ConfiguracoesAdmin() {
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-3xl font-bold">Configurações</h1>
-        <p className="text-muted-foreground">Gerencie depoimentos, FAQ e dados do site</p>
+        <p className="text-muted-foreground">
+          Gerencie depoimentos, FAQ e dados do site
+        </p>
       </div>
 
       <Tabs defaultValue="config" className="w-full">
-        <TabsList className="grid h-auto w-full grid-cols-3 gap-1 p-1">
+        <TabsList className="grid h-auto w-full grid-cols-1 gap-1 p-1 sm:grid-cols-3">
           <TabsTrigger
             value="config"
-            className="min-w-0 px-2 py-2 text-xs leading-tight sm:text-sm"
+            className="min-h-10 w-full whitespace-normal px-3 py-2 text-center text-sm leading-tight"
           >
-            <span className="sm:hidden">Geral</span>
-            <span className="hidden sm:inline">Configurações Gerais</span>
+            Configurações Gerais
           </TabsTrigger>
+
           <TabsTrigger
             value="depoimentos"
-            className="min-w-0 px-2 py-2 text-xs leading-tight sm:text-sm"
+            className="min-h-10 w-full whitespace-normal px-3 py-2 text-center text-sm leading-tight"
           >
             Depoimentos
           </TabsTrigger>
+
           <TabsTrigger
             value="faq"
-            className="min-w-0 px-2 py-2 text-xs leading-tight sm:text-sm"
+            className="min-h-10 w-full whitespace-normal px-3 py-2 text-center text-sm leading-tight"
           >
             FAQ
           </TabsTrigger>
@@ -125,8 +128,11 @@ function ConfiguracoesAdmin() {
           <Card>
             <CardHeader>
               <CardTitle>Dados do Rodapé e Contato</CardTitle>
-              <CardDescription>Informações que aparecem no rodapé da página</CardDescription>
+              <CardDescription>
+                Informações que aparecem no rodapé da página
+              </CardDescription>
             </CardHeader>
+
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -134,15 +140,26 @@ function ConfiguracoesAdmin() {
                   <Input
                     placeholder="@booktea"
                     value={configGeral.instagram}
-                    onChange={(e) => setConfigGeral({ ...configGeral, instagram: e.target.value })}
+                    onChange={(e) =>
+                      setConfigGeral({
+                        ...configGeral,
+                        instagram: e.target.value,
+                      })
+                    }
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label>WhatsApp</Label>
                   <Input
                     placeholder="(41) 99999-9999"
                     value={configGeral.whatsapp}
-                    onChange={(e) => setConfigGeral({ ...configGeral, whatsapp: e.target.value })}
+                    onChange={(e) =>
+                      setConfigGeral({
+                        ...configGeral,
+                        whatsapp: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
@@ -152,7 +169,12 @@ function ConfiguracoesAdmin() {
                 <Input
                   placeholder="contato@bookteam.com.br"
                   value={configGeral.email}
-                  onChange={(e) => setConfigGeral({ ...configGeral, email: e.target.value })}
+                  onChange={(e) =>
+                    setConfigGeral({
+                      ...configGeral,
+                      email: e.target.value,
+                    })
+                  }
                 />
               </div>
 
@@ -161,7 +183,12 @@ function ConfiguracoesAdmin() {
                 <Input
                   placeholder="(41) 3333-3333"
                   value={configGeral.telefone}
-                  onChange={(e) => setConfigGeral({ ...configGeral, telefone: e.target.value })}
+                  onChange={(e) =>
+                    setConfigGeral({
+                      ...configGeral,
+                      telefone: e.target.value,
+                    })
+                  }
                 />
               </div>
 
@@ -170,7 +197,12 @@ function ConfiguracoesAdmin() {
                 <Textarea
                   placeholder="Rua exemplo, 123 - Curitiba, PR"
                   value={configGeral.endereco}
-                  onChange={(e) => setConfigGeral({ ...configGeral, endereco: e.target.value })}
+                  onChange={(e) =>
+                    setConfigGeral({
+                      ...configGeral,
+                      endereco: e.target.value,
+                    })
+                  }
                   rows={3}
                 />
               </div>
@@ -205,7 +237,12 @@ function ConfiguracoesAdmin() {
 function DepoimentosTab() {
   const qc = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nome: "", cargo: "", depoimento: "", imagem_url: "" });
+  const [form, setForm] = useState({
+    nome: "",
+    cargo: "",
+    depoimento: "",
+    imagem_url: "",
+  });
 
   const { data: depoimentos = [] } = useQuery({
     queryKey: ["admin-depoimentos"],
@@ -214,6 +251,7 @@ function DepoimentosTab() {
         .from("depoimentos")
         .select("*")
         .order("ordem", { ascending: true });
+
       if (error) throw error;
       return (data ?? []) as Depoimento[];
     },
@@ -226,29 +264,64 @@ function DepoimentosTab() {
           .from("depoimentos")
           .update(form)
           .eq("id", editingId);
+
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("depoimentos").insert([{ ...form, ativo: true, ordem: depoimentos.length }]);
+        const { error } = await supabase
+          .from("depoimentos")
+          .insert([
+            {
+              ...form,
+              ativo: true,
+              ordem: depoimentos.length,
+            },
+          ]);
+
         if (error) throw error;
       }
     },
+
     onSuccess: () => {
-      toast.success(editingId ? "Depoimento atualizado!" : "Depoimento criado!");
-      setForm({ nome: "", cargo: "", depoimento: "", imagem_url: "" });
+      toast.success(
+        editingId
+          ? "Depoimento atualizado!"
+          : "Depoimento criado!"
+      );
+
+      setForm({
+        nome: "",
+        cargo: "",
+        depoimento: "",
+        imagem_url: "",
+      });
+
       setEditingId(null);
-      qc.invalidateQueries({ queryKey: ["admin-depoimentos"] });
+
+      qc.invalidateQueries({
+        queryKey: ["admin-depoimentos"],
+      });
     },
-    onError: (err) => toast.error("Erro: " + (err?.message || "desconhecido")),
+
+    onError: (err) =>
+      toast.error("Erro: " + (err?.message || "desconhecido")),
   });
 
   const deletarDepoimento = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("depoimentos").delete().eq("id", id);
+      const { error } = await supabase
+        .from("depoimentos")
+        .delete()
+        .eq("id", id);
+
       if (error) throw error;
     },
+
     onSuccess: () => {
       toast.success("Depoimento deletado!");
-      qc.invalidateQueries({ queryKey: ["admin-depoimentos"] });
+
+      qc.invalidateQueries({
+        queryKey: ["admin-depoimentos"],
+      });
     },
   });
 
@@ -258,10 +331,14 @@ function DepoimentosTab() {
         .from("depoimentos")
         .update({ ativo: !d.ativo })
         .eq("id", d.id);
+
       if (error) throw error;
     },
+
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-depoimentos"] });
+      qc.invalidateQueries({
+        queryKey: ["admin-depoimentos"],
+      });
     },
   });
 
@@ -274,47 +351,79 @@ function DepoimentosTab() {
             Novo Depoimento
           </Button>
         </DialogTrigger>
+
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingId ? "Editar" : "Novo"} Depoimento</DialogTitle>
+            <DialogTitle>
+              {editingId ? "Editar" : "Novo"} Depoimento
+            </DialogTitle>
           </DialogHeader>
+
           <div className="space-y-3">
             <div>
               <Label>Nome</Label>
               <Input
                 placeholder="Nome da pessoa"
                 value={form.nome}
-                onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    nome: e.target.value,
+                  })
+                }
               />
             </div>
+
             <div>
               <Label>Cargo</Label>
               <Input
                 placeholder="Cargo/Profissão"
                 value={form.cargo}
-                onChange={(e) => setForm({ ...form, cargo: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    cargo: e.target.value,
+                  })
+                }
               />
             </div>
+
             <div>
               <Label>Depoimento</Label>
               <Textarea
                 placeholder="O que você achou do Book Team?"
                 value={form.depoimento}
-                onChange={(e) => setForm({ ...form, depoimento: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    depoimento: e.target.value,
+                  })
+                }
                 rows={4}
               />
             </div>
+
             <div>
               <Label>URL da Imagem</Label>
               <Input
                 placeholder="https://..."
                 value={form.imagem_url}
-                onChange={(e) => setForm({ ...form, imagem_url: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    imagem_url: e.target.value,
+                  })
+                }
               />
             </div>
+
             <Button
               onClick={() => salvarDepoimento.mutate()}
-              disabled={salvarDepoimento.isPending || !form.nome || !form.depoimento}
+              disabled={
+                salvarDepoimento.isPending ||
+                !form.nome ||
+                !form.depoimento
+              }
               className="w-full bg-gold"
             >
               Salvar
@@ -325,35 +434,62 @@ function DepoimentosTab() {
 
       <div className="space-y-2">
         {depoimentos.map((d) => (
-          <Card key={d.id} className={!d.ativo ? "opacity-50" : ""}>
+          <Card
+            key={d.id}
+            className={!d.ativo ? "opacity-50" : ""}
+          >
             <CardContent className="flex items-center justify-between py-4">
               <div className="flex-1">
                 <p className="font-bold">{d.nome}</p>
-                <p className="text-sm text-muted-foreground">{d.cargo}</p>
-                <p className="mt-2 text-sm">{d.depoimento}</p>
+
+                <p className="text-sm text-muted-foreground">
+                  {d.cargo}
+                </p>
+
+                <p className="mt-2 text-sm">
+                  {d.depoimento}
+                </p>
               </div>
+
               <div className="flex gap-2">
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => toggleAtivo.mutate(d)}
+                  onClick={() =>
+                    toggleAtivo.mutate(d)
+                  }
                 >
-                  {d.ativo ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                  {d.ativo ? (
+                    <Eye className="h-4 w-4" />
+                  ) : (
+                    <EyeOff className="h-4 w-4" />
+                  )}
                 </Button>
+
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={() => {
                     setEditingId(d.id);
-                    setForm({ nome: d.nome, cargo: d.cargo, depoimento: d.depoimento, imagem_url: d.imagem_url || "" });
+
+                    setForm({
+                      nome: d.nome,
+                      cargo: d.cargo,
+                      depoimento: d.depoimento,
+                      imagem_url:
+                        d.imagem_url || "",
+                    });
                   }}
                 >
                   <Edit2 className="h-4 w-4" />
                 </Button>
+
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => deletarDepoimento.mutate(d.id)}
+                  onClick={() =>
+                    deletarDepoimento.mutate(d.id)
+                  }
                 >
                   <Trash2 className="h-4 w-4 text-red-500" />
                 </Button>
@@ -369,17 +505,27 @@ function DepoimentosTab() {
 // ===== FAQ TAB =====
 function FaqTab() {
   const qc = useQueryClient();
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ pergunta: "", resposta: "" });
+  const [editingId, setEditingId] =
+    useState<string | null>(null);
+
+  const [form, setForm] = useState({
+    pergunta: "",
+    resposta: "",
+  });
 
   const { data: faqs = [] } = useQuery({
     queryKey: ["admin-faq"],
+
     queryFn: async () => {
       const { data, error } = await supabase
         .from("faq")
         .select("*")
-        .order("ordem", { ascending: true });
+        .order("ordem", {
+          ascending: true,
+        });
+
       if (error) throw error;
+
       return (data ?? []) as FAQ[];
     },
   });
@@ -391,29 +537,64 @@ function FaqTab() {
           .from("faq")
           .update(form)
           .eq("id", editingId);
+
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("faq").insert([{ ...form, ativo: true, ordem: faqs.length }]);
+        const { error } = await supabase
+          .from("faq")
+          .insert([
+            {
+              ...form,
+              ativo: true,
+              ordem: faqs.length,
+            },
+          ]);
+
         if (error) throw error;
       }
     },
+
     onSuccess: () => {
-      toast.success(editingId ? "FAQ atualizado!" : "FAQ criado!");
-      setForm({ pergunta: "", resposta: "" });
+      toast.success(
+        editingId
+          ? "FAQ atualizado!"
+          : "FAQ criado!"
+      );
+
+      setForm({
+        pergunta: "",
+        resposta: "",
+      });
+
       setEditingId(null);
-      qc.invalidateQueries({ queryKey: ["admin-faq"] });
+
+      qc.invalidateQueries({
+        queryKey: ["admin-faq"],
+      });
     },
-    onError: (err) => toast.error("Erro: " + (err?.message || "desconhecido")),
+
+    onError: (err) =>
+      toast.error(
+        "Erro: " + (err?.message || "desconhecido")
+      ),
   });
 
   const deletarFaq = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("faq").delete().eq("id", id);
+      const { error } = await supabase
+        .from("faq")
+        .delete()
+        .eq("id", id);
+
       if (error) throw error;
     },
+
     onSuccess: () => {
       toast.success("FAQ deletado!");
-      qc.invalidateQueries({ queryKey: ["admin-faq"] });
+
+      qc.invalidateQueries({
+        queryKey: ["admin-faq"],
+      });
     },
   });
 
@@ -423,10 +604,14 @@ function FaqTab() {
         .from("faq")
         .update({ ativo: !f.ativo })
         .eq("id", f.id);
+
       if (error) throw error;
     },
+
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-faq"] });
+      qc.invalidateQueries({
+        queryKey: ["admin-faq"],
+      });
     },
   });
 
@@ -439,31 +624,53 @@ function FaqTab() {
             Novo FAQ
           </Button>
         </DialogTrigger>
+
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingId ? "Editar" : "Novo"} FAQ</DialogTitle>
+            <DialogTitle>
+              {editingId ? "Editar" : "Novo"} FAQ
+            </DialogTitle>
           </DialogHeader>
+
           <div className="space-y-3">
             <div>
               <Label>Pergunta</Label>
+
               <Input
                 placeholder="Como funciona o Book Club?"
                 value={form.pergunta}
-                onChange={(e) => setForm({ ...form, pergunta: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    pergunta: e.target.value,
+                  })
+                }
               />
             </div>
+
             <div>
               <Label>Resposta</Label>
+
               <Textarea
                 placeholder="Resposta da pergunta..."
                 value={form.resposta}
-                onChange={(e) => setForm({ ...form, resposta: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    resposta: e.target.value,
+                  })
+                }
                 rows={4}
               />
             </div>
+
             <Button
               onClick={() => salvarFaq.mutate()}
-              disabled={salvarFaq.isPending || !form.pergunta || !form.resposta}
+              disabled={
+                salvarFaq.isPending ||
+                !form.pergunta ||
+                !form.resposta
+              }
               className="w-full bg-gold"
             >
               Salvar
@@ -474,35 +681,58 @@ function FaqTab() {
 
       <div className="space-y-2">
         {faqs.map((f) => (
-          <Card key={f.id} className={!f.ativo ? "opacity-50" : ""}>
+          <Card
+            key={f.id}
+            className={!f.ativo ? "opacity-50" : ""}
+          >
             <CardContent className="py-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <p className="font-bold">{f.pergunta}</p>
-                  <p className="mt-2 text-sm">{f.resposta}</p>
+                  <p className="font-bold">
+                    {f.pergunta}
+                  </p>
+
+                  <p className="mt-2 text-sm">
+                    {f.resposta}
+                  </p>
                 </div>
+
                 <div className="flex gap-2">
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => toggleAtivo.mutate(f)}
+                    onClick={() =>
+                      toggleAtivo.mutate(f)
+                    }
                   >
-                    {f.ativo ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                    {f.ativo ? (
+                      <Eye className="h-4 w-4" />
+                    ) : (
+                      <EyeOff className="h-4 w-4" />
+                    )}
                   </Button>
+
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => {
                       setEditingId(f.id);
-                      setForm({ pergunta: f.pergunta, resposta: f.resposta });
+
+                      setForm({
+                        pergunta: f.pergunta,
+                        resposta: f.resposta,
+                      });
                     }}
                   >
                     <Edit2 className="h-4 w-4" />
                   </Button>
+
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => deletarFaq.mutate(f.id)}
+                    onClick={() =>
+                      deletarFaq.mutate(f.id)
+                    }
                   >
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>
