@@ -47,7 +47,7 @@ function MatriculaPage() {
       const { data, error } = await supabase
         .from("inscricoes")
         .select(
-          "*, turmas(*, livros(titulo)), pagamentos(id, status, valor, created_at)"
+          "*, turmas(*, livros(titulo)), pagamentos(id, status, valor, created_at, comprovante_enviado_em)"
         )
         .eq("id", inscricaoId)
         .maybeSingle();
@@ -297,7 +297,9 @@ function MatriculaPage() {
                   ? "Pagamento aprovado — inscrição confirmada."
                   : pagamento.status === "rejeitado"
                     ? "Comprovante recusado. Envie um novo comprovante."
-                    : "Aguardando validação financeira."}
+                    : pagamento.comprovante_enviado_em
+                      ? "Comprovante enviado — aguardando validação do administrador."
+                      : "Pagamento pendente — envie o comprovante após realizar o PIX."}
               </p>
             </div>
 
@@ -315,7 +317,9 @@ function MatriculaPage() {
                 ? "Pago"
                 : pagamento.status === "rejeitado"
                   ? "Recusado"
-                  : "Pendente"}
+                  : pagamento.comprovante_enviado_em
+                    ? "Aguardando validação"
+                    : "Pendente"}
             </Badge>
 
           </CardContent>
