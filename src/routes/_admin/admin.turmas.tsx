@@ -12,6 +12,7 @@ import { Archive, Download, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Turma = Tables<"turmas">;
+type TurmaComDia = Turma & { dia_semana?: string | null };
 type Livro = Pick<Tables<"livros">, "id" | "titulo" | "ordem">;
 
 export const Route = createFileRoute("/_admin/admin/turmas")({
@@ -117,6 +118,7 @@ function AdminTurmasPage() {
       }
 
       payload.livro_id = livroAtual;
+      payload.dia_semana = (t as TurmaComDia).dia_semana ?? null;
 
       if (t.id) {
         const { error } = await supabase
@@ -353,7 +355,34 @@ function AdminTurmasPage() {
                       </option>
                     ))}
                   </select>
-                </div>
+
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="dia_semana">Dia da semana</Label>
+                  <select
+                    id="dia_semana"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    value={String((editando as TurmaComDia).dia_semana ?? "")}
+                    onChange={(e) =>
+                      setEditando((t) => ({
+                        ...t,
+                        dia_semana: e.target.value || null,
+                      } as Partial<TurmaComDia>))
+                    }
+                  >
+                    <option value="">Selecione o dia</option>
+                    <option value="0">Domingo</option>
+                    <option value="1">Segunda-feira</option>
+                    <option value="2">Terça-feira</option>
+                    <option value="3">Quarta-feira</option>
+                    <option value="4">Quinta-feira</option>
+                    <option value="5">Sexta-feira</option>
+                    <option value="6">Sábado</option>
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    Usado para gerar automaticamente os dias de aula na lista de presença.
+                  </p>
+                </div>                </div>
               </div>
 
               <div className="flex gap-2">
@@ -417,6 +446,7 @@ function AdminTurmasPage() {
                       t.ano,
                       t.sala,
                       t.horario,
+                      ({ "0": "Domingo", "1": "Segunda-feira", "2": "Terça-feira", "3": "Quarta-feira", "4": "Quinta-feira", "5": "Sexta-feira", "6": "Sábado" } as Record<string, string>)[String((t as TurmaComDia).dia_semana ?? "")],
                     ]
                       .filter(Boolean)
                       .join(" · ")}
