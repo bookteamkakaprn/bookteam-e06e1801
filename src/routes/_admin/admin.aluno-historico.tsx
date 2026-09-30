@@ -1,12 +1,14 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, useSearch, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_admin/admin/aluno-historico")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    alunoId: String(search.alunoId ?? ""),
+  }),
   component: AdminAlunoHistorico,
 });
 
@@ -18,7 +20,7 @@ type Registro = {
 };
 
 function AdminAlunoHistorico() {
-  const { alunoId } = useParams({ from: "/_admin/admin/aluno-historico/:alunoId" });
+  const { alunoId } = useSearch({ from: "/_admin/admin/aluno-historico" });
   const navigate = useNavigate();
 
   // Buscar dados do aluno
@@ -38,17 +40,32 @@ function AdminAlunoHistorico() {
   // Buscar histórico do aluno
   const historicoQ = useQuery({
     queryKey: ["admin-aluno-historico", alunoId],
+    enabled: Boolean(alunoId),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("historico_leitura")
-        .select(
-          `id, data_conclusao, observacao,
-           livro:livros(id, titulo, ordem)`
-        )
+      const { data: historico, error: historicoError } = await supabase
+        .from("historico_livros")
+        .select("id, data_conclusao, observacao, livro_id")
         .eq("participante_id", alunoId)
         .order("data_conclusao", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as Registro[];
+
+      if (historicoError) throw historicoError;
+      if (!historico?.length) return [] as Registro[];
+
+      const livroIds = [...new Set(historico.map((r) => r.livro_id).filter(Boolean))];
+      const { data: livros, error: livrosError } = await supabase
+        .from("livros")
+        .select("id, titulo, ordem")
+        .in("id", livroIds);
+
+      if (livrosError) throw livrosError;
+
+      const porId = new Map((livros ?? []).map((livro) => [livro.id, livro]));
+      return historico.map((r) => ({
+        id: r.id,
+        data_conclusao: r.data_conclusao,
+        observacao: r.observacao,
+        livro: r.livro_id ? (porId.get(r.livro_id) ?? null) : null,
+      })) as Registro[];
     },
   });
 
