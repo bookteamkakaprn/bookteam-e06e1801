@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/matricula/$inscricaoId")({
   component: MatriculaPage,
 });
 
-const MAX_SIZE = 10 * 1024 * 1024;
+const MAX_SIZE = 5 * 1024 * 1024;
 
 const ALLOWED = [
   "application/pdf",
@@ -128,7 +128,7 @@ function MatriculaPage() {
       }
 
       if (file.size > MAX_SIZE) {
-        throw new Error("Arquivo maior que 10 MB");
+        throw new Error("Arquivo maior que 5 MB");
       }
 
       if (!ALLOWED.includes(file.type)) {
@@ -454,19 +454,25 @@ function MatriculaPage() {
           <div className="space-y-1.5">
 
             <Label htmlFor="arquivo">
-              Arquivo (PDF, PNG, JPG ou JPEG — até 10 MB)
+              Anexe seu comprovante (PDF, PNG, JPG ou JPEG — até 5 MB)
             </Label>
 
-            <Input
-              id="arquivo"
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg"
-              onChange={(e) =>
-                setFile(
-                  e.target.files?.[0] ?? null
-                )
-              }
-            />
+            <div className="rounded-lg border border-amber-300/40 bg-amber-50/5 p-3">
+              <Input
+                id="arquivo"
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg"
+                onChange={(e) =>
+                  setFile(
+                    e.target.files?.[0] ?? null
+                  )
+                }
+                className="h-12 cursor-pointer border-amber-300/50 bg-amber-100 text-sm text-black file:mr-3 file:rounded-md file:border-0 file:bg-amber-300 file:px-4 file:py-2 file:font-semibold file:text-black hover:file:bg-amber-200"
+              />
+              <p className="mt-2 text-xs font-medium text-amber-200">
+                👆 Toque em “Escolher arquivo” para anexar o comprovante
+              </p>
+            </div>
 
             {file && (
               <p className="text-xs text-muted-foreground">
@@ -497,7 +503,7 @@ function MatriculaPage() {
           </div>
 
           <Button
-            className="gap-2 bg-gold text-primary-foreground hover:bg-gold/90"
+            className="h-12 gap-2 bg-amber-300 px-6 text-base font-semibold text-black shadow-md hover:bg-amber-200"
             disabled={enviar.isPending}
             onClick={() => enviar.mutate()}
           >
