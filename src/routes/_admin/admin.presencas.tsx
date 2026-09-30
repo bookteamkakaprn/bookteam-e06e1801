@@ -166,11 +166,11 @@ function PresencaPage() {
       if (existente) {
         const { error } = await supabase
           .from("presencas")
-          .update(payload)
+          .update(payload as never)
           .eq("id", existente.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("presencas").insert(payload);
+        const { error } = await supabase.from("presencas").insert(payload as never);
         if (error) throw error;
       }
     },
