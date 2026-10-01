@@ -43,13 +43,23 @@ export async function enviarEmail(payload: EmailPayload) {
 export function emailPagamentoAprovado(
   email: string, nome: string, livro: string, turma: string, valor: number,
 ) {
-  return enviarEmail({ to: email, tipo: "pagamento_aprovado", nome, livro, turma, valor });
+  return emailCustomizado(
+    email,
+    nome,
+    "✅ Pagamento aprovado — aguarde a confirmação da vaga",
+    "Seu pagamento foi aprovado com sucesso.\n\nCurso: " + livro + "\nTurma: " + turma + "\nValor: R$ " + valor.toFixed(2) + "\n\nA aprovação do pagamento não confirma automaticamente sua vaga. Aguarde a confirmação da inscrição pelo ADM. Você receberá um novo e-mail quando sua vaga for confirmada.\n\nAcesse https://ministeriobookteam.com.br",
+  );
 }
 
 export function emailPagamentoRecusado(
   email: string, nome: string, livro: string, turma: string, motivo: string,
 ) {
-  return enviarEmail({ to: email, tipo: "pagamento_recusado", nome, livro, turma, motivo });
+  return emailCustomizado(
+    email,
+    nome,
+    "⚠️ Pagamento recusado — verifique o motivo",
+    "Seu pagamento não foi aprovado.\n\nCurso: " + livro + "\nTurma: " + turma + "\nMotivo: " + motivo + "\n\nEntre no site para verificar o motivo da recusa e as orientações.\n\nhttps://ministeriobookteam.com.br",
+  );
 }
 
 export function emailInscricaoAprovada(
@@ -62,23 +72,25 @@ export function emailInscricaoAprovada(
   horario?: string | null,
   frequenciaMinima = 90,
 ) {
-  return enviarEmail({
-    to: email,
-    tipo: "inscricao_aprovada",
+  const inicio = dataInicio ? new Date(dataInicio + (dataInicio.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR") : "a confirmar";
+  const fim = dataFim ? new Date(dataFim + (dataFim.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR") : "";
+  return emailCustomizado(
+    email,
     nome,
-    livro,
-    turma,
-    data_inicio: dataInicio || undefined,
-    data_fim: dataFim || undefined,
-    horario: horario || undefined,
-    frequencia_minima: frequenciaMinima,
-  });
+    "🎉 Sua vaga no Book Team foi confirmada!",
+    "Sua inscrição foi aprovada e a vaga é sua.\n\nCurso: " + livro + "\nTurma: " + turma + "\nInício: " + inicio + (fim ? "\nTérmino: " + fim : "") + (horario ? "\nHorário: " + horario : "") + "\n\nAs aulas desta turma foram vinculadas ao seu calendário dentro do site.\n\nPara aprovação no curso, é necessário ter no mínimo " + frequenciaMinima + "% de frequência.\n\nAcesse https://ministeriobookteam.com.br",
+  );
 }
 
 export function emailInscricaoRecusada(
   email: string, nome: string, livro: string, turma: string, motivo: string,
 ) {
-  return enviarEmail({ to: email, tipo: "inscricao_recusada", nome, livro, turma, motivo });
+  return emailCustomizado(
+    email,
+    nome,
+    "⚠️ Inscrição não confirmada — vagas encerradas",
+    "Infelizmente não foi possível confirmar sua inscrição porque as vagas da turma já foram encerradas.\n\nCurso: " + livro + "\nTurma: " + turma + "\nMotivo: " + motivo + "\n\nSeu pagamento será estornado em até 7 dias.\n\nDúvidas? Acesse o site e fale com o ADM.\n\nhttps://ministeriobookteam.com.br",
+  );
 }
 
 export function emailFaltaJustificar(
@@ -88,54 +100,38 @@ export function emailFaltaJustificar(
   turma: string,
   dataAula: string,
 ) {
-  return enviarEmail({
-    to: email,
-    tipo: "falta_justificar",
+  const data = new Date(dataAula + "T00:00:00").toLocaleDateString("pt-BR");
+  return emailCustomizado(
+    email,
     nome,
-    livro,
-    turma,
-    data_aula: dataAula,
-  });
+    "📌 Falta registrada — justifique no site",
+    "Foi registrada uma ausência na aula de " + data + ".\n\nCurso: " + livro + "\nTurma: " + turma + "\n\nEntre no site e clique no botão do dia da falta para justificar sua ausência.\n\nhttps://ministeriobookteam.com.br",
+  );
 }
 
 export function emailNovaTurma(
-  email: string,
-  nome: string,
-  livro: string,
-  turma: string,
-  dataInicio?: string | null,
-  dataFim?: string | null,
-  horario?: string | null,
+  email: string, nome: string, livro: string, turma: string, dataInicio?: string | null, dataFim?: string | null, horario?: string | null,
 ) {
-  return enviarEmail({
-    to: email,
-    tipo: "nova_turma",
+  const inicio = dataInicio ? new Date(dataInicio + (dataInicio.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR") : "";
+  const fim = dataFim ? new Date(dataFim + (dataFim.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR") : "";
+  return emailCustomizado(
+    email,
     nome,
-    livro,
-    turma,
-    data_inicio: dataInicio || undefined,
-    data_fim: dataFim || undefined,
-    horario: horario || undefined,
-  });
+    "📚 Nova turma disponível no Book Team",
+    "Uma nova turma foi aberta.\n\nCurso: " + livro + "\nTurma: " + turma + (inicio ? "\nInício: " + inicio : "") + (fim ? "\nTérmino: " + fim : "") + (horario ? "\nHorário: " + horario : "") + "\n\nEntre no site para consultar os detalhes e se inscrever.\n\nhttps://ministeriobookteam.com.br",
+  );
 }
 
 export function emailNovoEvento(
-  email: string,
-  nome: string,
-  titulo: string,
-  data?: string | null,
-  horario?: string | null,
-  mensagem?: string | null,
+  email: string, nome: string, titulo: string, data?: string | null, horario?: string | null, mensagem?: string | null,
 ) {
-  return enviarEmail({
-    to: email,
-    tipo: "novo_evento",
+  const dataBR = data ? new Date(data + (data.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR") : "";
+  return emailCustomizado(
+    email,
     nome,
-    assunto: titulo,
-    data_inicio: data || undefined,
-    horario: horario || undefined,
-    mensagem: mensagem || undefined,
-  });
+    "📣 Novo evento: " + titulo,
+    "Novo evento Book Team.\n\nEvento: " + titulo + (dataBR ? "\nData: " + dataBR : "") + (horario ? "\nHorário: " + horario : "") + (mensagem ? "\n\n" + mensagem : "") + "\n\nAcesse https://ministeriobookteam.com.br",
+  );
 }
 
 export function emailCustomizado(
