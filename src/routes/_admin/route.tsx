@@ -163,6 +163,12 @@ const menuPrincipal: MenuItem[] = [
     icon: ListTodo,
   },
   {
+    to: "/admin/tarefas",
+    label: "Tarefas",
+    permission: "tarefas",
+    icon: ListTodo,
+  },
+  {
     to: "/admin/pedido-materiais",
     label: "Pedido de materiais",
     permission: "pedido_materiais",
