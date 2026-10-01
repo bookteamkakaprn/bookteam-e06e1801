@@ -109,6 +109,21 @@ export function emailFaltaJustificar(
   );
 }
 
+export function emailListaEsperaNovaTurma(
+  email: string, nome: string, livro: string, turma: string, dataInicio?: string | null, dataFim?: string | null, horario?: string | null,
+) {
+  return emailCustomizado(
+    email,
+    nome,
+    "🎉 Nova turma aberta — sua lista de interesse foi atendida",
+    "Olá " + nome + ",\n\nUma nova turma foi aberta para o curso " + livro + ".\n\nTurma: " + turma +
+      (dataInicio ? "\nInício: " + new Date(dataInicio + (dataInicio.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR") : "") +
+      (dataFim ? "\nFim: " + new Date(dataFim + (dataFim.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR") : "") +
+      (horario ? "\nHorário: " + horario : "") +
+      "\n\nVocê demonstrou interesse neste curso. Acesse o site para verificar a turma e realizar sua inscrição enquanto houver vagas:\nhttps://ministeriobookteam.com.br",
+  );
+}
+
 export function emailNovaTurma(
   email: string, nome: string, livro: string, turma: string, dataInicio?: string | null, dataFim?: string | null, horario?: string | null,
 ) {
