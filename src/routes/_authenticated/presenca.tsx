@@ -140,9 +140,11 @@ function PresencaPage() {
       {inscricoes.map((inscricao) => {
         const aulas = gerarAulas(inscricao.turma);
         const registros = presencas.filter((p) => p.inscricao_id === inscricao.id);
-        const presente = registros.filter((p) => p.presente).length;
-        const marcadas = registros.length;
-        const percentual = marcadas > 0 ? Math.round((presente / marcadas) * 100) : 0;
+        const hoje = new Date();
+        const hojeSemHora = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+        const aulasConcluidas = aulas.filter((data) => localDate(data) <= hojeSemHora);
+        const presente = registros.filter((p) => p.presente && aulasConcluidas.includes(p.data_aula)).length;
+        const percentual = aulasConcluidas.length > 0 ? Math.round((presente / aulasConcluidas.length) * 100) : 100;
         const minimo = inscricao.turma?.frequencia_minima ?? 90;
 
         return (
@@ -150,7 +152,7 @@ function PresencaPage() {
             <CardHeader>
               <CardTitle className="flex flex-wrap items-center justify-between gap-2">
                 <span>{inscricao.livro?.titulo ?? "Curso"}</span>
-                <Badge variant={percentual >= minimo || marcadas === 0 ? "secondary" : "destructive"}>{percentual}% de frequência</Badge>
+                <Badge variant={percentual >= minimo ? "secondary" : "destructive"}>{percentual}% de frequência</Badge>
               </CardTitle>
               <p className="text-sm text-muted-foreground">
                 {inscricao.turma?.nome ?? "Turma"} · {aulas.length} aula(s) · mínimo {minimo}%
