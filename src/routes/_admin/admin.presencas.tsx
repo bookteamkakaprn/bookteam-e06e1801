@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, XCircle, CalendarDays, ChevronLeft, ChevronRight, Clock, Eye } from "lucide-react";
+import { CheckCircle2, XCircle, CalendarDays, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { emailFaltaJustificar } from "@/lib/email-service";
 
@@ -63,7 +62,7 @@ function PresencaPage() {
   }, [inscricoes]);
   const turma = turmas.find((t) => t.id === filtroTurma) ?? null;
   const diasAula = useMemo(() => gerarAulas(turma), [turma]);
-  const dataAtual = dataSelecionada && diasAula.includes(dataSelecionada) ? dataSelecionada : diasAula[0] ?? "";
+  const dataAtual = dataSelecionada && diasAula.includes(dataSelecionada) ? dataSelecionada : "";
   const alunos = inscricoes.filter((i) => i.turma?.id === filtroTurma);
   const registro = (inscricaoId: string, data: string) => presencas.find((p) => p.inscricao_id === inscricaoId && p.data_aula === data);
   const indice = Math.max(0, diasAula.indexOf(dataAtual));
