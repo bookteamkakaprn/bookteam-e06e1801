@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +34,7 @@ function PresencaPage() {
   const qc = useQueryClient();
   const [filtroTurma, setFiltroTurma] = useState("");
   const [dataSelecionada, setDataSelecionada] = useState("");
+  const [mesVisualizado, setMesVisualizado] = useState("");
   const [detalhe, setDetalhe] = useState<Presenca | null>(null);
 
   const inscricoesQ = useQuery({
@@ -63,9 +64,39 @@ function PresencaPage() {
   const turma = turmas.find((t) => t.id === filtroTurma) ?? null;
   const diasAula = useMemo(() => gerarAulas(turma), [turma]);
   const dataAtual = dataSelecionada && diasAula.includes(dataSelecionada) ? dataSelecionada : "";
+
+  useEffect(() => {
+    if (!turma) return;
+    const inicio = turma.data_inicio ? localDate(turma.data_inicio) : null;
+    if (inicio) {
+      setMesVisualizado(`${inicio.getFullYear()}-${String(inicio.getMonth() + 1).padStart(2, "0")}`);
+      setDataSelecionada(diasAula[0] ?? "");
+    }
+  }, [filtroTurma]);
+
+  const mesBase = mesVisualizado
+    ? localDate(`${mesVisualizado}-01`)
+    : (turma?.data_inicio ? localDate(turma.data_inicio) : new Date());
+  const inicioGrade = new Date(mesBase.getFullYear(), mesBase.getMonth(), 1 - mesBase.getDay());
+  const diasCalendario = Array.from({ length: 42 }, (_, index) => {
+    const d = new Date(inicioGrade);
+    d.setDate(inicioGrade.getDate() + index);
+    return d;
+  });
+  const aulasDoMes = diasAula.filter((d) =>
+    d.startsWith(`${mesBase.getFullYear()}-${String(mesBase.getMonth() + 1).padStart(2, "0")}`)
+  );
+  const mesAnterior = new Date(mesBase.getFullYear(), mesBase.getMonth() - 1, 1);
+  const proximoMes = new Date(mesBase.getFullYear(), mesBase.getMonth() + 1, 1);
+  const navegarMes = (mes: Date) => {
+    const chave = `${mes.getFullYear()}-${String(mes.getMonth() + 1).padStart(2, "0")}`;
+    setMesVisualizado(chave);
+    const primeiraAula = diasAula.find((d) => d.startsWith(chave));
+    setDataSelecionada(primeiraAula ?? "");
+  };
+
   const alunos = inscricoes.filter((i) => i.turma?.id === filtroTurma);
   const registro = (inscricaoId: string, data: string) => presencas.find((p) => p.inscricao_id === inscricaoId && p.data_aula === data);
-  const indice = Math.max(0, diasAula.indexOf(dataAtual));
   const presentes = alunos.filter((i) => registro(i.id,dataAtual)?.presente).length;
   const ausentes = alunos.filter((i) => { const p=registro(i.id,dataAtual); return p && !p.presente; }).length;
 
@@ -124,10 +155,59 @@ function PresencaPage() {
             </CardHeader>
             <CardContent>
               {diasAula.length === 0 ? <p className="text-sm text-muted-foreground">Configure início, fim e dia da semana em Turmas.</p> : (
-                <div className="flex items-center gap-2">
-                  <Button size="icon" variant="outline" disabled={indice<=0} onClick={()=>setDataSelecionada(diasAula[indice-1])}><ChevronLeft className="h-4 w-4"/></Button>
-                  <div className="flex-1 overflow-x-auto"><div className="flex min-w-max gap-2">{diasAula.map((d,i)=><Button key={d} size="sm" variant={d===dataAtual?"default":"outline"} onClick={()=>setDataSelecionada(d)}>{i+1}. {dataBR(d)}</Button>)}</div></div>
-                  <Button size="icon" variant="outline" disabled={indice>=diasAula.length-1} onClick={()=>setDataSelecionada(diasAula[indice+1])}><ChevronRight className="h-4 w-4"/></Button>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Button size="icon" variant="outline" onClick={() => navegarMes(mesAnterior)} aria-label="Mês anterior">
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="text-lg font-bold capitalize">
+                      {mesBase.toLocaleDateString("pt-BR", { month: "long", year: "numeric" })}
+                    </div>
+                    <Button size="icon" variant="outline" onClick={() => navegarMes(proximoMes)} aria-label="Próximo mês">
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="rounded-lg border overflow-hidden">
+                    <div className="grid grid-cols-7 bg-muted/40 border-b">
+                      {["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].map((dia) => (
+                        <div key={dia} className="py-2 text-center text-xs font-semibold text-muted-foreground">{dia}</div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-7">
+                      {diasCalendario.map((dia) => {
+                        const chave = iso(dia);
+                        const ehDoMes = dia.getMonth() === mesBase.getMonth();
+                        const ehAula = diasAula.includes(chave);
+                        const selecionada = chave === dataAtual;
+                        const temRegistros = ehAula && alunos.some((aluno) => registro(aluno.id, chave));
+                        return (
+                          <button
+                            key={chave}
+                            type="button"
+                            disabled={!ehAula}
+                            onClick={() => ehAula && setDataSelecionada(chave)}
+                            className={`min-h-[58px] border-b border-r p-2 text-center transition-colors ${ehAula ? "cursor-pointer hover:bg-primary/10" : "cursor-default"} ${!ehDoMes ? "opacity-35" : ""} ${selecionada ? "bg-primary/10" : ""}`}
+                          >
+                            <span className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${selecionada ? "bg-primary text-primary-foreground" : ehAula ? "border-2 border-green-500 text-green-700" : "text-foreground"}`}>
+                              {dia.getDate()}
+                            </span>
+                            {ehAula && <span className={`mt-1 block text-[10px] ${temRegistros ? "font-semibold text-primary" : "text-green-600"}`}>{temRegistros ? "lançada" : "aula"}</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full border-2 border-green-500" /> Dia de aula</span>
+                    <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full bg-primary" /> Dia selecionado</span>
+                    <span>{aulasDoMes.length} aula(s) neste mês</span>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    Clique no dia de aula no calendário para lançar a presença. Depois marque <strong>Presente</strong> ou <strong>Ausente</strong> para cada aluno.
+                  </p>
                 </div>
               )}
             </CardContent>
