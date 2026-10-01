@@ -62,9 +62,7 @@ function LivrosPage() {
               const capa = livro.imagem_url || livro.capa_url;
 
               return (
-                <Link key={livro.id} to="/livros/$id" params={{ id: livro.id }} className="group"
-                >
-                  <Card className="h-full overflow-hidden transition-all hover:shadow-lg hover:border-gold/50">
+                <Card key={livro.id} className="h-full overflow-hidden transition-all hover:shadow-lg hover:border-gold/50 group">
                     <CardContent className="p-0">
                       {/* Imagem/Capa */}
                       <div className="relative aspect-[3/4] overflow-hidden bg-secondary">
@@ -106,15 +104,14 @@ function LivrosPage() {
                           className="gap-1 group-hover:text-gold"
                           asChild
                         >
-                          <span>
+                          <Link to="/livros/$id" params={{ id: livro.id }}>
                             Ver
                             <ChevronRight className="h-3.5 w-3.5" />
-                          </span>
+                          </Link>
                         </Button>
                       </div>
                     </CardContent>
                   </Card>
-                </Link>
               );
             })}
           </div>
