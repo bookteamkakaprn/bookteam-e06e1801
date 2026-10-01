@@ -39,7 +39,6 @@ type Pagamento = {
   valor: number;
   status: "aguardando" | "aprovado" | "rejeitado";
   created_at: string;
-  participante_id: string;
   evento_id: string | null;
   inscricao_id: string | null;
   inscricao?: {
@@ -104,7 +103,7 @@ function exportarParaExcel(dados: any[], nomeArquivo: string) {
 }
 
 function AdminControlePagamentos() {
-  const [aba, setAba] = useState<"aprovados" | "rejeitados" | "estornados" | "inscritos">("aprovados");
+  const [aba, setAba] = useState<"aprovados" | "rejeitados" | "estornados">("aprovados");
   const [cursoFilter, setCursoFilter] = useState("todos");
   const [eventoFilter, setEventoFilter] = useState("todos");
   const [buscaAluno, setBuscaAluno] = useState("");
@@ -119,7 +118,7 @@ function AdminControlePagamentos() {
       const { data, error } = await supabase
         .from("pagamentos")
         .select(
-          `id, status, valor, created_at, participante_id, evento_id, inscricao_id,
+          `id, status, valor, created_at, evento_id, inscricao_id,
            inscricao:inscricoes(
              id, status, livro_id,
              participante:participantes(id, nome, email, data_nascimento),
@@ -169,9 +168,7 @@ function AdminControlePagamentos() {
   const filtrados = useMemo(() => {
     let dados: any[] = [];
 
-    if (aba === "inscritos") {
-      dados = inscritos;
-    } else if (aba === "aprovados") {
+    if (aba === "aprovados") {
       dados = pagamentosPorStatus.aprovados;
     } else if (aba === "rejeitados") {
       dados = pagamentosPorStatus.rejeitados;
@@ -180,28 +177,25 @@ function AdminControlePagamentos() {
     }
 
     return dados.filter((d) => {
-      const curso = aba === "inscritos" ? d.livro?.titulo : d.inscricao?.livro?.titulo;
-      const nome = aba === "inscritos" ? d.participante?.nome : d.inscricao?.participante?.nome;
+      const curso = d.inscricao?.livro?.titulo;
+      const nome = d.inscricao?.participante?.nome;
 
       const cursoOk = cursoFilter === "todos" || curso === cursoFilter;
       const buscaOk = !buscaAluno || nome?.toLowerCase().includes(buscaAluno.toLowerCase());
 
       return cursoOk && buscaOk;
     });
-  }, [aba, pagamentosPorStatus, inscritos, cursoFilter, buscaAluno]);
+  }, [aba, pagamentosPorStatus, cursoFilter, buscaAluno]);
 
   // Opções de filtro
   const cursosOpcoes = useMemo(() => {
     const set = new Set<string>();
-    [...pagamentos, ...inscritos].forEach((p) => {
-      const titulo =
-        aba === "inscritos"
-          ? (p as Inscrito).livro?.titulo
-          : (p as Pagamento).inscricao?.livro?.titulo;
+    pagamentos.forEach((p) => {
+      const titulo = p.inscricao?.livro?.titulo;
       if (titulo) set.add(titulo);
     });
     return Array.from(set).sort();
-  }, [pagamentos, inscritos, aba]);
+  }, [pagamentos]);
 
   const resumo = useMemo(() => {
     const cursoSelecionado = cursoFilter !== "todos" ? cursoFilter : null;
@@ -214,25 +208,21 @@ function AdminControlePagamentos() {
     const aprovados = pagamentosDoCurso(pagamentosPorStatus.aprovados);
     const rejeitados = pagamentosDoCurso(pagamentosPorStatus.rejeitados);
     const estornados = pagamentosDoCurso(pagamentosPorStatus.estornados);
-    const inscritosDoCurso = cursoSelecionado
-      ? inscritos.filter((i) => i.livro?.titulo === cursoSelecionado)
-      : inscritos;
-
     return {
       aprovados: aprovados.reduce((s, p) => s + Number(p.valor ?? 0), 0),
+      quantidadeAprovados: aprovados.length,
       rejeitados: rejeitados.length,
       estornados: estornados.length,
-      inscritos: inscritosDoCurso.length,
     };
-  }, [pagamentosPorStatus, inscritos, cursoFilter]);
+  }, [pagamentosPorStatus, cursoFilter]);
 
   const handleExportar = () => {
     const dadosExportacao = filtrados.map((d) => ({
-      Nome: aba === "inscritos" ? d.participante?.nome : d.inscricao?.participante?.nome,
-      Email: aba === "inscritos" ? d.participante?.email : d.inscricao?.participante?.email,
-      Idade: calcularIdade(aba === "inscritos" ? d.participante?.data_nascimento : d.inscricao?.participante?.data_nascimento),
-      Curso: aba === "inscritos" ? d.livro?.titulo : d.inscricao?.livro?.titulo,
-      Valor: aba === "inscritos" ? "-" : moeda(Number(d.valor ?? 0)),
+      Nome: d.inscricao?.participante?.nome,
+      Email: d.inscricao?.participante?.email,
+      Idade: calcularIdade(d.inscricao?.participante?.data_nascimento),
+      Curso: d.inscricao?.livro?.titulo,
+      Valor: moeda(Number(d.valor ?? 0)),
       Status: d.status,
       Data: new Date(d.created_at).toLocaleDateString("pt-BR"),
     }));
@@ -259,6 +249,7 @@ function AdminControlePagamentos() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{moeda(resumo.aprovados)}</p>
+            <p className="text-xs text-muted-foreground">{resumo.quantidadeAprovados} pagamento(s)</p>
           </CardContent>
         </Card>
 
@@ -287,11 +278,12 @@ function AdminControlePagamentos() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Users className="h-4 w-4" /> Inscritos
+              <CreditCard className="h-4 w-4" /> Pagamentos
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{resumo.inscritos}</p>
+            <p className="text-2xl font-bold">{pagamentos.length}</p>
+            <p className="text-xs text-muted-foreground">registros no controle</p>
           </CardContent>
         </Card>
       </div>
@@ -323,7 +315,7 @@ function AdminControlePagamentos() {
 
       {/* Abas */}
       <Tabs value={aba} onValueChange={(v) => setAba(v as any)} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="aprovados">Aprovados</TabsTrigger>
           <TabsTrigger value="rejeitados">Rejeitados</TabsTrigger>
           <TabsTrigger value="estornados">Estornados</TabsTrigger>
@@ -467,47 +459,6 @@ function AdminControlePagamentos() {
           </div>
         </TabsContent>
 
-        {/* INSCRITOS */}
-        <TabsContent value="inscritos" className="space-y-4 mt-4">
-          <div className="space-y-2">
-            {filtrados.length === 0 ? (
-              <Card>
-                <CardContent className="p-4 text-center text-muted-foreground">
-                  Nenhum inscrito
-                </CardContent>
-              </Card>
-            ) : (
-              filtrados.map((inscrito: Inscrito) => (
-                <Card key={inscrito.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-4 cursor-pointer hover:bg-accent/50 p-2 rounded -m-2"
-                      onClick={() => setExpandedAluno(expandedAluno === inscrito.participante_id ? null : inscrito.participante_id)}>
-                      <div className="flex-1">
-                        <p className="font-semibold">{inscrito.participante?.nome}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {inscrito.participante?.email}
-                        </p>
-                        <p className="text-xs mt-1">
-                          Idade: {calcularIdade(inscrito.participante?.data_nascimento) ?? "N/A"} • {inscrito.livro?.titulo}
-                        </p>
-                      </div>
-                      <Badge>Inscrito</Badge>
-                    </div>
-
-                    {expandedAluno === inscrito.participante_id && (
-                      <div className="mt-3 pt-3 border-t border-border">
-                        <p className="text-xs font-semibold mb-2">Histórico de Cursos:</p>
-                        <p className="text-xs text-muted-foreground">
-                          📚 {inscrito.livro?.titulo}
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );
