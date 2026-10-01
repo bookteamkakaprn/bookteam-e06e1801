@@ -55,6 +55,7 @@ type Turma = {
   ativo: boolean;
   livro_id: string | null;
   valor: number | null;
+  inscritos: number;
 };
 
 function LivroDetalhesPage() {
@@ -75,21 +76,21 @@ function LivroDetalhesPage() {
       return data as Livro | null;
     },
   });
-  const { data: turmas = [], isLoading: carregandoTurmas } = useQuery({
+  const { data: turmas = [], isLoading: carregandoTurmas, error: erroTurmas } = useQuery({
     queryKey: ["turmas-livro-publico", id],
     enabled: !isPlaceholder,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("turmas")
         .select(
-          "id,nome,data_inicio,data_fim,horario,sala,professor,vagas_max,vagas_restantes,ativo,livro_id,valor",
+          "id,nome,data_inicio,data_fim,horario,sala,professor,vagas_max,inscritos,ativo,livro_id,valor",
         )
         .eq("livro_id", id)
         .eq("ativo", true)
         .gte("data_inicio", new Date().toISOString().slice(0, 10))
         .order("data_inicio", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as Turma[];
+      return (data ?? []).map((t) => ({ ...t, vagas_restantes: Math.max(Number(t.vagas_max ?? 0) - Number(t.inscritos ?? 0), 0) })) as Turma[];
     },
   });
   const interesse = useMutation({
@@ -282,7 +283,13 @@ function LivroDetalhesPage() {
                 As turmas abertas aparecem aqui automaticamente.
               </p>
               {carregandoTurmas && <div className="mt-4 h-28 animate-pulse rounded-xl bg-muted" />}
-              {!carregandoTurmas && !turmas.length && (
+              {!carregandoTurmas && erroTurmas && (
+                <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/5 p-5">
+                  <p className="text-sm text-red-200">Não foi possível carregar as turmas deste curso.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Atualize a página e tente novamente.</p>
+                </div>
+              )}
+              {!carregandoTurmas && !erroTurmas && !turmas.length && (
                 <div className="mt-4 rounded-xl border border-border/60 bg-card/40 p-5">
                   <p className="text-sm text-muted-foreground">Ainda não há turmas disponíveis para este curso.</p>
                   <p className="mt-1 text-xs text-muted-foreground">Registre seu interesse e avisaremos por e-mail quando uma nova turma for aberta.</p>
