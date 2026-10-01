@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { emailNovaTurma } from "@/lib/email-service";
 import { Archive, Download, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -128,11 +129,34 @@ function AdminTurmasPage() {
 
         if (error) throw error;
       } else {
-        const { error } = await supabase
+        const { data: nova, error } = await supabase
           .from("turmas")
-          .insert(payload as never);
+          .insert(payload as never)
+          .select("id,nome,data_inicio,data_fim,horario,livro:livros(titulo)")
+          .single();
 
         if (error) throw error;
+
+        // Ao abrir uma nova turma, avisa todos os cadastrados que possuem e-mail.
+        const { data: cadastrados } = await supabase
+          .from("participantes")
+          .select("nome,email")
+          .not("email","is",null);
+
+        const lista = (cadastrados ?? []).filter((p) => p.email);
+        await Promise.allSettled(
+          lista.map((p) =>
+            emailNovaTurma(
+              p.email as string,
+              p.nome || "Participante",
+              (Array.isArray(nova?.livro) ? nova?.livro[0]?.titulo : nova?.livro?.titulo) || "Curso",
+              nova?.nome || "Nova turma",
+              nova?.data_inicio,
+              nova?.data_fim,
+              nova?.horario,
+            ),
+          ),
+        );
       }
     },
     onSuccess: () => {
