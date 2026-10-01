@@ -63,7 +63,7 @@ function LivroDetalhesPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isPlaceholder = id.startsWith("placeholder-");
-  const { data: livro, isLoading: carregandoLivro } = useQuery({
+  const { data: livro, isLoading: carregandoLivro, error: erroLivro } = useQuery({
     queryKey: ["livro-detalhes", id],
     enabled: !isPlaceholder,
     queryFn: async () => {
@@ -155,6 +155,20 @@ function LivroDetalhesPage() {
   });
   const numeroLivro = livro?.ordem ?? (isPlaceholder ? Number(id.replace("placeholder-", "")) : 0);
   const titulo = livro?.titulo ?? (isPlaceholder ? `Livro ${numeroLivro}` : "Livro não encontrado");
+  if (erroLivro)
+    return (
+      <div className="min-h-screen bg-background px-4 py-20 text-center">
+        <BookOpen className="mx-auto h-12 w-12 text-gold" />
+        <h1 className="mt-5 font-serif text-2xl font-semibold">Não foi possível carregar este curso</h1>
+        <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
+          Houve um erro ao consultar as informações do curso. Atualize a página e tente novamente.
+        </p>
+        <Button asChild className="mt-6 bg-gold text-primary-foreground">
+          <Link to="/livros">Voltar para os livros</Link>
+        </Button>
+      </div>
+    );
+
   if (carregandoLivro)
     return (
       <div className="min-h-screen bg-background px-4 py-16">
