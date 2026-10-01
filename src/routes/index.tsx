@@ -126,7 +126,7 @@ function Header() {
             <p className="truncate font-serif text-[15px] font-semibold tracking-wide">BOOK TEAM</p>
             <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-gold">amor & honra</p>
           </div>
-        </a>
+        </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">
           {navItems.map((item) =>
@@ -147,7 +147,7 @@ function Header() {
               >
                 {item.label}
                 <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-gold transition-all duration-300 group-hover:w-full" />
-              </a>
+              </Link>
             )
           )}
         </nav>
@@ -159,7 +159,7 @@ function Header() {
             size="sm"
             className="hidden text-foreground/90 hover:bg-white/5 hover:text-foreground sm:inline-flex"
           >
-            <Link to="/auth">Entrar</a>
+            <Link to="/auth">Entrar</Link>
           </Button>
           <Button
             asChild
@@ -168,7 +168,7 @@ function Header() {
           >
             <Link to="/auth" search={{ mode: "signup" }}>
               Quero participar
-            </a>
+            </Link>
           </Button>
           <button
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-foreground lg:hidden"
@@ -201,15 +201,15 @@ function Header() {
                   className="rounded-lg px-3 py-3 text-base font-medium text-foreground/80 hover:bg-white/5 hover:text-foreground"
                 >
                   {item.label}
-                </a>
+                </Link>
               )
             )}
             <div className="mt-2 flex gap-2 border-t border-border/60 pt-3">
               <Button asChild variant="outline" className="flex-1">
-                <Link to="/auth">Entrar</a>
+                <Link to="/auth">Entrar</Link>
               </Button>
               <Button asChild className="flex-1 bg-gold text-primary-foreground hover:bg-gold/90">
-                <Link to="/auth" search={{ mode: "signup" }}>Participar</a>
+                <Link to="/auth" search={{ mode: "signup" }}>Participar</Link>
               </Button>
             </div>
           </div>
@@ -506,7 +506,9 @@ function JornadaLivros() {
 
             if (cadastradoNoBanco) {
               return (
-                <a key={l.id} href={`/livros/${l.id}`}
+                <a
+                  key={l.id}
+                  href={`/livros/${l.id}`}
                   className="shrink-0 snap-start rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold/70"
                   aria-label={`Abrir ${l.titulo}`}
                 >
@@ -804,10 +806,9 @@ function LivrosComplementares() {
       >
         {!isLoading &&
           livros.map((livro) => (
-            <Link
+            <a
               key={livro.id}
-              to="/livros/$id"
-              params={{ id: livro.id }}
+              href={`/livros/${livro.id}`}
               className="shrink-0 snap-start rounded-2xl focus:outline-none focus:ring-2 focus:ring-gold/70"
               aria-label={`Abrir ${livro.titulo}`}
             >
@@ -1119,7 +1120,7 @@ function EventosEspeciais() {
                     )}
                   </div>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         ) : (
@@ -1215,7 +1216,7 @@ function Footer() {
             <Button asChild className="mt-4 w-full bg-gold text-primary-foreground hover:bg-gold/90">
               <Link to="/auth" search={{ mode: "signup" }}>
                 Criar minha conta
-              </a>
+              </Link>
             </Button>
           </div>
         </div>
