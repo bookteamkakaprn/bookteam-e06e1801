@@ -340,13 +340,6 @@ function AdminLayout() {
                     <span>Cadastrar aluno</span>
                   </Link>
 
-                  <Link
-                    to="/admin/participantes"
-                    className="flex min-h-10 items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                  >
-                    <UserCog className="h-4 w-4 shrink-0" />
-                    <span>Perfis / ADM</span>
-                  </Link>
                 </div>
               )}
             </div>}
@@ -367,7 +360,7 @@ function AdminLayout() {
             )}
 
             {/* Demais itens principais */}
-            {menuVisivel.slice(1).map(({ to, label, icon: Icon }) => (
+            {menuVisivel.filter((item) => item.permission !== "visao_geral").map(({ to, label, icon: Icon }) => (
               <Link
                 key={to}
                 to={to}
