@@ -109,8 +109,7 @@ function PresencaPage() {
       if (!justificando) throw new Error("Selecione a falta.");
       const justificativa = texto.trim();
       if (!justificativa) throw new Error("Informe o motivo da falta.");
-      const { error } = await supabase
-        .from("presencas")
+      const { error } = await (supabase.from("presencas") as any)
         .update({ justificativa, falta_justificada: true })
         .eq("id", justificando.presenca.id)
         .eq("participante_id", user!.id);
