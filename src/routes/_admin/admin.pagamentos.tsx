@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/select";
 import {
   Download,
-  Users,
   CreditCard,
   CheckCircle,
   XCircle,
@@ -105,9 +104,7 @@ function exportarParaExcel(dados: any[], nomeArquivo: string) {
 function AdminControlePagamentos() {
   const [aba, setAba] = useState<"aprovados" | "rejeitados" | "estornados">("aprovados");
   const [cursoFilter, setCursoFilter] = useState("todos");
-  const [eventoFilter, setEventoFilter] = useState("todos");
   const [buscaAluno, setBuscaAluno] = useState("");
-  const [expandedAluno, setExpandedAluno] = useState<string | null>(null);
 
   // Query Pagamentos
   // Usa o mesmo relacionamento já utilizado no módulo de aprovação,
@@ -235,7 +232,7 @@ function AdminControlePagamentos() {
       <div>
         <h1 className="font-serif text-3xl font-bold">Controle de Pagamentos</h1>
         <p className="text-sm text-muted-foreground">
-          Visualize pagamentos, inscritos e exporte dados
+          Visualize pagamentos e exporte os dados financeiros
         </p>
       </div>
 
@@ -319,7 +316,6 @@ function AdminControlePagamentos() {
           <TabsTrigger value="aprovados">Aprovados</TabsTrigger>
           <TabsTrigger value="rejeitados">Rejeitados</TabsTrigger>
           <TabsTrigger value="estornados">Estornados</TabsTrigger>
-          <TabsTrigger value="inscritos">Inscritos</TabsTrigger>
         </TabsList>
 
         {/* Filtros */}
