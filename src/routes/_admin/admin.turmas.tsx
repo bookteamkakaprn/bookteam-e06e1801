@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { emailNovaTurma } from "@/lib/email-service";
+import { emailListaEsperaNovaTurma, emailNovaTurma } from "@/lib/email-service";
 import { Archive, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -137,7 +137,45 @@ function AdminTurmasPage() {
 
         if (error) throw error;
 
-        // Ao abrir uma nova turma, avisa todos os cadastrados que possuem e-mail.
+        const tituloCurso =
+          (Array.isArray(nova?.livro) ? nova?.livro[0]?.titulo : nova?.livro?.titulo) || "Curso";
+
+        // Avisa somente quem havia registrado interesse neste curso.
+        const { data: interesses } = await (supabase as any)
+          .from("lista_interesse_cursos")
+          .select("id,participante_id")
+          .eq("livro_id", livroAtual)
+          .is("notificado_em", null);
+
+        const ids = (interesses ?? []).map((i: { participante_id: string }) => i.participante_id);
+        if (ids.length) {
+          const { data: interessados } = await supabase
+            .from("participantes")
+            .select("id,nome,email")
+            .in("id", ids)
+            .not("email", "is", null);
+
+          await Promise.allSettled(
+            (interessados ?? []).filter((p) => p.email).map((p) =>
+              emailListaEsperaNovaTurma(
+                p.email as string,
+                p.nome || "Participante",
+                tituloCurso,
+                nova?.nome || "Nova turma",
+                nova?.data_inicio,
+                nova?.data_fim,
+                nova?.horario,
+              ),
+            ),
+          );
+
+          await (supabase as any)
+            .from("lista_interesse_cursos")
+            .update({ notificado_em: new Date().toISOString() })
+            .in("id", (interesses ?? []).map((i: { id: string }) => i.id));
+        }
+
+        // Mantém o aviso geral para os cadastrados, como comunicado de nova turma.
         const { data: cadastrados } = await supabase
           .from("participantes")
           .select("nome,email")
@@ -149,7 +187,7 @@ function AdminTurmasPage() {
             emailNovaTurma(
               p.email as string,
               p.nome || "Participante",
-              (Array.isArray(nova?.livro) ? nova?.livro[0]?.titulo : nova?.livro?.titulo) || "Curso",
+              tituloCurso,
               nova?.nome || "Nova turma",
               nova?.data_inicio,
               nova?.data_fim,
