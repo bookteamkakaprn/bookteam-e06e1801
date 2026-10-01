@@ -1,335 +1,213 @@
 import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { toast } from "sonner";
-import {
-  CalendarDays,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Loader2,
-  MapPin,
-  Users,
-} from "lucide-react";
-import type { Tables } from "@/integrations/supabase/types";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin, BookOpen } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/calendario")({
-  head: () => ({
-    meta: [
-      { title: "Calendário de encontros — Book Team" },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Calendário — Book Team" }, { name: "robots", content: "noindex" }] }),
   component: CalendarioPage,
 });
 
-type Evento = Tables<"eventos"> & { livros: { titulo: string } | null };
-type Inscricao = Pick<Tables<"inscricoes">, "id" | "evento_id" | "status">;
-type Presenca = Pick<Tables<"presencas">, "id" | "evento_id" | "presente">;
+type Evento = {
+  id: string;
+  titulo: string | null;
+  descricao: string | null;
+  data: string;
+  hora: string | null;
+  local: string | null;
+  cidade: string | null;
+  vagas: number | null;
+};
+
+type Inscricao = {
+  id: string;
+  status: string;
+  livro: { id: string; titulo: string | null } | null;
+  turma: {
+    id: string;
+    nome: string | null;
+    data_inicio: string | null;
+    data_fim: string | null;
+    dia_semana: string | null;
+    horario: string | null;
+    sala: string | null;
+  } | null;
+};
+
+type Item =
+  | { kind: "evento"; id: string; data: string; titulo: string; hora: string | null; evento: Evento }
+  | { kind: "aula"; id: string; data: string; titulo: string; hora: string | null; inscricao: Inscricao };
 
 const DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-const MESES = [
-  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
-];
+const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-const iso = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
-const fmtData = (data: string) => new Date(data + "T00:00:00").toLocaleDateString("pt-BR");
+function iso(d: Date) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function localDate(v: string) {
+  const [y, m, d] = v.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+function gerarAulas(turma: Inscricao["turma"]) {
+  if (!turma?.data_inicio || !turma.data_fim || turma.dia_semana === null || turma.dia_semana === "") return [];
+  const dia = Number(turma.dia_semana);
+  const out: string[] = [];
+  const cursor = localDate(turma.data_inicio);
+  const fim = localDate(turma.data_fim);
+  while (cursor <= fim) {
+    if (cursor.getDay() === dia) out.push(iso(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return out;
+}
 
 function CalendarioPage() {
   const { user } = useAuth();
-  const qc = useQueryClient();
   const hoje = new Date();
   const hojeIso = iso(hoje);
   const [mes, setMes] = useState(() => new Date(hoje.getFullYear(), hoje.getMonth(), 1));
-  const [detalhe, setDetalhe] = useState<Evento | null>(null);
-
+  const [detalhe, setDetalhe] = useState<Item | null>(null);
   const inicioMes = iso(new Date(mes.getFullYear(), mes.getMonth(), 1));
   const fimMes = iso(new Date(mes.getFullYear(), mes.getMonth() + 1, 0));
 
   const { data: eventos = [], isLoading } = useQuery({
-    queryKey: ["aluno-calendario", inicioMes],
+    queryKey: ["aluno-calendario-eventos", inicioMes],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("eventos")
-        .select("*, livros(titulo)")
-        .gte("data", inicioMes)
-        .lte("data", fimMes)
-        .order("data");
+      const { data, error } = await supabase.from("eventos").select("id,titulo,descricao,data,hora,local,cidade,vagas").gte("data", inicioMes).lte("data", fimMes).order("data").order("hora");
       if (error) throw error;
-      return (data ?? []) as unknown as Evento[];
+      return (data ?? []) as Evento[];
     },
   });
 
   const { data: inscricoes = [] } = useQuery({
-    queryKey: ["aluno-inscricoes-cal", user?.id],
-    enabled: !!user,
+    queryKey: ["aluno-calendario-turmas", user?.id],
+    enabled: !!user?.id,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inscricoes")
-        .select("id, evento_id, status")
-        .eq("participante_id", user!.id);
+        .select("id,status,livro:livros(id,titulo),turma:turmas(id,nome,data_inicio,data_fim,dia_semana,horario,sala)")
+        .eq("participante_id", user!.id)
+        .eq("status", "confirmada");
       if (error) throw error;
-      return (data ?? []) as Inscricao[];
+      return (data ?? []) as unknown as Inscricao[];
     },
   });
 
-  const { data: presencas = [] } = useQuery({
-    queryKey: ["aluno-presencas-cal", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("presencas")
-        .select("id, evento_id, presente")
-        .eq("participante_id", user!.id);
-      if (error) throw error;
-      return (data ?? []) as Presenca[];
-    },
-  });
+  const itens = useMemo<Item[]>(() => {
+    const result: Item[] = eventos.map((e) => ({
+      kind: "evento",
+      id: "evento-" + e.id,
+      data: e.data,
+      titulo: e.titulo || "Evento",
+      hora: e.hora,
+      evento: e,
+    }));
+    for (const inscricao of inscricoes) {
+      for (const data of gerarAulas(inscricao.turma)) {
+        if (data >= inicioMes && data <= fimMes) {
+          result.push({
+            kind: "aula",
+            id: "aula-" + inscricao.id + "-" + data,
+            data,
+            titulo: inscricao.livro?.titulo || "Aula",
+            hora: inscricao.turma?.horario || null,
+            inscricao,
+          });
+        }
+      }
+    }
+    return result.sort((a, b) => (a.data + (a.hora || "")).localeCompare(b.data + (b.hora || "")));
+  }, [eventos, inscricoes, inicioMes, fimMes]);
 
   const porDia = useMemo(() => {
-    const mapa = new Map<string, Evento[]>();
-    for (const e of eventos) {
-      const lista = mapa.get(e.data) ?? [];
-      lista.push(e);
-      mapa.set(e.data, lista);
+    const mapa = new Map<string, Item[]>();
+    for (const item of itens) {
+      const list = mapa.get(item.data) ?? [];
+      list.push(item);
+      mapa.set(item.data, list);
     }
     return mapa;
-  }, [eventos]);
+  }, [itens]);
 
   const celulas = useMemo(() => {
     const primeiro = new Date(mes.getFullYear(), mes.getMonth(), 1);
     const totalDias = new Date(mes.getFullYear(), mes.getMonth() + 1, 0).getDate();
-    const vazios = primeiro.getDay();
-    return [
-      ...Array.from({ length: vazios }, () => null),
-      ...Array.from({ length: totalDias }, (_, i) => new Date(mes.getFullYear(), mes.getMonth(), i + 1)),
-    ];
+    return [...Array.from({ length: primeiro.getDay() }, () => null), ...Array.from({ length: totalDias }, (_, i) => new Date(mes.getFullYear(), mes.getMonth(), i + 1))];
   }, [mes]);
-
-  const inscricaoDe = (eventoId: string) => inscricoes.find((i) => i.evento_id === eventoId) ?? null;
-  const presencaDe = (eventoId: string) => presencas.find((p) => p.evento_id === eventoId) ?? null;
-
-  const marcarPresenca = useMutation({
-    mutationFn: async (evento: Evento) => {
-      if (!user) throw new Error("Sessão expirada. Faça login novamente.");
-      const inscricao = inscricaoDe(evento.id);
-      if (!inscricao) throw new Error("Você não está inscrito neste encontro.");
-      if (inscricao.status !== "confirmada") throw new Error("Sua inscrição ainda não foi confirmada.");
-      if (evento.data !== hojeIso) throw new Error("A presença só pode ser marcada no dia do encontro.");
-
-      const existente = presencaDe(evento.id);
-      if (existente) {
-        const { error } = await supabase
-          .from("presencas")
-          .update({ presente: true, horario_checkin: new Date().toISOString() })
-          .eq("id", existente.id);
-        if (error) throw error;
-        return;
-      }
-      const { error } = await supabase.from("presencas").insert({
-        evento_id: evento.id,
-        inscricao_id: inscricao.id,
-        participante_id: user.id,
-        presente: true,
-        horario_checkin: new Date().toISOString(),
-      });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Presença confirmada!");
-      qc.invalidateQueries({ queryKey: ["aluno-presencas-cal"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="font-serif text-3xl font-bold">Calendário de encontros</h1>
-          <p className="text-sm text-muted-foreground">
-            Veja os detalhes de cada encontro e marque sua presença no dia.
-          </p>
-        </div>
-        <Button asChild variant="outline" size="sm">
-          <Link to="/eventos">Encontros abertos</Link>
-        </Button>
+      <div>
+        <h1 className="font-serif text-3xl font-bold">Calendário</h1>
+        <p className="text-sm text-muted-foreground">Quando sua vaga for confirmada, todas as aulas semanais da turma aparecem automaticamente aqui.</p>
       </div>
 
       <Card>
         <CardContent className="p-4">
           <div className="mb-4 flex items-center justify-between">
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label="Mês anterior"
-              onClick={() => setMes(new Date(mes.getFullYear(), mes.getMonth() - 1, 1))}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <p className="font-serif text-lg font-semibold">
-              {MESES[mes.getMonth()]} {mes.getFullYear()}
-            </p>
-            <Button
-              size="icon"
-              variant="ghost"
-              aria-label="Próximo mês"
-              onClick={() => setMes(new Date(mes.getFullYear(), mes.getMonth() + 1, 1))}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <Button size="icon" variant="ghost" onClick={() => setMes(new Date(mes.getFullYear(), mes.getMonth() - 1, 1))}><ChevronLeft className="h-4 w-4" /></Button>
+            <p className="font-serif text-lg font-semibold">{MESES[mes.getMonth()]} {mes.getFullYear()}</p>
+            <Button size="icon" variant="ghost" onClick={() => setMes(new Date(mes.getFullYear(), mes.getMonth() + 1, 1))}><ChevronRight className="h-4 w-4" /></Button>
           </div>
-
-          <div className="grid grid-cols-7 gap-1 text-center text-[11px] uppercase tracking-wider text-muted-foreground">
-            {DIAS.map((d) => (
-              <div key={d} className="py-1">{d}</div>
-            ))}
-          </div>
-
+          <div className="grid grid-cols-7 gap-1 text-center text-[11px] uppercase tracking-wider text-muted-foreground">{DIAS.map((d) => <div key={d} className="py-1">{d}</div>)}</div>
           <div className="mt-1 grid grid-cols-7 gap-1">
             {celulas.map((dia, idx) => {
-              if (!dia) return <div key={`v-${idx}`} className="min-h-[84px] rounded-md bg-muted/20" />;
+              if (!dia) return <div key={"v-"+idx} className="min-h-[92px] rounded-md bg-muted/20" />;
               const key = iso(dia);
               const doDia = porDia.get(key) ?? [];
               const eHoje = key === hojeIso;
               return (
-                <div
-                  key={key}
-                  className={`min-h-[84px] rounded-md border p-1 text-left ${
-                    eHoje ? "border-primary bg-primary/5" : "border-border/60"
-                  }`}
-                >
-                  <span className={`text-xs ${eHoje ? "font-semibold text-primary" : "text-muted-foreground"}`}>
-                    {dia.getDate()}
-                  </span>
+                <div key={key} className={"min-h-[92px] rounded-md border p-1 text-left " + (eHoje ? "border-primary bg-primary/5" : "border-border/60")}>
+                  <span className={"text-xs " + (eHoje ? "font-semibold text-primary" : "text-muted-foreground")}>{dia.getDate()}</span>
                   <div className="mt-1 space-y-1">
-                    {doDia.map((e) => {
-                      const inscrito = !!inscricaoDe(e.id);
-                      return (
-                        <button
-                          key={e.id}
-                          type="button"
-                          onClick={() => setDetalhe(e)}
-                          className={`w-full truncate rounded px-1 py-0.5 text-left text-[11px] transition-colors ${
-                            inscrito
-                              ? "bg-primary/20 text-foreground hover:bg-primary/30"
-                              : "bg-secondary text-muted-foreground hover:text-foreground"
-                          }`}
-                          title={e.titulo}
-                        >
-                          {e.hora ? `${e.hora.slice(0, 5)} ` : ""}
-                          {e.titulo}
-                        </button>
-                      );
-                    })}
+                    {doDia.map((item) => (
+                      <button key={item.id} type="button" onClick={() => setDetalhe(item)} className={"w-full truncate rounded px-1 py-1 text-left text-[10px] " + (item.kind === "aula" ? "bg-gold/15 hover:bg-gold/25" : "bg-secondary hover:bg-secondary/80")}>
+                        {item.hora ? item.hora.slice(0, 5) + " " : ""}{item.titulo}
+                      </button>
+                    ))}
                   </div>
                 </div>
               );
             })}
           </div>
-          {isLoading && (
-            <p className="mt-3 text-sm text-muted-foreground">
-              <Loader2 className="mr-1 inline h-3.5 w-3.5 animate-spin" /> Carregando encontros...
-            </p>
-          )}
+          {isLoading && <p className="mt-3 text-sm text-muted-foreground">Carregando calendário...</p>}
         </CardContent>
       </Card>
 
+      <div className="flex flex-wrap gap-2 text-xs">
+        <Badge variant="secondary" className="gap-1"><BookOpen className="h-3.5 w-3.5" /> Aula da sua turma</Badge>
+        <Badge variant="outline" className="gap-1"><CalendarDays className="h-3.5 w-3.5" /> Evento</Badge>
+        <Button asChild variant="outline" size="sm"><Link to="/presenca">Ver presença e justificar faltas</Link></Button>
+      </div>
 
-
-      <Dialog open={!!detalhe} onOpenChange={(o) => !o && setDetalhe(null)}>
+      <Dialog open={!!detalhe} onOpenChange={(open) => !open && setDetalhe(null)}>
         <DialogContent className="max-w-lg">
-          {detalhe && (
+          {detalhe?.kind === "aula" && (
             <>
-              <DialogHeader>
-                <DialogTitle className="font-serif text-xl">{detalhe.titulo}</DialogTitle>
-              </DialogHeader>
+              <DialogHeader><DialogTitle>{detalhe.titulo}</DialogTitle></DialogHeader>
               <div className="space-y-3 text-sm">
-                {detalhe.livros?.titulo && (
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-gold">
-                    {detalhe.livros.titulo}
-                  </p>
-                )}
-                {detalhe.descricao && <p className="text-muted-foreground">{detalhe.descricao}</p>}
-                <div className="grid gap-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4" /> {fmtData(detalhe.data)}
-                  </span>
-                  {detalhe.hora && (
-                    <span className="inline-flex items-center gap-2">
-                      <Clock className="h-4 w-4" /> {detalhe.hora.slice(0, 5)}
-                    </span>
-                  )}
-                  {(detalhe.local || detalhe.cidade) && (
-                    <span className="inline-flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      {[detalhe.local, detalhe.cidade].filter(Boolean).join(" — ")}
-                    </span>
-                  )}
-                  <span className="inline-flex items-center gap-2">
-                    <Users className="h-4 w-4" /> {detalhe.vagas} vagas
-                  </span>
-                </div>
-
-                {(() => {
-                  const inscricao = inscricaoDe(detalhe.id);
-                  const presenca = presencaDe(detalhe.id);
-                  if (presenca?.presente) {
-                    return (
-                      <p className="inline-flex items-center gap-2 rounded-md bg-primary/10 px-3 py-2 text-xs text-foreground">
-                        <CheckCircle2 className="h-4 w-4 text-primary" /> Presença já registrada. Bom encontro!
-                      </p>
-                    );
-                  }
-                  if (!inscricao) {
-                    return (
-                      <Button asChild size="sm" className="w-full">
-                        <Link to="/inscricao/$eventoId" params={{ eventoId: detalhe.id }}>
-                          Inscrever-se neste encontro
-                        </Link>
-                      </Button>
-                    );
-                  }
-                  if (inscricao.status !== "confirmada") {
-                    return (
-                      <p className="rounded-md bg-secondary px-3 py-2 text-xs text-muted-foreground">
-                        Sua inscrição está como <strong>{inscricao.status.replace(/_/g, " ")}</strong>. A presença
-                        libera após a confirmação do pagamento.
-                      </p>
-                    );
-                  }
-                  if (detalhe.data !== hojeIso) {
-                    return (
-                      <p className="rounded-md bg-secondary px-3 py-2 text-xs text-muted-foreground">
-                        A presença poderá ser marcada no dia do encontro ({fmtData(detalhe.data)}).
-                      </p>
-                    );
-                  }
-                  return (
-                    <Button
-                      className="w-full"
-                      disabled={marcarPresenca.isPending}
-                      onClick={() => marcarPresenca.mutate(detalhe)}
-                    >
-                      {marcarPresenca.isPending ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="mr-2 h-4 w-4" />
-                      )}
-                      Marcar minha presença
-                    </Button>
-                  );
-                })()}
+                <p><strong>Turma:</strong> {detalhe.inscricao.turma?.nome || "—"}</p>
+                <p className="flex items-center gap-2"><CalendarDays className="h-4 w-4" /> {localDate(detalhe.data).toLocaleDateString("pt-BR")}</p>
+                {detalhe.hora && <p className="flex items-center gap-2"><Clock className="h-4 w-4" /> {detalhe.hora.slice(0,5)}</p>}
+                {detalhe.inscricao.turma?.sala && <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {detalhe.inscricao.turma.sala}</p>}
+                <p className="text-xs text-muted-foreground">Para registrar ou justificar sua presença, use a aba Presença.</p>
+              </div>
+            </>
+          )}
+          {detalhe?.kind === "evento" && (
+            <>
+              <DialogHeader><DialogTitle>{detalhe.evento.titulo || "Evento"}</DialogTitle></DialogHeader>
+              <div className="space-y-3 text-sm">
+                {detalhe.evento.descricao && <p className="text-muted-foreground">{detalhe.evento.descricao}</p>}
+                <p className="flex items-center gap-2"><CalendarDays className="h-4 w-4" /> {localDate(detalhe.data).toLocaleDateString("pt-BR")}</p>
+                {detalhe.hora && <p className="flex items-center gap-2"><Clock className="h-4 w-4" /> {detalhe.hora.slice(0,5)}</p>}
+                {(detalhe.evento.local || detalhe.evento.cidade) && <p className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {[detalhe.evento.local, detalhe.evento.cidade].filter(Boolean).join(" — ")}</p>}
               </div>
             </>
           )}
