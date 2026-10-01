@@ -124,6 +124,14 @@ type FormLivro = {
 
   duracao: string;
   turma: string;
+  objetivo: string;
+  publico_alvo: string;
+  conteudo_programatico: string;
+  competencias: string;
+  material_necessario: string;
+  professor: string;
+  coordenador: string;
+  datas_curriculo: string;
 };
 
 /* =========================================================
@@ -165,6 +173,14 @@ const vazio: FormLivro = {
 
   duracao: "",
   turma: "",
+  objetivo: "",
+  publico_alvo: "",
+  conteudo_programatico: "",
+  competencias: "",
+  material_necessario: "",
+  professor: "",
+  coordenador: "",
+  datas_curriculo: "",
 };
 
 /* =========================================================
@@ -439,6 +455,14 @@ function AdminLivrosPage() {
             : Number(form.qtd_encontros),
         duracao: form.duracao.trim() || null,
         turma: form.turma.trim() || null,
+        objetivo: form.objetivo.trim() || null,
+        publico_alvo: form.publico_alvo.trim() || null,
+        conteudo_programatico: form.conteudo_programatico.trim() || null,
+        competencias: form.competencias.trim() || null,
+        material_necessario: form.material_necessario.trim() || null,
+        professor: form.professor.trim() || null,
+        coordenador: form.coordenador.trim() || null,
+        datas_curriculo: form.datas_curriculo.trim() || null,
       };
 
       let livroId = selecionado;
@@ -753,6 +777,14 @@ function AdminLivrosPage() {
           : String(livro.qtd_encontros),
       duracao: livro.duracao ?? "",
       turma: livro.turma ?? "",
+      objetivo: livro.objetivo ?? "",
+      publico_alvo: livro.publico_alvo ?? "",
+      conteudo_programatico: livro.conteudo_programatico ?? "",
+      competencias: livro.competencias ?? "",
+      material_necessario: livro.material_necessario ?? "",
+      professor: livro.professor ?? "",
+      coordenador: livro.coordenador ?? "",
+      datas_curriculo: livro.datas_curriculo ?? "",
     });
   }
 
@@ -1588,25 +1620,40 @@ function AdminLivrosPage() {
 
               {/* DESCRIÇÃO */}
 
-              <Field
-                label="Descrição"
-                wide
-              >
-                <Textarea
-                  rows={4}
-                  value={
-                    form.descricao
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    set(
-                      "descricao",
-                      event.target
-                        .value
-                    )
-                  }
-                />
+              <Field label="Descrição" wide>
+                <Textarea rows={4} value={form.descricao} onChange={(event) => set("descricao", event.target.value)} />
+              </Field>
+
+              <Field label="Objetivo" wide>
+                <Textarea rows={3} value={form.objetivo} onChange={(event) => set("objetivo", event.target.value)} />
+              </Field>
+
+              <Field label="Público-alvo" wide>
+                <Textarea rows={3} value={form.publico_alvo} onChange={(event) => set("publico_alvo", event.target.value)} />
+              </Field>
+
+              <Field label="Conteúdo programático" wide>
+                <Textarea rows={5} value={form.conteudo_programatico} onChange={(event) => set("conteudo_programatico", event.target.value)} />
+              </Field>
+
+              <Field label="Competências" wide>
+                <Textarea rows={4} value={form.competencias} onChange={(event) => set("competencias", event.target.value)} />
+              </Field>
+
+              <Field label="Material necessário" wide>
+                <Textarea rows={3} value={form.material_necessario} onChange={(event) => set("material_necessario", event.target.value)} />
+              </Field>
+
+              <Field label="Professor">
+                <Input value={form.professor} onChange={(event) => set("professor", event.target.value)} />
+              </Field>
+
+              <Field label="Coordenador">
+                <Input value={form.coordenador} onChange={(event) => set("coordenador", event.target.value)} />
+              </Field>
+
+              <Field label="Datas / currículo" wide>
+                <Input value={form.datas_curriculo} onChange={(event) => set("datas_curriculo", event.target.value)} />
               </Field>
 
             </div>
