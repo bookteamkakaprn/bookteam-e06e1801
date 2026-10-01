@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_admin/admin/presencas")({
   component: PresencaPage,
 });
 
-type Turma = { id: string; nome: string | null; data_inicio: string | null; data_fim: string | null; dia_semana: string | null; horario: string | null; frequencia_minima: number | null };
+type Turma = { id: string; nome: string | null; livro: { titulo: string | null } | null; data_inicio: string | null; data_fim: string | null; dia_semana: string | null; horario: string | null; frequencia_minima: number | null };
 type Inscricao = { id: string; status: string; participante: { id: string; nome: string | null; email: string | null } | null; livro: { id: string; titulo: string | null } | null; turma: Turma | null };
 type Presenca = { id: string; inscricao_id: string; participante_id: string; turma_id: string | null; data_aula: string; presente: boolean; justificativa: string | null; falta_justificada: boolean };
 
@@ -40,7 +40,7 @@ function PresencaPage() {
   const inscricoesQ = useQuery({
     queryKey: ["admin-presenca-inscricoes-semanais"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("inscricoes").select("id,status,participante:participantes(id,nome,email),livro:livros(id,titulo),turma:turmas(id,nome,data_inicio,data_fim,dia_semana,horario,frequencia_minima)").eq("status","confirmada").order("created_at");
+      const { data, error } = await supabase.from("inscricoes").select("id,status,participante:participantes(id,nome,email),livro:livros(id,titulo),turma:turmas(id,nome,livro:livros(titulo),data_inicio,data_fim,dia_semana,horario,frequencia_minima)").eq("status","confirmada").order("created_at");
       if (error) throw error;
       return (data ?? []) as unknown as Inscricao[];
     },
@@ -139,7 +139,7 @@ function PresencaPage() {
           <label className="text-sm font-medium">Turma</label>
           <select className="mt-1 h-10 w-full max-w-xl rounded-md border border-input bg-background px-3 text-sm" value={filtroTurma} onChange={(e)=>{setFiltroTurma(e.target.value);setDataSelecionada("");}}>
             <option value="">Selecione uma turma</option>
-            {turmas.map((t)=><option key={t.id} value={t.id}>{t.nome}</option>)}
+            {turmas.map((t)=><option key={t.id} value={t.id}>{t.nome} — {t.livro?.titulo ?? "Curso"}</option>)}
           </select>
         </CardContent>
       </Card>
@@ -148,7 +148,7 @@ function PresencaPage() {
         <>
           <Card>
             <CardHeader>
-              <CardTitle className="flex flex-wrap items-center gap-3"><CalendarDays className="h-5 w-5 text-gold" />{turma.nome}</CardTitle>
+              <CardTitle className="flex flex-wrap items-center gap-3"><CalendarDays className="h-5 w-5 text-gold" />{turma.nome} — {turma.livro?.titulo ?? "Curso"}</CardTitle>
               <p className="text-sm text-muted-foreground">
                 {turma.data_inicio ? localDate(turma.data_inicio).toLocaleDateString("pt-BR") : "—"} até {turma.data_fim ? localDate(turma.data_fim).toLocaleDateString("pt-BR") : "—"} · {turma.dia_semana !== null && turma.dia_semana !== "" ? DIAS[Number(turma.dia_semana)] : "dia não configurado"} {turma.horario ? "· " + turma.horario.slice(0,5) : ""}
               </p>
