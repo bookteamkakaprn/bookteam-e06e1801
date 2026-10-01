@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,7 +141,7 @@ function CursosPage() {
                   <p className="font-semibold text-sm line-clamp-2 group-hover:text-gold transition-colors">{livro.titulo}</p>
                   {livro.autor && <p className="text-xs text-muted-foreground">{livro.autor}</p>}
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         </section>
@@ -194,7 +194,7 @@ function CursosPage() {
                   <p className="font-semibold text-sm line-clamp-2 group-hover:text-gold transition-colors">{livro.titulo}</p>
                   {livro.autor && <p className="text-xs text-muted-foreground">{livro.autor}</p>}
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         </section>
