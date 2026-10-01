@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_admin/admin/inscricoes")({
 });
 
 type StatusPagamento = "aguardando" | "aprovado" | "rejeitado";
-type Aba = "pagamentos" | "inscricoes";
+type Aba = "pagamentos" | "inscricoes"; type FiltroInscricao = "pendentes" | "aprovadas" | "rejeitadas";
 
 type Pagamento = {
   id: string;
@@ -151,6 +151,7 @@ function AdminAprovacoes() {
   const [aba, setAba] = useState<Aba>("pagamentos");
   const [filtroPagamento, setFiltroPagamento] =
     useState<StatusPagamento>("aguardando");
+  const [filtroInscricao, setFiltroInscricao] = useState<FiltroInscricao>("pendentes");
 
   const [recusandoPagamento, setRecusandoPagamento] =
     useState<Pagamento | null>(null);
@@ -1181,19 +1182,19 @@ function AdminAprovacoes() {
 
       {!carregando && !erro && aba === "inscricoes" && (
         <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <Badge variant="secondary">
-              Pendentes: {inscricoesPendentes.length}
-            </Badge>
-            <Badge variant="secondary">
-              Aprovadas: {inscricoesAprovadas.length}
-            </Badge>
-            <Badge variant="secondary">
-              Rejeitadas: {inscricoesRejeitadas.length}
-            </Badge>
+          <div className="flex flex-wrap gap-1">
+            {([
+              ["pendentes", "Pendentes", inscricoesPendentes.length],
+              ["aprovadas", "Aprovadas", inscricoesAprovadas.length],
+              ["rejeitadas", "Rejeitadas", inscricoesRejeitadas.length],
+            ] as [FiltroInscricao, string, number][]).map(([value, label, total]) => (
+              <Button key={value} size="sm" variant={filtroInscricao === value ? "default" : "outline"} onClick={() => setFiltroInscricao(value)}>
+                {label}{total > 0 ? ` (${total})` : ""}
+              </Button>
+            ))}
           </div>
 
-          {!inscricoesPendentes.length && (
+          {filtroInscricao === "pendentes" && !inscricoesPendentes.length && (
             <Card>
               <CardContent className="p-6 text-sm text-muted-foreground">
                 Nenhuma inscrição aguardando confirmação de vaga.
@@ -1201,6 +1202,7 @@ function AdminAprovacoes() {
             </Card>
           )}
 
+          {filtroInscricao === "pendentes" && (
           <div className="space-y-3">
             {inscricoesPendentes.map((inscricao) => {
               const turma = inscricao.turma;
@@ -1297,7 +1299,8 @@ function AdminAprovacoes() {
             })}
           </div>
 
-          {inscricoesAprovadas.length > 0 && (
+
+          {filtroInscricao === "aprovadas" && (
             <Card>
               <CardContent className="space-y-3 p-4">
                 <h2 className="font-serif text-lg font-semibold">
@@ -1354,7 +1357,8 @@ function AdminAprovacoes() {
             </Card>
           )}
 
-          {inscricoesRejeitadas.length > 0 && (
+
+          {filtroInscricao === "rejeitadas" && (
             <Card>
               <CardContent className="space-y-3 p-4">
                 <h2 className="font-serif text-lg font-semibold">
@@ -1407,6 +1411,7 @@ function AdminAprovacoes() {
               </CardContent>
             </Card>
           )}
+
         </div>
       )}
 
