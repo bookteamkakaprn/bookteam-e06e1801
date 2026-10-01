@@ -12,6 +12,23 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Clock, Loader2, Upload } from "lucide-react";
 
+const pixField = (id: string, value: string) => `${id}${String(value.length).padStart(2, "0")}${value}`;
+const crc16 = (value: string) => {
+  let crc = 0xffff;
+  for (let i = 0; i < value.length; i++) {
+    crc ^= value.charCodeAt(i) << 8;
+    for (let bit = 0; bit < 8; bit++) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+  }
+  return crc.toString(16).toUpperCase().padStart(4, "0");
+};
+const gerarPixPayload = (chave: string, beneficiario?: string | null) => {
+  const nome = (beneficiario || "BOOK TEAM").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").replace(/[^A-Za-z0-9 ]/g, "").slice(0, 25) || "BOOK TEAM";
+  const cidade = "CURITIBA";
+  const merchantAccount = pixField("00", "BR.GOV.BCB.PIX") + pixField("01", chave.trim());
+  const semCrc = pixField("00", "01") + pixField("26", merchantAccount) + pixField("52", "0000") + pixField("53", "986") + pixField("58", "BR") + pixField("59", nome) + pixField("60", cidade) + pixField("62", pixField("05", "***")) + "6304";
+  return semCrc + crc16(semCrc);
+};
+
 export const Route = createFileRoute("/_authenticated/matricula/$inscricaoId")({
   head: () => ({
     meta: [
@@ -326,104 +343,21 @@ function MatriculaPage() {
         </Card>
       )}
 
-      {/* Dados do PIX */}
-      {pix &&
-        (pix.pix_chave ||
-          pix.pix_copia_cola ||
-          pix.pix_qrcode_url) && (
-          <Card>
-
-            <CardHeader>
-              <CardTitle className="text-base">
-                Dados para PIX
-              </CardTitle>
-            </CardHeader>
-
-            <CardContent className="grid gap-4 sm:grid-cols-[auto_1fr] sm:items-start">
-
-              {pix.pix_qrcode_url && (
-                <img
-                  src={pix.pix_qrcode_url}
-                  alt="QR Code do PIX para pagamento"
-                  loading="lazy"
-                  className="h-40 w-40 rounded-md border border-border object-contain"
-                />
-              )}
-
-              <div className="space-y-1 text-sm">
-
-                {pix.beneficiario && (
-                  <p>
-                    <span className="text-muted-foreground">
-                      Beneficiário:
-                    </span>{" "}
-                    {pix.beneficiario}
-                  </p>
-                )}
-
-                {pix.banco && (
-                  <p>
-                    <span className="text-muted-foreground">
-                      Banco:
-                    </span>{" "}
-                    {pix.banco}
-                  </p>
-                )}
-
-                {pix.tipo_chave && (
-                  <p>
-                    <span className="text-muted-foreground">
-                      Tipo da chave:
-                    </span>{" "}
-                    {pix.tipo_chave}
-                  </p>
-                )}
-
-                {pix.pix_chave && (
-                  <p className="break-all">
-                    <span className="text-muted-foreground">
-                      Chave:
-                    </span>{" "}
-                    {pix.pix_chave}
-                  </p>
-                )}
-
-                {pix.pix_copia_cola && (
-                  <div className="space-y-1.5 pt-2">
-
-                    <p className="break-all rounded-md bg-muted p-2 text-xs">
-                      {pix.pix_copia_cola}
-                    </p>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        navigator.clipboard.writeText(
-                          pix.pix_copia_cola!
-                        );
-
-                        toast.success(
-                          "Código PIX copiado"
-                        );
-                      }}
-                    >
-                      Copiar código PIX
-                    </Button>
-
-                  </div>
-                )}
-
-                {pix.instrucoes && (
-                  <p className="pt-2 text-muted-foreground">
-                    {pix.instrucoes}
-                  </p>
-                )}
-
-              </div>
-            </CardContent>
-          </Card>
-        )}
+      {/* QR Code PIX — sem valor fixado */}
+      {pix?.pix_chave && (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 p-5">
+            <p className="text-center text-sm font-medium">Escaneie o QR Code para pagar via PIX</p>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=10&data=${encodeURIComponent(gerarPixPayload(pix.pix_chave, pix.beneficiario))}`}
+              alt="QR Code PIX"
+              loading="eager"
+              className="h-64 w-64 rounded-xl border bg-white p-2 object-contain"
+            />
+            <p className="text-center text-xs text-muted-foreground">O valor não está definido no QR Code. Informe o valor no aplicativo do seu banco.</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Enviar comprovante */}
       <Card>
