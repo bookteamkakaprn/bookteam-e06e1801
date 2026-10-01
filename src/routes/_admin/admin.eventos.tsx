@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { emailNovoEvento } from "@/lib/email-service";
 import { Loader2, Plus, Save, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_admin/admin/eventos")({
@@ -103,11 +104,36 @@ function AdminEventosPage() {
         vagas: Number(evento.vagas ?? 0),
       };
 
-      const response = evento.id
-        ? await supabase.from("eventos").update(payload).eq("id", evento.id)
-        : await supabase.from("eventos").insert(payload);
+      if (evento.id) {
+        const response = await supabase.from("eventos").update(payload).eq("id", evento.id);
+        if (response.error) throw response.error;
+      } else {
+        const response = await supabase
+          .from("eventos")
+          .insert(payload)
+          .select("id,titulo,data,hora,descricao")
+          .single();
+        if (response.error) throw response.error;
 
-      if (response.error) throw response.error;
+        const { data: cadastrados } = await supabase
+          .from("participantes")
+          .select("nome,email")
+          .not("email","is",null);
+
+        const lista = (cadastrados ?? []).filter((p) => p.email);
+        await Promise.allSettled(
+          lista.map((p) =>
+            emailNovoEvento(
+              p.email as string,
+              p.nome || "Participante",
+              response.data?.titulo || "Novo evento",
+              response.data?.data,
+              response.data?.hora,
+              response.data?.descricao,
+            ),
+          ),
+        );
+      }
     },
     onSuccess: () => {
       toast.success("Evento salvo!");
