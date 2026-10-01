@@ -386,6 +386,7 @@ export interface FileRoutesByTo {
   '/admin/presencas': typeof AdminAdminPresencasRoute
   '/admin/relatorios': typeof AdminAdminRelatoriosRoute
   '/admin/turmas': typeof AdminAdminTurmasRoute
+  '/admin/visualizacao-turmas': typeof AdminAdminVisualizacaoTurmasRoute
   '/admin/tutorial': typeof AdminAdminTutorialRoute
   '/inscricao/$eventoId': typeof AuthenticatedInscricaoEventoIdRoute
   '/matricula/$inscricaoId': typeof AuthenticatedMatriculaInscricaoIdRoute
@@ -484,6 +485,7 @@ export interface FileRouteTypes {
     | '/admin/presencas'
     | '/admin/relatorios'
     | '/admin/turmas'
+    | '/admin/visualizacao-turmas'
     | '/admin/tutorial'
     | '/inscricao/$eventoId'
     | '/matricula/$inscricaoId'
@@ -530,6 +532,7 @@ export interface FileRouteTypes {
     | '/admin/presencas'
     | '/admin/relatorios'
     | '/admin/turmas'
+    | '/admin/visualizacao-turmas'
     | '/admin/tutorial'
     | '/inscricao/$eventoId'
     | '/matricula/$inscricaoId'
