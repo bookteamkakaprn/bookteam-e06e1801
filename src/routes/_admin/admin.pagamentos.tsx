@@ -117,55 +117,40 @@ function AdminControlePagamentos() {
   const pagamentosQ = useQuery({
     queryKey: ["admin-pagamentos"],
     queryFn: async () => {
-      // Busca os pagamentos sem joins para não deixar uma relação opcional
-      // quebrar o painel inteiro. Depois carregamos as inscrições relacionadas.
-      const { data: pagamentosData, error: pagamentosError } = await supabase
-        .from("pagamentos")
-        .select("id,status,valor,created_at,evento_id,inscricao_id")
-        .order("created_at", { ascending: false });
+      const { data, error } = await (supabase as any).rpc("admin_controle_pagamentos");
 
-      if (pagamentosError) throw pagamentosError;
-
-      const pagamentosBase = (pagamentosData ?? []) as Array<{
-        id: string;
-        status: "aguardando" | "aprovado" | "rejeitado";
-        valor: number;
-        created_at: string;
-        evento_id: string | null;
-        inscricao_id: string | null;
-      }>;
-
-      const inscricaoIds = Array.from(
-        new Set(
-          pagamentosBase
-            .map((p) => p.inscricao_id)
-            .filter((id): id is string => Boolean(id)),
-        ),
-      );
-
-      if (!inscricaoIds.length) {
-        return pagamentosBase as Pagamento[];
+      if (error) {
+        throw new Error(
+          [error.code, error.message, error.details, error.hint]
+            .filter(Boolean)
+            .join(" | "),
+        );
       }
 
-      const { data: inscricoesData, error: inscricoesError } = await supabase
-        .from("inscricoes")
-        .select(
-          `id,status,livro_id,
-           participante:participantes(id,nome,email,data_nascimento),
-           livro:livros(id,titulo)`,
-        )
-        .in("id", inscricaoIds);
-
-      if (inscricoesError) throw inscricoesError;
-
-      const inscricoesMap = new Map(
-        (inscricoesData ?? []).map((i) => [i.id, i]),
-      );
-
-      return pagamentosBase.map((p) => ({
-        ...p,
+      return ((data ?? []) as any[]).map((p) => ({
+        id: p.id,
+        valor: Number(p.valor ?? 0),
+        status: p.status,
+        created_at: p.created_at,
+        evento_id: p.evento_id,
+        inscricao_id: p.inscricao_id,
         inscricao: p.inscricao_id
-          ? (inscricoesMap.get(p.inscricao_id) as Pagamento["inscricao"])
+          ? {
+              id: p.inscricao_id,
+              status: p.inscricao_status,
+              livro_id: p.livro_id,
+              livro: p.livro_id
+                ? { id: p.livro_id, titulo: p.curso }
+                : null,
+              participante: p.participante_id
+                ? {
+                    id: p.participante_id,
+                    nome: p.nome,
+                    email: p.email,
+                    data_nascimento: p.data_nascimento,
+                  }
+                : null,
+            }
           : null,
       })) as Pagamento[];
     },
