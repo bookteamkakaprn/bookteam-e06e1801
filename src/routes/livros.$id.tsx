@@ -134,6 +134,8 @@ function LivroDetalhesPage() {
           .from("pagamentos")
           .insert({
             inscricao_id: insc.id,
+            participante_id: user.id,
+            turma_id: turma.id,
             valor: Number(turma.valor ?? 0),
             comprovante_url: null,
             status: "aguardando",
