@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -120,10 +120,7 @@ function CursosPage() {
             className="flex gap-4 overflow-x-auto pb-4 scrollbar-hidden"
           >
             {livrosJornada.map((livro) => (
-              <a
-                key={livro.id}
-                href={`/livros/${livro.id}`}
-                className="shrink-0 w-[200px] md:w-[240px] flex flex-col gap-3 cursor-pointer group"
+              <Link key={livro.id} to="/livros/$id" params={{ id: livro.id }} className="shrink-0 w-[200px] md:w-[240px] flex flex-col gap-3 cursor-pointer group"
               >
                 <div
                   className="aspect-[2/3] rounded-lg overflow-hidden bg-black/20 group-hover:shadow-lg transition-shadow"
@@ -140,7 +137,7 @@ function CursosPage() {
                   <p className="font-semibold text-sm line-clamp-2 group-hover:text-gold transition-colors">{livro.titulo}</p>
                   {livro.autor && <p className="text-xs text-muted-foreground">{livro.autor}</p>}
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </section>
@@ -172,10 +169,7 @@ function CursosPage() {
             className="flex gap-4 overflow-x-auto pb-4 scrollbar-hidden"
           >
             {livrosComplementares.map((livro) => (
-              <a
-                key={livro.id}
-                href={`/livros/${livro.id}`}
-                className="shrink-0 w-[200px] md:w-[240px] flex flex-col gap-3 cursor-pointer group"
+              <Link key={livro.id} to="/livros/$id" params={{ id: livro.id }} className="shrink-0 w-[200px] md:w-[240px] flex flex-col gap-3 cursor-pointer group"
               >
                 <div
                   className="aspect-[2/3] rounded-lg overflow-hidden bg-black/20 group-hover:shadow-lg transition-shadow"
@@ -192,7 +186,7 @@ function CursosPage() {
                   <p className="font-semibold text-sm line-clamp-2 group-hover:text-gold transition-colors">{livro.titulo}</p>
                   {livro.autor && <p className="text-xs text-muted-foreground">{livro.autor}</p>}
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </section>
