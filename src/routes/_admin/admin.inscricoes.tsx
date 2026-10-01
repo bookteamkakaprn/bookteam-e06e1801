@@ -47,6 +47,7 @@ type Pagamento = {
   comprovante_enviado_em: string | null;
   observacao: string | null;
   created_at: string;
+  inscricao_id: string;
   inscricao: {
     id: string;
     status: string;
@@ -179,7 +180,7 @@ function AdminAprovacoes() {
       const { data, error } = await supabase
         .from("pagamentos")
         .select(
-          `id,status,valor,comprovante_url,comprovante_enviado_em,observacao,created_at,
+          `id,inscricao_id,status,valor,comprovante_url,comprovante_enviado_em,observacao,created_at,
            inscricao:inscricoes(
              id,status,
              participante:participantes(id,nome,email,status),
@@ -191,10 +192,7 @@ function AdminAprovacoes() {
         )
         .order("created_at", { ascending: false });
 
-      if (error) {
-        throw new Error(`PAGAMENTOS: ${erroTexto(error)}`);
-      }
-
+      if (error) throw new Error(`PAGAMENTOS: ${erroTexto(error)}`);
       return (data ?? []) as unknown as Pagamento[];
     },
   });
@@ -211,16 +209,11 @@ function AdminAprovacoes() {
            turma:turmas(
              id,nome,data_inicio,data_fim,horario,frequencia_minima,vagas_max,vagas_restantes
            ),
-           pagamentos(
-             id,status,valor,comprovante_url,observacao
-           )`,
+           pagamentos(id,status,valor,comprovante_url,observacao)`,
         )
         .order("created_at", { ascending: false });
 
-      if (error) {
-        throw new Error(`INSCRICOES: ${erroTexto(error)}`);
-      }
-
+      if (error) throw new Error(`INSCRICOES: ${erroTexto(error)}`);
       return (data ?? []) as unknown as Inscricao[];
     },
   });
