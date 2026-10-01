@@ -29,7 +29,7 @@ begin
     p.status::text,
     p.valor,
     p.created_at,
-    p.evento_id,
+    i.evento_id,
     p.inscricao_id,
     i.status::text as inscricao_status,
     i.livro_id,
