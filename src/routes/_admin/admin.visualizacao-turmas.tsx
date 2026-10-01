@@ -42,11 +42,17 @@ function AdminVisualizacaoTurmasPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("turmas")
-        .select("id,nome,livro_id,data_inicio,data_fim,horario,sala,vagas_max,inscritos,livro:livros(titulo)")
+        .select("id,nome,livro_id,data_inicio,data_fim,horario,sala,vagas_max,inscritos")
         .order("data_inicio", { ascending: true, nullsFirst: false })
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as any[];
+
+      const ids = [...new Set((data ?? []).map((t) => t.livro_id).filter(Boolean))];
+      const { data: livros } = ids.length
+        ? await supabase.from("livros").select("id,titulo").in("id", ids)
+        : { data: [] as { id: string; titulo: string | null }[] };
+      const mapa = new Map((livros ?? []).map((l) => [l.id, l]));
+      return (data ?? []).map((t) => ({ ...t, livro: mapa.get(t.livro_id) ?? null })) as any[];
     },
   });
 
@@ -73,11 +79,17 @@ function AdminVisualizacaoTurmasPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inscricoes")
-        .select("id,status,livro_disponibilizado,participante:participantes(id,nome,email,telefone)")
+        .select("id,status,livro_disponibilizado,participante_id")
         .eq("turma_id", turmaId)
         .order("created_at");
       if (error) throw error;
-      return (data ?? []) as unknown as Inscricao[];
+
+      const ids = [...new Set((data ?? []).map((i: any) => i.participante_id).filter(Boolean))];
+      const { data: participantes } = ids.length
+        ? await supabase.from("participantes").select("id,nome,email,telefone").in("id", ids)
+        : { data: [] as any[] };
+      const mapa = new Map((participantes ?? []).map((p) => [p.id, p]));
+      return (data ?? []).map((i: any) => ({ ...i, participante: mapa.get(i.participante_id) ?? null })) as unknown as Inscricao[];
     },
   });
 
