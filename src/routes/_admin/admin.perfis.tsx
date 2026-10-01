@@ -37,6 +37,7 @@ const ABAS = [
   ["cursos", "Cursos"],
   ["turmas", "Turmas"],
   ["materiais", "Materiais dos cursos"],
+  ["tarefas", "Tarefas"],
   ["pedido_materiais", "Pedido de materiais"],
   ["presencas", "Lista de presença"],
   ["eventos", "Eventos"],
