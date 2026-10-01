@@ -242,6 +242,19 @@ function AdminControlePagamentos() {
         </p>
       </div>
 
+      {pagamentosQ.error && (
+        <Card className="border-destructive/40">
+          <CardContent className="p-4 text-sm">
+            <p className="font-semibold text-destructive">Não foi possível carregar os pagamentos.</p>
+            <p className="mt-1 text-muted-foreground">
+              {pagamentosQ.error instanceof Error
+                ? pagamentosQ.error.message
+                : "Erro ao consultar o controle de pagamentos."}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Cards de resumo */}
       <div className="grid gap-3 md:grid-cols-4">
         <Card>
