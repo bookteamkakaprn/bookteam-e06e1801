@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Loader2, UserRound } from "lucide-react";
+import { Users, Loader2, UserRound, PackageCheck, LoaderCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_admin/admin/visualizacao-turmas")({
   component: AdminVisualizacaoTurmasPage,
@@ -30,6 +30,7 @@ type Inscricao = {
 
 function AdminVisualizacaoTurmasPage() {
   const [turmaId, setTurmaId] = useState("");
+  const qc = useQueryClient();
 
   const turmasQ = useQuery({
     queryKey: ["admin-visualizacao-turmas"],
@@ -60,6 +61,27 @@ function AdminVisualizacaoTurmasPage() {
 
   const turma = (turmasQ.data ?? []).find((t) => t.id === turmaId);
   const confirmados = (inscricoesQ.data ?? []).filter((i) => i.status === "confirmada");
+
+  const entregarLivro = useMutation({
+    mutationFn: async (inscricaoId: string) => {
+      const { data, error } = await (supabase as any).rpc("entregar_livro_inscricao", {
+        p_inscricao_id: inscricaoId,
+        p_observacao: turma ? `Entrega manual de livro — ${turma.nome}` : null,
+      });
+      if (error) throw error;
+      return Number(data ?? 0);
+    },
+    onSuccess: (total) => {
+      if (total > 0) {
+        toast.success("Livro marcado como entregue e baixa realizada no estoque.");
+      } else {
+        toast.info("Este livro já estava marcado como entregue.");
+      }
+      qc.invalidateQueries({ queryKey: ["admin-visualizacao-inscritos", turmaId] });
+      qc.invalidateQueries({ queryKey: ["admin-estoque"] });
+    },
+    onError: (error: any) => toast.error(error?.message ?? "Não foi possível registrar a entrega."),
+  });
 
   return (
     <div className="space-y-6">
@@ -109,9 +131,28 @@ function AdminVisualizacaoTurmasPage() {
                     <p className="font-medium">{index + 1}. {i.participante?.nome ?? "Aluno"}</p>
                     <p className="text-xs text-muted-foreground">{i.participante?.email ?? "—"}{i.participante?.telefone ? ` · ${i.participante.telefone}` : ""}</p>
                   </div>
-                  <Badge variant={i.livro_disponibilizado ? "default" : "outline"}>
-                    {i.livro_disponibilizado ? "Livro disponibilizado" : "Livro pendente"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={i.livro_disponibilizado ? "default" : "outline"}>
+                      {i.livro_disponibilizado ? "Livro entregue" : "Livro pendente"}
+                    </Badge>
+                    {!i.livro_disponibilizado && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5"
+                        disabled={entregarLivro.isPending}
+                        onClick={() => {
+                          if (window.confirm(`Marcar o livro de ${i.participante?.nome ?? "este aluno"} como entregue? Isso fará a baixa de 1 unidade no estoque.`)) {
+                            entregarLivro.mutate(i.id);
+                          }
+                        }}
+                      >
+                        {entregarLivro.isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <PackageCheck className="h-4 w-4" />}
+                        Entregar livro
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </CardContent>
