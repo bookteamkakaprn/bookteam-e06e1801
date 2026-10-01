@@ -77,19 +77,18 @@ function AdminVisualizacaoTurmasPage() {
     enabled: !!turmaId,
     queryKey: ["admin-visualizacao-inscritos", turmaId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("inscricoes")
-        .select("id,status,livro_disponibilizado,participante_id")
-        .eq("turma_id", turmaId)
-        .order("created_at");
+      const { data, error } = await (supabase as any).rpc("admin_visualizacao_inscritos_turma", {
+        p_turma_id: turmaId,
+      });
       if (error) throw error;
-
-      const ids = [...new Set((data ?? []).map((i: any) => i.participante_id).filter(Boolean))];
-      const { data: participantes } = ids.length
-        ? await supabase.from("participantes").select("id,nome,email,telefone").in("id", ids)
-        : { data: [] as any[] };
-      const mapa = new Map((participantes ?? []).map((p) => [p.id, p]));
-      return (data ?? []).map((i: any) => ({ ...i, participante: mapa.get(i.participante_id) ?? null })) as unknown as Inscricao[];
+      return ((data ?? []) as any[]).map((i) => ({
+        id: i.id,
+        status: i.status,
+        livro_disponibilizado: Boolean(i.livro_disponibilizado),
+        participante: i.participante_id
+          ? { id: i.participante_id, nome: i.nome, email: i.email, telefone: i.telefone }
+          : null,
+      })) as Inscricao[];
     },
   });
 
