@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { emailComprovanteRecebido } from "@/lib/email-service";
 import { useAuth } from "@/lib/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -218,6 +219,20 @@ function MatriculaPage() {
           throw new Error(
             `Erro ao registrar pagamento: ${error.message}`
           );
+        }
+      }
+
+      // O comprovante foi recebido, mas pagamento e vaga ainda estão em análise.
+      if (user.email) {
+        try {
+          await emailComprovanteRecebido(
+            user.email,
+            data.participantes?.nome || user.user_metadata?.nome || "Aluno(a)",
+            data.turmas?.livros?.titulo || "Curso",
+            data.turmas?.nome || "Turma",
+          );
+        } catch (emailError) {
+          console.error("Erro ao enviar email de recebimento do comprovante:", emailError);
         }
       }
     },
