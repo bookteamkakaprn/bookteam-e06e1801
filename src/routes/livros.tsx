@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,10 +62,7 @@ function LivrosPage() {
               const capa = livro.imagem_url || livro.capa_url;
 
               return (
-                <a
-                  key={livro.id}
-                  href={`/livros/${livro.id}`}
-                  className="group"
+                <Link key={livro.id} to="/livros/$id" params={{ id: livro.id }} className="group"
                 >
                   <Card className="h-full overflow-hidden transition-all hover:shadow-lg hover:border-gold/50">
                     <CardContent className="p-0">
@@ -117,7 +114,7 @@ function LivrosPage() {
                       </div>
                     </CardContent>
                   </Card>
-                </a>
+                </Link>
               );
             })}
           </div>
