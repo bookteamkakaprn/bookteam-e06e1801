@@ -140,8 +140,26 @@ export function emailCustomizado(
   return enviarEmail({ to: email, tipo: "customizado", nome, assunto, mensagem });
 }
 
+export function emailComprovanteRecebido(
+  email: string, nome: string, livro: string, turma: string,
+) {
+  return emailCustomizado(
+    email,
+    nome,
+    "📄 Comprovante recebido — aguarde a confirmação da vaga",
+    "Recebemos o seu comprovante de pagamento.
+
+Curso: " + livro + "\nTurma: " + turma + "\n\nSeu comprovante está em processamento. Em breve informaremos sobre a aprovação do pagamento e a confirmação da sua vaga.\n\nImportante: o envio e a aprovação do pagamento não garantem a vaga. A confirmação da inscrição está condicionada à disponibilidade de vagas na turma e à aprovação da inscrição pelo ADM. Caso as vagas sejam encerradas antes da confirmação da sua inscrição, você receberá uma comunicação sobre o estorno do valor pago.\n\nAguarde a confirmação antes de considerar sua vaga liberada.\n\nAcesse https://ministeriobookteam.com.br",
+  );
+}
+
 export function emailInicioCurso(
   email: string, nome: string, livro: string, turma: string, dataInicio: string,
 ) {
-  return enviarEmail({ to: email, tipo: "curso_iniciado", nome, livro, turma, data_inicio: dataInicio });
+  return emailCustomizado(
+    email,
+    nome,
+    "🎉 Parabéns! Você está inscrito no curso",
+    "Parabéns, você está inscrito no curso.\n\nCurso: " + livro + "\nTurma: " + turma + "\nInício: " + new Date(dataInicio + (dataInicio.length === 10 ? "T00:00:00" : "")).toLocaleDateString("pt-BR") + "\n\nAcesse o site para consultar os dias, horários e locais das aulas:\nhttps://ministeriobookteam.com.br",
+  );
 }
