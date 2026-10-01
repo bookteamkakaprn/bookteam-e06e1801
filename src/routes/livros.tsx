@@ -64,7 +64,7 @@ function LivrosPage() {
               return (
                 <Link
                   key={livro.id}
-                  to={`/livros/${livro.id}`}
+                  href={`/livros/${livro.id}`}
                   className="group"
                 >
                   <Card className="h-full overflow-hidden transition-all hover:shadow-lg hover:border-gold/50">
