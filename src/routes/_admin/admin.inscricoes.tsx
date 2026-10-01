@@ -66,6 +66,8 @@ type Pagamento = {
       nome: string | null;
       data_inicio: string | null;
       data_fim: string | null;
+      horario: string | null;
+      frequencia_minima: number | null;
       vagas_max: number | null;
       vagas_restantes: number | null;
     } | null;
@@ -95,6 +97,8 @@ type Inscricao = {
     nome: string | null;
     data_inicio: string | null;
     data_fim: string | null;
+    horario: string | null;
+    frequencia_minima: number | null;
     vagas_max: number | null;
     vagas_restantes: number | null;
   } | null;
