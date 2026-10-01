@@ -72,7 +72,7 @@ function PresencaPage() {
       setMesVisualizado(`${inicio.getFullYear()}-${String(inicio.getMonth() + 1).padStart(2, "0")}`);
       setDataSelecionada(diasAula[0] ?? "");
     }
-  }, [filtroTurma]);
+  }, [filtroTurma, diasAula]);
 
   const mesBase = mesVisualizado
     ? localDate(`${mesVisualizado}-01`)
