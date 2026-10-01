@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { emailNovaTurma } from "@/lib/email-service";
-import { Archive, Download, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Archive, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Turma = Tables<"turmas">;
@@ -166,76 +166,6 @@ function AdminTurmasPage() {
     },
     onError: (e: unknown) =>
       toast.error(e instanceof Error ? e.message : "Erro ao salvar"),
-  });
-
-  const baixarComprovantes = useMutation({
-    mutationFn: async (turma: Turma) => {
-      const { data: inscricoes, error: inscricoesError } = await supabase
-        .from("inscricoes")
-        .select("id")
-        .eq("turma_id", turma.id);
-
-      if (inscricoesError) throw inscricoesError;
-
-      const inscricaoIds = (inscricoes ?? []).map((i) => i.id);
-      if (inscricaoIds.length === 0) return 0;
-
-      const { data: comprovantes, error: comprovantesError } = await supabase
-        .from("pagamentos")
-        .select("id, comprovante_url, inscricao_id, participante:participantes(nome)")
-        .in("inscricao_id", inscricaoIds)
-        .not("comprovante_url", "is", null);
-
-      if (comprovantesError) throw comprovantesError;
-
-      let baixados = 0;
-
-      for (const pagamento of comprovantes ?? []) {
-        if (!pagamento.comprovante_url) continue;
-
-        const { data: arquivo, error: downloadError } = await supabase.storage
-          .from("comprovantes")
-          .download(pagamento.comprovante_url);
-
-        if (downloadError || !arquivo) continue;
-
-        const participante = Array.isArray(pagamento.participante)
-          ? pagamento.participante[0]
-          : pagamento.participante;
-
-        const nome = (participante?.nome ?? "aluno")
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/[^a-zA-Z0-9]+/g, "-")
-          .replace(/^-|-$/g, "")
-          .toLowerCase();
-
-        const ext = pagamento.comprovante_url.split(".").pop() ?? "bin";
-        const link = document.createElement("a");
-        const objectUrl = URL.createObjectURL(arquivo);
-
-        link.href = objectUrl;
-        link.download = "BookTeam-" + (turma.nome ?? "Turma") + "-" + nome + "-" + pagamento.id + "." + ext;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(objectUrl);
-
-        baixados += 1;
-        await new Promise((resolve) => setTimeout(resolve, 350));
-      }
-
-      return baixados;
-    },
-    onSuccess: (total) => {
-      toast.success(
-        total > 0
-          ? total + " comprovante(s) baixado(s). Salve-os na pasta da turma antes de finalizar."
-          : "Nenhum comprovante encontrado para esta turma.",
-      );
-    },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Erro ao baixar comprovantes"),
   });
 
   const finalizarTurma = useMutation({
@@ -490,16 +420,6 @@ function AdminTurmasPage() {
                     </Badge>
                   ) : (
                     <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => baixarComprovantes.mutate(t)}
-                        disabled={baixarComprovantes.isPending}
-                      >
-                        <Download className="mr-1 h-4 w-4" />
-                        Baixar comprovantes
-                      </Button>
-
                       <Button
                         size="sm"
                         onClick={() => finalizarTurma.mutate(t)}
