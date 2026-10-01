@@ -335,12 +335,7 @@ const signUpSchema = z.object({
 
   data_nascimento: z
     .string()
-    .refine((d) => {
-      const data = new Date(d);
-      const hoje = new Date();
-      const idade = hoje.getFullYear() - data.getFullYear();
-      return idade >= 13;
-    }, "Você deve ter pelo menos 13 anos"),
+    .min(1, "Informe a data de nascimento"),
 
   cpf: z
     .string()
@@ -675,7 +670,7 @@ function SignUpForm() {
         />
 
         <p className="text-xs text-muted-foreground">
-          Você deve ter pelo menos 13 anos.
+          Informe sua data de nascimento para o cadastro.
         </p>
 
       </div>
