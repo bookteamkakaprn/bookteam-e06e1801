@@ -84,6 +84,11 @@ function calcularIdade(dataNascimento: string | null): number | null {
 }
 
 function exportarParaExcel(dados: any[], nomeArquivo: string) {
+  if (!dados.length) {
+    toast.info("Não há dados para exportar.");
+    return;
+  }
+
   const csv = [
     Object.keys(dados[0]).join(","),
     ...dados.map((row) =>
@@ -112,45 +117,61 @@ function AdminControlePagamentos() {
   const pagamentosQ = useQuery({
     queryKey: ["admin-pagamentos"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Busca os pagamentos sem joins para não deixar uma relação opcional
+      // quebrar o painel inteiro. Depois carregamos as inscrições relacionadas.
+      const { data: pagamentosData, error: pagamentosError } = await supabase
         .from("pagamentos")
-        .select(
-          `id, status, valor, created_at, evento_id, inscricao_id,
-           inscricao:inscricoes(
-             id, status, livro_id,
-             participante:participantes(id, nome, email, data_nascimento),
-             livro:livros(id, titulo),
-             turma:turmas(id, nome)
-           )`
-        )
+        .select("id,status,valor,created_at,evento_id,inscricao_id")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (pagamentosError) throw pagamentosError;
 
-      return (data ?? []) as unknown as Pagamento[];
-    },
-  });
+      const pagamentosBase = (pagamentosData ?? []) as Array<{
+        id: string;
+        status: "aguardando" | "aprovado" | "rejeitado";
+        valor: number;
+        created_at: string;
+        evento_id: string | null;
+        inscricao_id: string | null;
+      }>;
 
-  // Query Inscritos
-  const inscritosQ = useQuery({
-    queryKey: ["admin-inscritos"],
-    queryFn: async () => {
-      const { data, error } = await supabase
+      const inscricaoIds = Array.from(
+        new Set(
+          pagamentosBase
+            .map((p) => p.inscricao_id)
+            .filter((id): id is string => Boolean(id)),
+        ),
+      );
+
+      if (!inscricaoIds.length) {
+        return pagamentosBase as Pagamento[];
+      }
+
+      const { data: inscricoesData, error: inscricoesError } = await supabase
         .from("inscricoes")
         .select(
-          `id, status, livro_id, participante_id, created_at,
-           livro:livros(id, titulo),
-           participante:participantes(id, nome, email, data_nascimento)`
+          `id,status,livro_id,
+           participante:participantes(id,nome,email,data_nascimento),
+           livro:livros(id,titulo)`,
         )
-        .eq("status", "confirmada")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as Inscrito[];
+        .in("id", inscricaoIds);
+
+      if (inscricoesError) throw inscricoesError;
+
+      const inscricoesMap = new Map(
+        (inscricoesData ?? []).map((i) => [i.id, i]),
+      );
+
+      return pagamentosBase.map((p) => ({
+        ...p,
+        inscricao: p.inscricao_id
+          ? (inscricoesMap.get(p.inscricao_id) as Pagamento["inscricao"])
+          : null,
+      })) as Pagamento[];
     },
   });
 
   const pagamentos = pagamentosQ.data ?? [];
-  const inscritos = inscritosQ.data ?? [];
 
   // Filtrar pagamentos por status
   const pagamentosPorStatus = useMemo(() => {
