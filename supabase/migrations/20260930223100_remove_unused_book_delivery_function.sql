@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.marcar_livros_disponibilizados(uuid, uuid);
