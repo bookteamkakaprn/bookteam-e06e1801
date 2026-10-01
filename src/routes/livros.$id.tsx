@@ -15,6 +15,7 @@ import {
   User,
   Heart,
   Loader2,
+  BellRing,
 } from "lucide-react";
 
 export const Route = createFileRoute("/livros/$id")({
@@ -91,6 +92,18 @@ function LivroDetalhesPage() {
       return (data ?? []) as Turma[];
     },
   });
+  const interesse = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error("Entre na sua conta para registrar seu interesse.");
+      const { error } = await (supabase as any)
+        .from("lista_interesse_cursos")
+        .upsert({ participante_id: user.id, livro_id: id }, { onConflict: "participante_id,livro_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => toast.success("Interesse registrado! Avisaremos quando uma nova turma deste curso for aberta."),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Não foi possível registrar seu interesse."),
+  });
+
   const inscrever = useMutation({
     mutationFn: async (turma: Turma) => {
       if (!user?.id) throw new Error("Faça login para continuar.");
@@ -270,8 +283,23 @@ function LivroDetalhesPage() {
               </p>
               {carregandoTurmas && <div className="mt-4 h-28 animate-pulse rounded-xl bg-muted" />}
               {!carregandoTurmas && !turmas.length && (
-                <div className="mt-4 rounded-xl border border-border/60 bg-card/40 p-4 text-sm text-muted-foreground">
-                  Ainda não há turma aberta para este curso.
+                <div className="mt-4 rounded-xl border border-border/60 bg-card/40 p-5">
+                  <p className="text-sm text-muted-foreground">Ainda não há turmas disponíveis para este curso.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Registre seu interesse e avisaremos por e-mail quando uma nova turma for aberta.</p>
+                  {user ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-4 gap-2 border-gold/40 hover:border-gold hover:text-gold"
+                      onClick={() => interesse.mutate()}
+                      disabled={interesse.isPending}
+                    >
+                      {interesse.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <BellRing className="h-4 w-4" />}
+                      Registrar meu interesse
+                    </Button>
+                  ) : (
+                    <p className="mt-4 text-xs text-muted-foreground">Entre na sua conta para registrar seu interesse.</p>
+                  )}
                 </div>
               )}
               <div className="mt-4 space-y-3">
