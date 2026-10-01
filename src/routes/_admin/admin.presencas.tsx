@@ -1,484 +1,173 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { CheckCircle2, XCircle, CalendarDays, ChevronLeft, ChevronRight, Clock, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { emailFaltaJustificar } from "@/lib/email-service";
 
 export const Route = createFileRoute("/_admin/admin/presencas")({
-  head: () => ({
-    meta: [
-      { title: "Lista de Presença — Admin" },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Lista de Presença — Admin" }, { name: "robots", content: "noindex" }] }),
   component: PresencaPage,
 });
 
-type Turma = {
-  id: string;
-  nome: string | null;
-  data_inicio: string | null;
-  data_fim: string | null;
-  dia_semana: string | null;
+type Turma = { id: string; nome: string | null; data_inicio: string | null; data_fim: string | null; dia_semana: string | null; horario: string | null; frequencia_minima: number | null };
+type Inscricao = { id: string; status: string; participante: { id: string; nome: string | null; email: string | null } | null; livro: { id: string; titulo: string | null } | null; turma: Turma | null };
+type Presenca = { id: string; inscricao_id: string; participante_id: string; turma_id: string | null; data_aula: string; presente: boolean; justificativa: string | null; falta_justificada: boolean };
+
+const DIAS = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
+const iso = (d: Date) => d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+const localDate = (v: string) => { const [y,m,d]=v.split("-").map(Number); return new Date(y,m-1,d); };
+const dataBR = (v: string) => localDate(v).toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"2-digit"});
+const gerarAulas = (t: Turma | null) => {
+  if (!t?.data_inicio || !t.data_fim || t.dia_semana === null || t.dia_semana === "") return [];
+  const out: string[] = []; const cursor = localDate(t.data_inicio); const fim = localDate(t.data_fim); const dia = Number(t.dia_semana);
+  while (cursor <= fim) { if (cursor.getDay() === dia) out.push(iso(cursor)); cursor.setDate(cursor.getDate()+1); }
+  return out;
 };
-
-type Inscricao = {
-  id: string;
-  status: string;
-  participante: { id: string; nome: string | null; email: string | null } | null;
-  livro: { id: string; titulo: string | null } | null;
-  turma: Turma | null;
-};
-
-type Presenca = {
-  id: string;
-  inscricao_id: string;
-  participante_id: string;
-  data_aula: string;
-  presente: boolean;
-  horario_checkin: string | null;
-};
-
-const DIAS = [
-  "Domingo",
-  "Segunda-feira",
-  "Terça-feira",
-  "Quarta-feira",
-  "Quinta-feira",
-  "Sexta-feira",
-  "Sábado",
-];
-
-function dataISO(date: Date) {
-  const ano = date.getFullYear();
-  const mes = String(date.getMonth() + 1).padStart(2, "0");
-  const dia = String(date.getDate()).padStart(2, "0");
-  return `${ano}-${mes}-${dia}`;
-}
-
-function dataLocal(iso: string) {
-  const [ano, mes, dia] = iso.split("-").map(Number);
-  return new Date(ano, mes - 1, dia);
-}
-
-function formatarData(iso: string) {
-  return dataLocal(iso).toLocaleDateString("pt-BR", {
-    weekday: "short",
-    day: "2-digit",
-    month: "2-digit",
-  });
-}
-
-function gerarDiasAula(turma: Turma | null) {
-  if (!turma?.data_inicio || !turma?.data_fim || turma.dia_semana === null || turma.dia_semana === "") {
-    return [];
-  }
-
-  const inicio = dataLocal(turma.data_inicio);
-  const fim = dataLocal(turma.data_fim);
-  const diaSemana = Number(turma.dia_semana);
-
-  if (Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime()) || Number.isNaN(diaSemana)) {
-    return [];
-  }
-
-  const dias: string[] = [];
-  const cursor = new Date(inicio);
-
-  while (cursor <= fim) {
-    if (cursor.getDay() === diaSemana) {
-      dias.push(dataISO(cursor));
-    }
-    cursor.setDate(cursor.getDate() + 1);
-  }
-
-  return dias;
-}
 
 function PresencaPage() {
   const qc = useQueryClient();
-  const [filtroLivro, setFiltroLivro] = useState("");
   const [filtroTurma, setFiltroTurma] = useState("");
   const [dataSelecionada, setDataSelecionada] = useState("");
+  const [detalhe, setDetalhe] = useState<Presenca | null>(null);
 
   const inscricoesQ = useQuery({
-    queryKey: ["admin-presenca-inscricoes"],
+    queryKey: ["admin-presenca-inscricoes-semanais"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("inscricoes")
-        .select(
-          `id, status,
-           participante:participantes(id, nome, email),
-           livro:livros(id, titulo),
-           turma:turmas(id, nome, data_inicio, data_fim, dia_semana)`
-        )
-        .eq("status", "confirmada")
-        .order("participante_id", { ascending: true });
-
+      const { data, error } = await supabase.from("inscricoes").select("id,status,participante:participantes(id,nome,email),livro:livros(id,titulo),turma:turmas(id,nome,data_inicio,data_fim,dia_semana,horario,frequencia_minima)").eq("status","confirmada").order("created_at");
       if (error) throw error;
       return (data ?? []) as unknown as Inscricao[];
     },
   });
-
   const presencasQ = useQuery({
-    queryKey: ["admin-presenca-registros"],
+    queryKey: ["admin-presenca-registros-semanais"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("presencas")
-        .select("id, inscricao_id, participante_id, data_aula, presente, horario_checkin");
+      const { data, error } = await supabase.from("presencas").select("id,inscricao_id,participante_id,turma_id,data_aula,presente,justificativa,falta_justificada");
       if (error) throw error;
       return (data ?? []) as Presenca[];
     },
   });
 
-  const registrarPresenca = useMutation({
-    mutationFn: async ({
-      inscricaoId,
-      participanteId,
-      dataAula,
-      presente,
-    }: {
-      inscricaoId: string;
-      participanteId: string;
-      dataAula: string;
-      presente: boolean;
-    }) => {
-      const { data: existente, error: buscaError } = await supabase
-        .from("presencas")
-        .select("id")
-        .eq("inscricao_id", inscricaoId)
-        .eq("data_aula", dataAula)
-        .maybeSingle();
+  const inscricoes = inscricoesQ.data ?? [];
+  const presencas = presencasQ.data ?? [];
+  const turmas = useMemo(() => {
+    const map = new Map<string, Turma>();
+    for (const i of inscricoes) if (i.turma?.id) map.set(i.turma.id, i.turma);
+    return [...map.values()];
+  }, [inscricoes]);
+  const turma = turmas.find((t) => t.id === filtroTurma) ?? null;
+  const diasAula = useMemo(() => gerarAulas(turma), [turma]);
+  const dataAtual = dataSelecionada && diasAula.includes(dataSelecionada) ? dataSelecionada : diasAula[0] ?? "";
+  const alunos = inscricoes.filter((i) => i.turma?.id === filtroTurma);
+  const registro = (inscricaoId: string, data: string) => presencas.find((p) => p.inscricao_id === inscricaoId && p.data_aula === data);
+  const indice = Math.max(0, diasAula.indexOf(dataAtual));
+  const presentes = alunos.filter((i) => registro(i.id,dataAtual)?.presente).length;
+  const ausentes = alunos.filter((i) => { const p=registro(i.id,dataAtual); return p && !p.presente; }).length;
 
-      if (buscaError) throw buscaError;
-
-      const payload = {
-        inscricao_id: inscricaoId,
-        participante_id: participanteId,
-        data_aula: dataAula,
-        presente,
-        horario_checkin: presente ? new Date().toISOString() : null,
-      };
-
-      if (existente) {
-        const { error } = await supabase
-          .from("presencas")
-          .update(payload as never)
-          .eq("id", existente.id);
+  const marcar = useMutation({
+    mutationFn: async ({ inscricao, presente }: { inscricao: Inscricao; presente: boolean }) => {
+      const participanteId = inscricao.participante?.id;
+      const turmaId = inscricao.turma?.id;
+      if (!participanteId || !turmaId || !dataAtual) throw new Error("Dados da aula incompletos.");
+      const atual = registro(inscricao.id,dataAtual);
+      const payload = { inscricao_id: inscricao.id, participante_id: participanteId, turma_id: turmaId, data_aula: dataAtual, presente, horario_checkin: presente ? new Date().toISOString() : null };
+      if (atual) {
+        const { error } = await supabase.from("presencas").update(payload as never).eq("id",atual.id);
         if (error) throw error;
       } else {
         const { error } = await supabase.from("presencas").insert(payload as never);
         if (error) throw error;
       }
+      if (!presente && inscricao.participante?.email) {
+        try {
+          await emailFaltaJustificar(inscricao.participante.email, inscricao.participante.nome || "Aluno(a)", inscricao.livro?.titulo || "Curso", inscricao.turma?.nome || "Turma", dataAtual);
+        } catch (e) { console.error("Email de falta não enviado", e); }
+      }
     },
-    onSuccess: () => {
-      toast.success("Presença registrada!");
-      qc.invalidateQueries({ queryKey: ["admin-presenca-registros"] });
+    onSuccess: (_, vars) => {
+      toast.success(vars.presente ? "Presença registrada." : "Ausência registrada. O aluno recebeu e-mail para justificar.");
+      qc.invalidateQueries({ queryKey: ["admin-presenca-registros-semanais"] });
     },
-    onError: (e) => {
-      toast.error(
-        `Erro ao registrar presença: ${e instanceof Error ? e.message : "Desconhecido"}`
-      );
-    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Erro ao registrar presença."),
   });
-
-  const inscricoes = inscricoesQ.data ?? [];
-  const presencas = presencasQ.data ?? [];
-
-  const livrosUnicos = [...new Set(inscricoes.map((i) => i.livro?.id))].filter(Boolean) as string[];
-  const livroLabels: Record<string, string> = {};
-  inscricoes.forEach((i) => {
-    if (i.livro?.id) livroLabels[i.livro.id] = i.livro.titulo || "Sem título";
-  });
-
-  const turmasUnicas = [...new Set(inscricoes.map((i) => i.turma?.id))].filter(Boolean) as string[];
-  const turmaLabels: Record<string, string> = {};
-  const turmaPorId = new Map<string, Turma>();
-  inscricoes.forEach((i) => {
-    if (i.turma?.id) {
-      turmaLabels[i.turma.id] = i.turma.nome || "Sem turma";
-      turmaPorId.set(i.turma.id, i.turma);
-    }
-  });
-
-  const inscricoesFiltradas = inscricoes.filter((i) => {
-    const matchLivro = !filtroLivro || i.livro?.id === filtroLivro;
-    const matchTurma = !filtroTurma || i.turma?.id === filtroTurma;
-    return matchLivro && matchTurma;
-  });
-
-  const turmaSelecionada = useMemo(
-    () => (filtroTurma ? turmaPorId.get(filtroTurma) ?? null : null),
-    [filtroTurma, inscricoes]
-  );
-
-  const diasAula = useMemo(
-    () => gerarDiasAula(turmaSelecionada),
-    [turmaSelecionada]
-  );
-
-  const dataAtual = dataSelecionada && diasAula.includes(dataSelecionada)
-    ? dataSelecionada
-    : diasAula[0] ?? "";
-
-  const getPresenca = (inscricaoId: string, dataAula: string) =>
-    presencas.find(
-      (p) => p.inscricao_id === inscricaoId && p.data_aula === dataAula
-    );
-
-  const presentesNoDia = inscricoesFiltradas.filter(
-    (i) => dataAtual && getPresenca(i.id, dataAtual)?.presente
-  ).length;
-
-  const ausentesNoDia = inscricoesFiltradas.filter(
-    (i) => dataAtual && getPresenca(i.id, dataAtual) && !getPresenca(i.id, dataAtual)?.presente
-  ).length;
-
-  const selecionarTurma = (id: string) => {
-    setFiltroTurma(id);
-    setDataSelecionada("");
-  };
-
-  const indiceData = Math.max(0, diasAula.indexOf(dataAtual));
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-3xl font-bold">Lista de Presença</h1>
-        <p className="text-sm text-muted-foreground">
-          Registre a presença dos alunos em cada encontro da turma.
-        </p>
+        <p className="text-sm text-muted-foreground">A turma usa a data de início, fim, dia da semana e horário cadastrados para gerar automaticamente cada aula semanal.</p>
       </div>
 
-      <div className="flex gap-4 flex-wrap">
-        <div>
-          <label className="text-sm font-medium">Curso</label>
-          <select
-            value={filtroLivro}
-            onChange={(e) => {
-              setFiltroLivro(e.target.value);
-              setFiltroTurma("");
-              setDataSelecionada("");
-            }}
-            className="mt-1 px-3 py-2 bg-card border border-border/40 rounded-md text-sm"
-          >
-            <option value="">Todos os cursos</option>
-            {livrosUnicos.map((livroId) => (
-              <option key={livroId} value={livroId}>
-                {livroLabels[livroId]}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
+      <Card>
+        <CardContent className="p-4">
           <label className="text-sm font-medium">Turma</label>
-          <select
-            value={filtroTurma}
-            onChange={(e) => selecionarTurma(e.target.value)}
-            className="mt-1 px-3 py-2 bg-card border border-border/40 rounded-md text-sm"
-          >
+          <select className="mt-1 h-10 w-full max-w-xl rounded-md border border-input bg-background px-3 text-sm" value={filtroTurma} onChange={(e)=>{setFiltroTurma(e.target.value);setDataSelecionada("");}}>
             <option value="">Selecione uma turma</option>
-            {turmasUnicas
-              .filter((id) => !filtroLivro || inscricoes.some((i) => i.turma?.id === id && i.livro?.id === filtroLivro))
-              .map((turmaId) => (
-                <option key={turmaId} value={turmaId}>
-                  {turmaLabels[turmaId]}
-                </option>
-              ))}
+            {turmas.map((t)=><option key={t.id} value={t.id}>{t.nome}</option>)}
           </select>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {filtroTurma && turmaSelecionada && (
-        <div className="rounded-lg border border-gold/30 bg-gold/5 p-4">
-          <div className="flex items-start gap-3">
-            <CalendarDays className="mt-0.5 h-5 w-5 text-gold" />
-            <div>
-              <p className="font-semibold">{turmaSelecionada.nome}</p>
+      {turma && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex flex-wrap items-center gap-3"><CalendarDays className="h-5 w-5 text-gold" />{turma.nome}</CardTitle>
               <p className="text-sm text-muted-foreground">
-                {turmaSelecionada.data_inicio
-                  ? dataLocal(turmaSelecionada.data_inicio).toLocaleDateString("pt-BR")
-                  : "—"}
-                {" até "}
-                {turmaSelecionada.data_fim
-                  ? dataLocal(turmaSelecionada.data_fim).toLocaleDateString("pt-BR")
-                  : "—"}
-                {" · "}
-                {turmaSelecionada.dia_semana !== null && turmaSelecionada.dia_semana !== ""
-                  ? DIAS[Number(turmaSelecionada.dia_semana)]
-                  : "dia da semana não configurado"}
+                {turma.data_inicio ? localDate(turma.data_inicio).toLocaleDateString("pt-BR") : "—"} até {turma.data_fim ? localDate(turma.data_fim).toLocaleDateString("pt-BR") : "—"} · {turma.dia_semana !== null && turma.dia_semana !== "" ? DIAS[Number(turma.dia_semana)] : "dia não configurado"} {turma.horario ? "· " + turma.horario.slice(0,5) : ""}
               </p>
-            </div>
-          </div>
-        </div>
-      )}
+            </CardHeader>
+            <CardContent>
+              {diasAula.length === 0 ? <p className="text-sm text-muted-foreground">Configure início, fim e dia da semana em Turmas.</p> : (
+                <div className="flex items-center gap-2">
+                  <Button size="icon" variant="outline" disabled={indice<=0} onClick={()=>setDataSelecionada(diasAula[indice-1])}><ChevronLeft className="h-4 w-4"/></Button>
+                  <div className="flex-1 overflow-x-auto"><div className="flex min-w-max gap-2">{diasAula.map((d,i)=><Button key={d} size="sm" variant={d===dataAtual?"default":"outline"} onClick={()=>setDataSelecionada(d)}>{i+1}. {dataBR(d)}</Button>)}</div></div>
+                  <Button size="icon" variant="outline" disabled={indice>=diasAula.length-1} onClick={()=>setDataSelecionada(diasAula[indice+1])}><ChevronRight className="h-4 w-4"/></Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-      {filtroTurma && diasAula.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <p className="font-semibold">Dias do curso</p>
-              <p className="text-xs text-muted-foreground">
-                {diasAula.length} encontro(s) entre as datas da turma
-              </p>
-            </div>
-            <Badge variant="secondary">
-              {formatarData(dataAtual)}
-            </Badge>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              size="icon"
-              variant="outline"
-              disabled={indiceData <= 0}
-              onClick={() => setDataSelecionada(diasAula[indiceData - 1])}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <div className="flex-1 overflow-x-auto">
-              <div className="flex gap-2 min-w-max">
-                {diasAula.map((dia, index) => (
-                  <Button
-                    key={dia}
-                    size="sm"
-                    variant={dia === dataAtual ? "default" : "outline"}
-                    onClick={() => setDataSelecionada(dia)}
-                  >
-                    {index + 1}. {formatarData(dia)}
-                  </Button>
-                ))}
+          {dataAtual && (
+            <>
+              <div className="grid grid-cols-3 gap-3">
+                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Alunos</p><p className="text-2xl font-bold">{alunos.length}</p></CardContent></Card>
+                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Presentes</p><p className="text-2xl font-bold text-green-600">{presentes}</p></CardContent></Card>
+                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Ausentes</p><p className="text-2xl font-bold text-red-600">{ausentes}</p></CardContent></Card>
               </div>
-            </div>
-
-            <Button
-              size="icon"
-              variant="outline"
-              disabled={indiceData >= diasAula.length - 1}
-              onClick={() => setDataSelecionada(diasAula[indiceData + 1])}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+              <div className="overflow-x-auto rounded-lg border">
+                <table className="w-full min-w-[760px] text-sm">
+                  <thead><tr className="border-b bg-card/40"><th className="px-4 py-3 text-left">Aluno</th><th className="px-4 py-3 text-left">Curso</th><th className="px-4 py-3 text-center">Presença — {dataBR(dataAtual)}</th><th className="px-4 py-3 text-center">Justificativa</th></tr></thead>
+                  <tbody>
+                    {alunos.map((i)=>{
+                      const p=registro(i.id,dataAtual);
+                      return <tr key={i.id} className="border-b border-border/30">
+                        <td className="px-4 py-3"><p className="font-medium">{i.participante?.nome || "Aluno"}</p><p className="text-xs text-muted-foreground">{i.participante?.email}</p></td>
+                        <td className="px-4 py-3">{i.livro?.titulo}</td>
+                        <td className="px-4 py-3"><div className="flex justify-center gap-2">
+                          <Button size="sm" variant={p?.presente ? "default" : "outline"} onClick={()=>marcar.mutate({inscricao:i,presente:true})}><CheckCircle2 className="mr-1 h-4 w-4"/>Presente</Button>
+                          <Button size="sm" variant={p && !p.presente ? "destructive" : "outline"} onClick={()=>marcar.mutate({inscricao:i,presente:false})}><XCircle className="mr-1 h-4 w-4"/>Ausente</Button>
+                        </div></td>
+                        <td className="px-4 py-3 text-center">{p?.justificativa ? <Button size="sm" variant="ghost" onClick={()=>setDetalhe(p)}><Eye className="mr-1 h-4 w-4"/>Ver justificativa</Button> : <span className="text-xs text-muted-foreground">—</span>}</td>
+                      </tr>;
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </>
       )}
 
-      {filtroTurma && turmaSelecionada && diasAula.length === 0 && (
-        <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4 text-sm">
-          <p className="font-semibold">Configure o dia da semana da turma.</p>
-          <p className="mt-1 text-muted-foreground">
-            A lista usa a data de início, a data de fim e o dia da semana cadastrado em Turmas
-            para gerar automaticamente cada encontro.
-          </p>
-        </div>
-      )}
-
-      {!filtroTurma && (
-        <p className="text-sm text-muted-foreground">
-          Selecione uma turma para visualizar os dias do curso e registrar as presenças.
-        </p>
-      )}
-
-      {filtroTurma && dataAtual && !inscricoesQ.isLoading && inscricoesFiltradas.length > 0 && (
-        <div className="border border-border/40 rounded-lg overflow-hidden">
-          <div className="border-b border-border/40 bg-card/30 px-4 py-3">
-            <p className="font-semibold">Presença — {formatarData(dataAtual)}</p>
-            <p className="text-xs text-muted-foreground">
-              Toque em Presente ou Ausente para cada aluno.
-            </p>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[720px]">
-              <thead>
-                <tr className="border-b border-border/40 bg-card/30">
-                  <th className="px-4 py-3 text-left font-medium">Aluno</th>
-                  <th className="px-4 py-3 text-left font-medium">Curso</th>
-                  <th className="px-4 py-3 text-left font-medium">Turma</th>
-                  <th className="px-4 py-3 text-center font-medium">Presença</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inscricoesFiltradas.map((inscricao) => {
-                  const presenca = getPresenca(inscricao.id, dataAtual);
-                  return (
-                    <tr key={inscricao.id} className="border-b border-border/20 hover:bg-card/20">
-                      <td className="px-4 py-3">
-                        <p className="font-medium">{inscricao.participante?.nome}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {inscricao.participante?.email}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3">{inscricao.livro?.titulo}</td>
-                      <td className="px-4 py-3">{inscricao.turma?.nome}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2 justify-center">
-                          <Button
-                            size="sm"
-                            variant={presenca?.presente ? "default" : "outline"}
-                            className={presenca?.presente ? "bg-green-600 hover:bg-green-700" : ""}
-                            onClick={() =>
-                              registrarPresenca.mutate({
-                                inscricaoId: inscricao.id,
-                                participanteId: inscricao.participante?.id ?? "",
-                                dataAula: dataAtual,
-                                presente: true,
-                              })
-                            }
-                            disabled={registrarPresenca.isPending}
-                          >
-                            <CheckCircle2 className="h-4 w-4 mr-1" />
-                            Presente
-                          </Button>
-
-                          <Button
-                            size="sm"
-                            variant={presenca && !presenca.presente ? "destructive" : "outline"}
-                            onClick={() =>
-                              registrarPresenca.mutate({
-                                inscricaoId: inscricao.id,
-                                participanteId: inscricao.participante?.id ?? "",
-                                dataAula: dataAtual,
-                                presente: false,
-                              })
-                            }
-                            disabled={registrarPresenca.isPending}
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Ausente
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {filtroTurma && dataAtual && inscricoesFiltradas.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
-          <div className="bg-card/30 rounded-lg p-4 border border-border/40">
-            <p className="text-sm text-muted-foreground">Total</p>
-            <p className="text-2xl font-bold">{inscricoesFiltradas.length}</p>
-          </div>
-          <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/20">
-            <p className="text-sm text-muted-foreground">Presentes</p>
-            <p className="text-2xl font-bold text-green-600">{presentesNoDia}</p>
-          </div>
-          <div className="bg-red-500/10 rounded-lg p-4 border border-red-500/20">
-            <p className="text-sm text-muted-foreground">Ausentes</p>
-            <p className="text-2xl font-bold text-red-600">{ausentesNoDia}</p>
-          </div>
-        </div>
-      )}
+      <Dialog open={!!detalhe} onOpenChange={(open)=>!open&&setDetalhe(null)}>
+        <DialogContent><DialogHeader><DialogTitle>Justificativa de falta</DialogTitle></DialogHeader>{detalhe && <div className="space-y-3"><p className="text-sm">Aula: <strong>{dataBR(detalhe.data_aula)}</strong></p><Badge variant={detalhe.falta_justificada?"secondary":"destructive"}>{detalhe.falta_justificada?"Justificada":"Enviada pelo aluno"}</Badge><p className="rounded-md border bg-muted/20 p-4 text-sm whitespace-pre-wrap">{detalhe.justificativa}</p></div>}</DialogContent>
+      </Dialog>
     </div>
   );
 }
