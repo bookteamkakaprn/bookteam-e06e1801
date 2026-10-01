@@ -1298,7 +1298,7 @@ function AdminAprovacoes() {
               );
             })}
           </div>
-
+          )}
 
           {filtroInscricao === "aprovadas" && (
             <Card>
