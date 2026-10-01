@@ -29,6 +29,7 @@ import {
   MessageSquare,
   ShoppingCart,
   HelpCircle,
+  ListTodo,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_admin")({
@@ -81,6 +82,7 @@ export const Route = createFileRoute("/_admin")({
         ["/admin/cadastrar-livro", "cursos"],
         ["/admin/turmas", "turmas"],
         ["/admin/materiais", "materiais"],
+        ["/admin/tarefas", "tarefas"],
         ["/admin/pedido-materiais", "pedido_materiais"],
         ["/admin/presencas", "presencas"],
         ["/admin/eventos", "eventos"],
@@ -153,6 +155,12 @@ const menuPrincipal: MenuItem[] = [
     label: "Materiais dos cursos",
     permission: "materiais",
     icon: FolderOpen,
+  },
+  {
+    to: "/admin/tarefas",
+    label: "Tarefas",
+    permission: "tarefas",
+    icon: ListTodo,
   },
   {
     to: "/admin/pedido-materiais",
