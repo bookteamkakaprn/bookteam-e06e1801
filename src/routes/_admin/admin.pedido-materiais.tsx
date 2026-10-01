@@ -77,7 +77,7 @@ function AdminPedidoMateriaisPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("inscricoes")
-        .select("id")
+        .select("id,livro_disponibilizado")
         .eq("turma_id", turmaId)
         .eq("status", "confirmada");
       if (error) throw error;
@@ -101,6 +101,33 @@ function AdminPedidoMateriaisPage() {
   });
 
   const quantidadeAlunos = alunosQ.data?.length ?? 0;
+  const quantidadePendentesLivro =
+    alunosQ.data?.filter((item) => item.livro_disponibilizado !== true).length ?? 0;
+
+  const baixarEstoque = useMutation({
+    mutationFn: async () => {
+      if (!turmaSelecionada || !livroId) throw new Error("Selecione a turma.");
+      if (quantidadePendentesLivro === 0) {
+        throw new Error("Todos os livros desta turma já foram disponibilizados.");
+      }
+
+      const { data, error } = await supabase.rpc("baixar_estoque_livraria" as never, {
+        p_livro_id: livroId,
+        p_turma_id: turmaId,
+        p_quantidade: quantidadePendentesLivro,
+        p_observacao: `Disponibilização manual de livros — ${turmaSelecionada.nome}`,
+      } as never);
+
+      if (error) throw error;
+      return Number(data ?? quantidadePendentesLivro);
+    },
+    onSuccess: (total) => {
+      toast.success(`${total} livro(s) baixado(s) do estoque e marcado(s) como disponibilizado(s).`);
+      alunosQ.refetch();
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Não foi possível baixar o estoque."),
+  });
 
   const gerarPedido = () => {
     if (!turmaSelecionada) {
@@ -215,6 +242,45 @@ function AdminPedidoMateriaisPage() {
                   </p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                Baixa manual do estoque
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border p-4">
+                  <p className="text-xs text-muted-foreground">Alunos confirmados</p>
+                  <p className="mt-1 text-2xl font-bold">{quantidadeAlunos}</p>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <p className="text-xs text-muted-foreground">Livros pendentes</p>
+                  <p className="mt-1 text-2xl font-bold">{quantidadePendentesLivro}</p>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <p className="text-xs text-muted-foreground">Ação</p>
+                  <p className="mt-1 text-sm font-medium">Somente manual</p>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                A entrada do aluno na turma não baixa o estoque automaticamente. A baixa acontece somente quando o ADM clicar abaixo.
+              </p>
+              <Button
+                onClick={() => {
+                  if (window.confirm(`Baixar ${quantidadePendentesLivro} livro(s) do estoque e marcar como disponibilizados para esta turma?`)) {
+                    baixarEstoque.mutate();
+                  }
+                }}
+                disabled={baixarEstoque.isPending || quantidadePendentesLivro === 0}
+                className="gap-2"
+              >
+                {baixarEstoque.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
+                {baixarEstoque.isPending ? "Baixando..." : `Baixar ${quantidadePendentesLivro} livro(s) do estoque`}
+              </Button>
             </CardContent>
           </Card>
 
