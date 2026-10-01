@@ -50,15 +50,17 @@ function AdminVisualizacaoTurmasPage() {
     },
   });
 
+  const turmaSelecionada = (turmasQ.data ?? []).find((t) => t.id === turmaId);
+
   const estoqueQ = useQuery({
-    enabled: !!turmaId,
-    queryKey: ["admin-visualizacao-estoque", turma?.livro_id],
+    enabled: !!turmaSelecionada?.livro_id,
+    queryKey: ["admin-visualizacao-estoque", turmaSelecionada?.livro_id],
     queryFn: async () => {
-      if (!turma?.livro_id) return 0;
+      if (!turmaSelecionada?.livro_id) return 0;
       const { data, error } = await (supabase as any)
         .from("estoque_livraria")
         .select("livro_id,quantidade")
-        .eq("livro_id", turma.livro_id)
+        .eq("livro_id", turmaSelecionada.livro_id)
         .maybeSingle();
       if (error) throw error;
       return Number((data as Estoque | null)?.quantidade ?? 0);
@@ -79,7 +81,7 @@ function AdminVisualizacaoTurmasPage() {
     },
   });
 
-  const turma = (turmasQ.data ?? []).find((t) => t.id === turmaId);
+  const turma = turmaSelecionada;
   const confirmados = (inscricoesQ.data ?? []).filter((i) => i.status === "confirmada");
   const estoqueDisponivel = Number(estoqueQ.data ?? 0);
 
