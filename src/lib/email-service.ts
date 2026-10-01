@@ -162,9 +162,7 @@ export function emailComprovanteRecebido(
     email,
     nome,
     "📄 Comprovante recebido — aguarde a confirmação da vaga",
-    "Recebemos o seu comprovante de pagamento.
-
-Curso: " + livro + "\nTurma: " + turma + "\n\nSeu comprovante está em processamento. Em breve informaremos sobre a aprovação do pagamento e a confirmação da sua vaga.\n\nImportante: o envio e a aprovação do pagamento não garantem a vaga. A confirmação da inscrição está condicionada à disponibilidade de vagas na turma e à aprovação da inscrição pelo ADM. Caso as vagas sejam encerradas antes da confirmação da sua inscrição, você receberá uma comunicação sobre o estorno do valor pago.\n\nAguarde a confirmação antes de considerar sua vaga liberada.\n\nAcesse https://ministeriobookteam.com.br",
+    "Recebemos o seu comprovante de pagamento.\n\nCurso: " + livro + "\nTurma: " + turma + "\n\nSeu comprovante está em processamento. Em breve informaremos sobre a aprovação do pagamento e a confirmação da sua vaga.\n\nImportante: o envio e a aprovação do pagamento não garantem a vaga. A confirmação da inscrição está condicionada à disponibilidade de vagas na turma e à aprovação da inscrição pelo ADM. Caso as vagas sejam encerradas antes da confirmação da sua inscrição, você receberá uma comunicação sobre o estorno do valor pago.\n\nAguarde a confirmação antes de considerar sua vaga liberada.\n\nAcesse https://ministeriobookteam.com.br",
   );
 }
 
