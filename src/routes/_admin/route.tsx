@@ -83,6 +83,8 @@ export const Route = createFileRoute("/_admin")({
         ["/admin/turmas", "turmas"],
         ["/admin/materiais", "materiais"],
         ["/admin/tarefas", "tarefas"],
+        ["/admin/estoque", "estoque"],
+        ["/admin/visualizacao-turmas", "visualizacao_turmas"],
         ["/admin/pedido-materiais", "pedido_materiais"],
         ["/admin/presencas", "presencas"],
         ["/admin/eventos", "eventos"],
@@ -167,6 +169,18 @@ const menuPrincipal: MenuItem[] = [
     label: "Tarefas",
     permission: "tarefas",
     icon: ListTodo,
+  },
+  {
+    to: "/admin/estoque",
+    label: "Estoque da livraria",
+    permission: "estoque",
+    icon: ShoppingCart,
+  },
+  {
+    to: "/admin/visualizacao-turmas",
+    label: "Visualização de turma + inscritos",
+    permission: "visualizacao_turmas",
+    icon: Users,
   },
   {
     to: "/admin/pedido-materiais",
