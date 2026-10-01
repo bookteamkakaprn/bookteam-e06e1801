@@ -22,6 +22,7 @@ type Turma = {
   sala: string | null;
   vagas_max: number;
   inscritos: number;
+  livro: { titulo: string | null } | null;
 };
 type Inscricao = {
   id: string;
@@ -29,6 +30,8 @@ type Inscricao = {
   livro_disponibilizado: boolean;
   participante: { id: string; nome: string; email: string; telefone: string | null } | null;
 };
+
+type Estoque = { livro_id: string; quantidade: number };
 
 function AdminVisualizacaoTurmasPage() {
   const [turmaId, setTurmaId] = useState("");
@@ -44,6 +47,21 @@ function AdminVisualizacaoTurmasPage() {
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as any[];
+    },
+  });
+
+  const estoqueQ = useQuery({
+    enabled: !!turmaId,
+    queryKey: ["admin-visualizacao-estoque", turma?.livro_id],
+    queryFn: async () => {
+      if (!turma?.livro_id) return 0;
+      const { data, error } = await (supabase as any)
+        .from("estoque_livraria")
+        .select("livro_id,quantidade")
+        .eq("livro_id", turma.livro_id)
+        .maybeSingle();
+      if (error) throw error;
+      return Number((data as Estoque | null)?.quantidade ?? 0);
     },
   });
 
@@ -63,6 +81,7 @@ function AdminVisualizacaoTurmasPage() {
 
   const turma = (turmasQ.data ?? []).find((t) => t.id === turmaId);
   const confirmados = (inscricoesQ.data ?? []).filter((i) => i.status === "confirmada");
+  const estoqueDisponivel = Number(estoqueQ.data ?? 0);
 
   const entregarLivro = useMutation({
     mutationFn: async (inscricaoId: string) => {
@@ -122,7 +141,13 @@ function AdminVisualizacaoTurmasPage() {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Alunos inscritos ({confirmados.length})</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Alunos inscritos ({confirmados.length})</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Estoque de <strong>{turma.livro?.titulo ?? "livro"}</strong>: {estoqueDisponivel} unidade(s) disponível(is).
+                A entrega baixa automaticamente 1 unidade do estoque.
+              </p>
+            </CardHeader>
             <CardContent className="space-y-2">
               {inscricoesQ.isLoading && <div className="py-6 text-sm text-muted-foreground">Carregando inscritos...</div>}
               {!inscricoesQ.isLoading && confirmados.length === 0 && <p className="py-6 text-sm text-muted-foreground">Nenhum aluno confirmado nesta turma.</p>}
@@ -143,7 +168,7 @@ function AdminVisualizacaoTurmasPage() {
                         size="sm"
                         variant="outline"
                         className="gap-1.5"
-                        disabled={entregarLivro.isPending}
+                        disabled={entregarLivro.isPending || estoqueDisponivel < 1}
                         onClick={() => {
                           if (window.confirm(`Marcar o livro de ${i.participante?.nome ?? "este aluno"} como entregue? Isso fará a baixa de 1 unidade no estoque.`)) {
                             entregarLivro.mutate(i.id);
@@ -151,7 +176,7 @@ function AdminVisualizacaoTurmasPage() {
                         }}
                       >
                         {entregarLivro.isPending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <PackageCheck className="h-4 w-4" />}
-                        Entregar livro
+                        {estoqueDisponivel < 1 ? "Sem estoque" : "Entregar livro"}
                       </Button>
                     )}
                   </div>
