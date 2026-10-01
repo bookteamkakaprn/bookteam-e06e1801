@@ -33,7 +33,7 @@ import {
 
 export const Route = createFileRoute("/_admin")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const { data: userData, error } = await supabase.auth.getUser();
 
     if (error || !userData.user) {
@@ -50,13 +50,65 @@ export const Route = createFileRoute("/_admin")({
       .eq("role", "admin")
       .maybeSingle();
 
-    if (roleError || !role) {
-      throw redirect({ to: "/inicio" });
+    const isAdmin = !roleError && Boolean(role);
+
+    let permissions: string[] = [];
+
+    if (!isAdmin) {
+      const { data: assignment } = await (supabase as any)
+        .from("admin_usuario_perfis")
+        .select("perfil_id")
+        .eq("user_id", userData.user.id)
+        .maybeSingle();
+
+      if (!assignment?.perfil_id) throw redirect({ to: "/inicio" });
+
+      const { data: perfil } = await (supabase as any)
+        .from("admin_perfis")
+        .select("id, ativo, permissoes")
+        .eq("id", assignment.perfil_id)
+        .maybeSingle();
+
+      if (!perfil?.ativo) throw redirect({ to: "/inicio" });
+      permissions = Array.isArray(perfil.permissoes) ? perfil.permissoes : [];
+
+      const path = location.pathname;
+      const permissionByPath: Array<[string, string]> = [
+        ["/admin/perfis", "perfis"],
+        ["/admin/participantes", "participantes"],
+        ["/admin/inscricoes", "inscricoes"],
+        ["/admin/livros", "cursos"],
+        ["/admin/cadastrar-livro", "cursos"],
+        ["/admin/turmas", "turmas"],
+        ["/admin/materiais", "materiais"],
+        ["/admin/pedido-materiais", "pedido_materiais"],
+        ["/admin/presencas", "presencas"],
+        ["/admin/eventos", "eventos"],
+        ["/admin/calendario", "calendario"],
+        ["/admin/pagamentos", "pagamentos"],
+        ["/admin/configuracoes", "configuracoes"],
+        ["/admin/fale-com-adm", "fale_com_adm"],
+        ["/admin/tutorial", "tutorial"],
+        ["/admin", "visao_geral"],
+      ];
+
+      const required = permissionByPath.find(([prefix]) =>
+        path === prefix || path.startsWith(prefix + "/"),
+      )?.[1];
+
+      if (required && !permissions.includes(required)) {
+        const fallback = permissions.includes("visao_geral")
+          ? "/admin"
+          : "/inicio";
+        throw redirect({ to: fallback as any });
+      }
     }
 
     return {
       user: userData.user,
-      role: role.role,
+      role: isAdmin ? "admin" : "perfil",
+      isAdmin,
+      permissions,
     };
   },
   component: AdminLayout,
@@ -66,6 +118,7 @@ type MenuItem = {
   to: string;
   label: string;
   icon: typeof LayoutDashboard;
+  permission: string;
   exact?: boolean;
 };
 
@@ -73,67 +126,80 @@ const menuPrincipal: MenuItem[] = [
   {
     to: "/admin",
     label: "Visão geral",
+    permission: "visao_geral",
     icon: LayoutDashboard,
     exact: true,
   },
   {
     to: "/admin/inscricoes",
     label: "Aprovar inscrições / pagamentos",
+    permission: "inscricoes",
     icon: ClipboardCheck,
   },
   {
     to: "/admin/livros",
     label: "Cursos",
+    permission: "cursos",
     icon: BookOpen,
   },
   {
     to: "/admin/turmas",
     label: "Turmas",
+    permission: "turmas",
     icon: GraduationCap,
   },
   {
     to: "/admin/materiais",
     label: "Materiais dos cursos",
+    permission: "materiais",
     icon: FolderOpen,
   },
   {
     to: "/admin/pedido-materiais",
     label: "Pedido de materiais",
+    permission: "pedido_materiais",
     icon: ShoppingCart,
   },
   {
     to: "/admin/presencas",
     label: "Lista de presença",
+    permission: "presencas",
     icon: CheckSquare,
   },
   {
     to: "/admin/eventos",
     label: "Eventos",
+    permission: "eventos",
     icon: Calendar,
   },
   {
     to: "/admin/calendario",
     label: "Calendário",
+    permission: "calendario",
     icon: Calendar,
   },
   {
     to: "/admin/pagamentos",
     label: "Controle de pagamentos",
+    permission: "pagamentos",
     icon: CreditCard,
   },
   {
     to: "/admin/configuracoes",
     label: "Configurações",
+    permission: "configuracoes",
     icon: UserCog,
   },
   {
     to: "/admin/fale-com-adm",
     label: "Fale com ADM",
+    permission: "fale_com_adm",
     icon: MessageSquare,
   },
   {
     to: "/admin/tutorial",
     label: "Tutorial",
+    permission: "tutorial",
     icon: HelpCircle,
   },
 ];
@@ -143,6 +209,7 @@ function AdminLayout() {
     select: (s) => s.location.pathname,
   });
 
+  const { isAdmin, permissions } = Route.useRouteContext();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -162,6 +229,11 @@ function AdminLayout() {
     exact
       ? pathname === to
       : pathname === to || pathname.startsWith(to + "/");
+
+  const pode = (permission: string) =>
+    isAdmin || permissions.includes(permission);
+
+  const menuVisivel = menuPrincipal.filter((item) => pode(item.permission));
 
   return (
     <div className="min-h-screen min-w-0 overflow-x-hidden bg-muted/30">
@@ -205,6 +277,8 @@ function AdminLayout() {
           </p>
 
           <nav className="flex flex-col gap-1">
+            {menuVisivel.some((item) => item.permission === "visao_geral") && (
+            <>
             {/* 1. Visão geral */}
             <Link
               to="/admin"
@@ -218,8 +292,11 @@ function AdminLayout() {
               <span>Visão geral</span>
             </Link>
 
+            </>
+            )}
+
             {/* 2. Alunos */}
-            <div>
+            {pode("participantes") && <div>
               <button
                 type="button"
                 onClick={() => setAlunosAberto((aberto) => !aberto)}
@@ -272,10 +349,25 @@ function AdminLayout() {
                   </Link>
                 </div>
               )}
-            </div>
+            </div>}
+
+            {/* Perfis de acesso — somente ADM */}
+            {isAdmin && (
+              <Link
+                to="/admin/perfis"
+                className={`inline-flex min-h-11 min-w-0 items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                  active("/admin/perfis")
+                    ? "bg-primary text-primary-foreground"
+                    : "text-foreground hover:bg-secondary"
+                }`}
+              >
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                <span>Perfis de acesso</span>
+              </Link>
+            )}
 
             {/* Demais itens principais */}
-            {menuPrincipal.slice(1).map(({ to, label, icon: Icon }) => (
+            {menuVisivel.slice(1).map(({ to, label, icon: Icon }) => (
               <Link
                 key={to}
                 to={to}
