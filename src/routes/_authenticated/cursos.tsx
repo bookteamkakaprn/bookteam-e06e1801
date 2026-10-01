@@ -120,10 +120,9 @@ function CursosPage() {
             className="flex gap-4 overflow-x-auto pb-4 scrollbar-hidden"
           >
             {livrosJornada.map((livro) => (
-              <Link
+              <a
                 key={livro.id}
-                to="/livros/$id"
-                params={{ id: livro.id }}
+                href={`/livros/${livro.id}`}
                 className="shrink-0 w-[200px] md:w-[240px] flex flex-col gap-3 cursor-pointer group"
               >
                 <div
