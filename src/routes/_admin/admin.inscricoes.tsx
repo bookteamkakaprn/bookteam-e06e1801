@@ -24,7 +24,7 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
-import { emailPagamentoAprovado, emailPagamentoRecusado, emailInicioCurso } from "@/lib/email-service";
+import { emailPagamentoAprovado, emailPagamentoRecusado, emailInscricaoAprovada, emailInscricaoRecusada, emailInicioCurso } from "@/lib/email-service";
 
 export const Route = createFileRoute("/_admin/admin/inscricoes")({
   head: () => ({
@@ -180,7 +180,7 @@ function AdminAprovacoes() {
              participante:participantes(id,nome,email,status),
              livro:livros(id,titulo,autor),
              turma:turmas(
-               id,nome,data_inicio,data_fim,vagas_max,vagas_restantes
+               id,nome,data_inicio,data_fim,horario,frequencia_minima,vagas_max,vagas_restantes
              )
            )`,
         )
@@ -204,7 +204,7 @@ function AdminAprovacoes() {
            participante:participantes(id,nome,email,status),
            livro:livros(id,titulo,autor),
            turma:turmas(
-             id,nome,data_inicio,data_fim,vagas_max,vagas_restantes
+             id,nome,data_inicio,data_fim,horario,frequencia_minima,vagas_max,vagas_restantes
            ),
            pagamentos(
              id,status,valor,comprovante_url,observacao
@@ -476,6 +476,30 @@ function AdminAprovacoes() {
 
       if (error) throw error;
 
+      if (pagamento.inscricao?.participante?.email && pagamento.status !== novoStatus) {
+        try {
+          if (novoStatus === "aprovado") {
+            await emailPagamentoAprovado(
+              pagamento.inscricao.participante.email,
+              pagamento.inscricao.participante.nome || "Aluno(a)",
+              pagamento.inscricao.livro?.titulo || "Curso",
+              pagamento.inscricao.turma?.nome || "Turma",
+              pagamento.valor,
+            );
+          } else if (novoStatus === "rejeitado") {
+            await emailPagamentoRecusado(
+              pagamento.inscricao.participante.email,
+              pagamento.inscricao.participante.nome || "Aluno(a)",
+              pagamento.inscricao.livro?.titulo || "Curso",
+              pagamento.inscricao.turma?.nome || "Turma",
+              motivo.trim(),
+            );
+          }
+        } catch (emailError) {
+          console.error("Erro ao enviar email de alteração do pagamento:", emailError);
+        }
+      }
+
       // Registrar auditoria
       await supabase.from("audit_log").insert({
         tabela: "pagamentos",
@@ -538,6 +562,23 @@ function AdminAprovacoes() {
         .eq("id", inscricao.id);
 
       if (error) throw error;
+
+      if (inscricao.participante?.email) {
+        try {
+          await emailInscricaoAprovada(
+            inscricao.participante.email,
+            inscricao.participante.nome || "Aluno(a)",
+            inscricao.livro?.titulo || "Curso",
+            inscricao.turma?.nome || "Turma",
+            inscricao.turma?.data_inicio,
+            inscricao.turma?.data_fim,
+            inscricao.turma?.horario,
+            inscricao.turma?.frequencia_minima ?? 90,
+          );
+        } catch (emailError) {
+          console.error("Erro ao enviar email de vaga confirmada:", emailError);
+        }
+      }
     },
     onSuccess: () => {
       toast.success("Inscrição aprovada. A vaga foi confirmada.");
@@ -596,6 +637,20 @@ function AdminAprovacoes() {
           .eq("id", pagamento.id);
 
         if (pagamentoError) throw pagamentoError;
+      }
+
+      if (inscricao.participante?.email) {
+        try {
+          await emailInscricaoRecusada(
+            inscricao.participante.email,
+            inscricao.participante.nome || "Aluno(a)",
+            inscricao.livro?.titulo || "Curso",
+            inscricao.turma?.nome || "Turma",
+            texto,
+          );
+        } catch (emailError) {
+          console.error("Erro ao enviar email de inscrição não confirmada:", emailError);
+        }
       }
     },
     onSuccess: () => {
@@ -738,6 +793,33 @@ function AdminAprovacoes() {
         .eq("id", inscricao.id);
 
       if (error) throw error;
+
+      if (inscricao.participante?.email && inscricao.status !== novoStatus) {
+        try {
+          if (novoStatus === "confirmada") {
+            await emailInscricaoAprovada(
+              inscricao.participante.email,
+              inscricao.participante.nome || "Aluno(a)",
+              inscricao.livro?.titulo || "Curso",
+              inscricao.turma?.nome || "Turma",
+              inscricao.turma?.data_inicio,
+              inscricao.turma?.data_fim,
+              inscricao.turma?.horario,
+              inscricao.turma?.frequencia_minima ?? 90,
+            );
+          } else if (novoStatus === "cancelada") {
+            await emailInscricaoRecusada(
+              inscricao.participante.email,
+              inscricao.participante.nome || "Aluno(a)",
+              inscricao.livro?.titulo || "Curso",
+              inscricao.turma?.nome || "Turma",
+              motivo.trim() || "Vagas encerradas.",
+            );
+          }
+        } catch (emailError) {
+          console.error("Erro ao enviar email de alteração da inscrição:", emailError);
+        }
+      }
 
       // Registrar auditoria
       await supabase.from("audit_log").insert({
