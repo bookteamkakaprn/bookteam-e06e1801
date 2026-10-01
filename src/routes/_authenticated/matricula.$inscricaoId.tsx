@@ -209,8 +209,6 @@ function MatriculaPage() {
           .from("pagamentos")
           .insert({
             inscricao_id: inscricaoId,
-            participante_id: user.id,
-            turma_id: data.turma_id ?? data.turmas?.id ?? null,
             valor: Number(data.turmas?.valor ?? 0),
             comprovante_url: path,
             comprovante_enviado_em: new Date().toISOString(),
