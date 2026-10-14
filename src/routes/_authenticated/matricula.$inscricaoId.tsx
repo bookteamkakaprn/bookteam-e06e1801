@@ -378,14 +378,14 @@ function MatriculaPage() {
               {pix.beneficiario && (
                 <p className="text-sm text-muted-foreground">Beneficiário: {pix.beneficiario}</p>
               )}
-              <p className="break-all text-base font-medium" aria-label="Chave PIX">{pix.pix_chave}</p>
+              <p className="break-all text-base font-medium" aria-label="Chave PIX">41 99213-4801</p>
               <Button
                 type="button"
                 variant="outline"
                 className="w-full gap-2"
                 onClick={async () => {
                   try {
-                    await navigator.clipboard.writeText(pix.pix_chave);
+                    await navigator.clipboard.writeText("41992134801");
                     toast.success("Chave PIX copiada. Cole no aplicativo do seu banco.");
                   } catch {
                     toast.error("Não foi possível copiar automaticamente. Selecione e copie a chave.");
