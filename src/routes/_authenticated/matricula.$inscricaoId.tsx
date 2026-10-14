@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Check, Clock, Copy, Loader2, Upload } from "lucide-react";
+import { Clock, Copy, Loader2, Upload } from "lucide-react";
 
 const pixField = (id: string, value: string) => `${id}${String(value.length).padStart(2, "0")}${value}`;
 const crc16 = (value: string) => {
