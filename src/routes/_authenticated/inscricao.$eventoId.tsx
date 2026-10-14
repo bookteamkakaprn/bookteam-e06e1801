@@ -66,13 +66,21 @@ function InscricaoEventoPage() {
       if (!evento || !user) throw new Error("Dados incompletos");
 
       // Verificar se já está inscrito
-      const { data: existente } = await supabase
+      if (evento.status !== "aberto") {
+        throw new Error("As inscrições para este encontro não estão abertas.");
+      }
+      if (Number(evento.vagas ?? 0) <= 0) {
+        throw new Error("Não há vagas disponíveis para este encontro.");
+      }
+
+      const { data: existente, error: consultaError } = await supabase
         .from("inscricoes")
         .select("id")
         .eq("participante_id", user.id)
         .eq("evento_id", evento.id)
         .maybeSingle();
 
+      if (consultaError) throw consultaError;
       if (existente) {
         throw new Error("Você já está inscrito neste encontro!");
       }
@@ -95,9 +103,8 @@ function InscricaoEventoPage() {
         .from("pagamentos")
         .insert({
           inscricao_id: inscricao.id,
-          participante_id: user.id,
-          valor: evento.valor,
-          status: evento.valor === 0 ? "aprovado" : "aguardando",
+          valor: Number(evento.valor ?? 0),
+          status: Number(evento.valor ?? 0) === 0 ? "aprovado" : "aguardando",
         });
 
       if (errPag) throw errPag;
@@ -105,16 +112,12 @@ function InscricaoEventoPage() {
       return inscricao;
     },
     onSuccess: () => {
-      if (evento && evento.valor > 0) {
+      if (evento && Number(evento.valor ?? 0) > 0) {
         toast.success("Inscrição criada. Envie o comprovante na área Pagamentos para concluir a etapa financeira.");
-        setTimeout(() => {
-          window.location.href = "/pagamentos";
-        }, 1200);
+        window.location.assign("/pagamentos");
       } else {
         toast.success("Inscrição realizada com sucesso!");
-        setTimeout(() => {
-          window.location.href = "/minhas-inscricoes";
-        }, 1200);
+        window.location.assign("/minhas-inscricoes");
       }
     },
     onError: (e: Error) => {
