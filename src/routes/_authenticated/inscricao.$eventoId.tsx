@@ -96,7 +96,6 @@ function InscricaoEventoPage() {
         .insert({
           inscricao_id: inscricao.id,
           participante_id: user.id,
-          evento_id: evento.id,
           valor: evento.valor,
           status: evento.valor === 0 ? "aprovado" : "aguardando",
         });
@@ -106,10 +105,17 @@ function InscricaoEventoPage() {
       return inscricao;
     },
     onSuccess: () => {
-      toast.success("Inscrição realizada com sucesso!");
-      setTimeout(() => {
-        window.location.href = "/minhas-inscricoes";
-      }, 1500);
+      if (evento && evento.valor > 0) {
+        toast.success("Inscrição criada. Envie o comprovante na área Pagamentos para concluir a etapa financeira.");
+        setTimeout(() => {
+          window.location.href = "/pagamentos";
+        }, 1200);
+      } else {
+        toast.success("Inscrição realizada com sucesso!");
+        setTimeout(() => {
+          window.location.href = "/minhas-inscricoes";
+        }, 1200);
+      }
     },
     onError: (e: Error) => {
       toast.error(e.message || "Erro ao se inscrever");

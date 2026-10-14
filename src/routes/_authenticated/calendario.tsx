@@ -88,7 +88,7 @@ function CalendarioPage() {
   const { data: eventos = [], isLoading } = useQuery({
     queryKey: ["aluno-calendario-eventos", inicioMes],
     queryFn: async () => {
-      const { data, error } = await supabase.from("eventos").select("id,titulo,descricao,data,hora,local,cidade,vagas").gte("data", inicioMes).lte("data", fimMes).order("data").order("hora");
+      const { data, error } = await supabase.from("eventos").select("id,titulo,descricao,data,hora,local,cidade,vagas").is("livro_id", null).eq("status", "aberto").gte("data", inicioMes).lte("data", fimMes).order("data").order("hora");
       if (error) throw error;
       return (data ?? []) as Evento[];
     },
@@ -171,7 +171,7 @@ function CalendarioPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-3xl font-bold">Calendário</h1>
-        <p className="text-sm text-muted-foreground">Quando sua vaga for confirmada, todas as aulas semanais da turma aparecem automaticamente aqui.</p>
+        <p className="text-sm text-muted-foreground">Confira neste calendário as aulas da sua turma e os encontros abertos. Selecione um dia marcado para ver os detalhes.</p>
       </div>
 
       <Card>
