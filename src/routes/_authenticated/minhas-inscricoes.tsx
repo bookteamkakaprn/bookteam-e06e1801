@@ -41,9 +41,8 @@ type Inscricao = {
 
 function MinhasInscricoesPage() {
   const { user } = useAuth();
-  const [abaSelecionada, setAbaSelecionada] = useState<
-    "confirmadas" | "aguardando" | "rejeitadas" | "canceladas" | "presenca" | "certificado" | "pagamentos-aprovados" | "pagamentos-rejeitados"
-  >("confirmadas");
+  const [abaInscricao, setAbaInscricao] = useState<"aguardando" | "confirmadas" | "rejeitadas" | "canceladas">("aguardando");
+  const [abaPagamento, setAbaPagamento] = useState<"aguardando" | "aprovados" | "rejeitados" | "cancelados">("aguardando");
   const [mostrarArquivados, setMostrarArquivados] = useState(false);
 
   const { data: inscricoes = [], isLoading: carregandoInscricoes, refetch } = useQuery({
@@ -124,8 +123,10 @@ function MinhasInscricoesPage() {
   const canceladasFiltradas = inscricoes.filter((i) => i.status === "cancelada" && !i.motivo_rejeicao);
 
   // Processar pagamentos
+  const pagamentosAguardando: Inscricao[] = [];
   const pagamentosAprovados: Inscricao[] = [];
   const pagamentosRejeitados: Inscricao[] = [];
+  const pagamentosCancelados: Inscricao[] = [];
 
   inscricoes.forEach((insc) => {
     insc.pagamentos?.forEach((pag) => {
@@ -137,69 +138,93 @@ function MinhasInscricoesPage() {
           pagamentosAprovados.push({ ...insc, pagamentos: [pag] });
         } else if (pag.status === "rejeitado") {
           pagamentosRejeitados.push({ ...insc, pagamentos: [pag] });
+        } else if (pag.status === "cancelado" || pag.status === "cancelada") {
+          pagamentosCancelados.push({ ...insc, pagamentos: [pag] });
+        } else {
+          pagamentosAguardando.push({ ...insc, pagamentos: [pag] });
         }
       }
     });
   });
 
-  // Abas
-  const abas = [
-    { id: "confirmadas", label: "Confirmadas", count: confirmadasFiltradas.length },
-    { id: "aguardando", label: "Aguardando", count: aguardandoFiltradas.length },
-    { id: "rejeitadas", label: "Rejeitadas", count: rejeitadasFiltradas.length },
-    { id: "canceladas", label: "Canceladas", count: canceladasFiltradas.length },
-    { id: "pagamentos-aprovados", label: "Pagamentos Aprovados", count: pagamentosAprovados.length },
-    { id: "pagamentos-rejeitados", label: "Pagamentos Rejeitados", count: pagamentosRejeitados.length },
-  ] as const;
-
-  const getDados = () => {
-    switch (abaSelecionada) {
-      case "confirmadas":
-        return confirmadasFiltradas;
-      case "aguardando":
-        return aguardandoFiltradas;
-      case "rejeitadas":
-        return rejeitadasFiltradas;
-      case "canceladas":
-        return canceladasFiltradas;
-      case "pagamentos-aprovados":
-        return pagamentosAprovados;
-      case "pagamentos-rejeitados":
-        return pagamentosRejeitados;
-      default:
-        return [];
-    }
-  };
-
-  const dados = getDados();
-  const temPagamento = abaSelecionada.includes("pagamentos");
+  const listaInscricoes = {
+    aguardando: aguardandoFiltradas,
+    confirmadas: confirmadasFiltradas,
+    rejeitadas: rejeitadasFiltradas,
+    canceladas: canceladasFiltradas,
+  }[abaInscricao];
+  const listaPagamentos = {
+    aguardando: pagamentosAguardando,
+    aprovados: pagamentosAprovados,
+    rejeitados: pagamentosRejeitados,
+    cancelados: pagamentosCancelados,
+  }[abaPagamento];
+  const dados = listaInscricoes;
+  const temPagamento = false;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-3xl font-bold">Minhas inscrições</h1>
         <p className="text-sm text-muted-foreground">
-          Visualize seu histórico de inscrições, pagamentos e certificados.
+          Consulte separadamente a situação das suas inscrições e dos pagamentos.
         </p>
       </div>
 
-      {/* Abas */}
-      <div className="flex flex-wrap gap-2">
-        {abas.map(({ id, label, count }) => (
-          <Button
-            key={id}
-            variant={abaSelecionada === id ? "default" : "outline"}
-            onClick={() => setAbaSelecionada(id)}
-            className="gap-2"
-          >
-            {label}
-            <Badge variant="secondary" className="ml-1">
-              {count}
-            </Badge>
-          </Button>
-        ))}
-      </div>
+      <section className="space-y-3">
+        <h2 className="font-serif text-xl font-semibold">Pagamentos</h2>
+        <div className="flex flex-wrap gap-2">
+          {([
+            ["aguardando", "Aguardando", pagamentosAguardando.length],
+            ["aprovados", "Aprovados", pagamentosAprovados.length],
+            ["rejeitados", "Rejeitados", pagamentosRejeitados.length],
+            ["cancelados", "Cancelados", pagamentosCancelados.length],
+          ] as const).map(([id, label, count]) => (
+            <Button key={id} variant={abaPagamento === id ? "default" : "outline"} onClick={() => setAbaPagamento(id)} className="gap-2">
+              {label}<Badge variant="secondary">{count}</Badge>
+            </Button>
+          ))}
+        </div>
+        {mostrarArquivados && <p className="text-xs text-muted-foreground">Exibindo comprovantes arquivados.</p>}
+        <div className="space-y-3">
+          {listaPagamentos.map((inscricao) => {
+            const pag = inscricao.pagamentos?.[0];
+            const titulo = inscricao.evento?.titulo || inscricao.livro?.titulo || inscricao.turma?.nome || "Inscrição não informada";
+            return (
+              <Card key={`${inscricao.id}-pag-${pag?.id}`}>
+                <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-2">
+                    <p className="font-serif text-lg font-semibold">{titulo}</p>
+                    <Badge variant={pag?.status === "aprovado" ? "default" : pag?.status === "rejeitado" ? "destructive" : "secondary"}>{pag?.status === "aprovado" ? "Aprovado" : pag?.status === "rejeitado" ? "Rejeitado" : pag?.status === "cancelado" || pag?.status === "cancelada" ? "Cancelado" : "Aguardando"}</Badge>
+                    {pag?.observacao && <p className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-sm text-destructive">Motivo/observação: {pag.observacao}</p>}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-serif text-lg font-semibold">{Number(pag?.valor ?? 0).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</span>
+                    {pag?.comprovante_url && <Button size="sm" variant="outline" onClick={() => downloadComprovante(pag.comprovante_url!, "comprovante")}><Download className="mr-1 h-3.5 w-3.5" />Comprovante</Button>}
+                    {pag?.status === "rejeitado" && <Button size="sm" onClick={() => { window.location.href = "/pagamentos"; }}>Reenviar comprovante</Button>}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+          {listaPagamentos.length === 0 && <Card><CardContent className="p-4 text-sm text-muted-foreground">Nenhum pagamento nesta categoria.</CardContent></Card>}
+        </div>
+      </section>
 
+      <section className="space-y-3">
+        <h2 className="font-serif text-xl font-semibold">Minhas inscrições</h2>
+        <div className="flex flex-wrap gap-2">
+          {([
+            ["aguardando", "Aguardando", aguardandoFiltradas.length],
+            ["confirmadas", "Confirmadas", confirmadasFiltradas.length],
+            ["rejeitadas", "Rejeitadas", rejeitadasFiltradas.length],
+            ["canceladas", "Canceladas", canceladasFiltradas.length],
+          ] as const).map(([id, label, count]) => (
+            <Button key={id} variant={abaInscricao === id ? "default" : "outline"} onClick={() => setAbaInscricao(id)} className="gap-2">
+              {label}<Badge variant="secondary">{count}</Badge>
+            </Button>
+          ))}
+        </div>
       {/* Filtro de arquivados */}
       {temPagamento && (
         <div className="flex items-center gap-2">
@@ -222,12 +247,8 @@ function MinhasInscricoesPage() {
 
 
 
-      {abaSelecionada !== "certificado" && !carregandoInscricoes && dados.length === 0 && (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            Nenhuma inscrição nesta categoria.
-          </CardContent>
-        </Card>
+      {!carregandoInscricoes && dados.length === 0 && (
+        <Card><CardContent className="p-6 text-sm text-muted-foreground">Nenhuma inscrição nesta categoria.</CardContent></Card>
       )}
 
       <div className="space-y-3">
@@ -391,6 +412,7 @@ function MinhasInscricoesPage() {
           );
         })}
       </div>
+      </section>
     </div>
   );
 }
