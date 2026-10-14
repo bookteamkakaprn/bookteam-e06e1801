@@ -93,7 +93,7 @@ function PagPage() {
       const pagamentosRes = await supabase
         .from("pagamentos")
         .select(
-          "id,status,valor,comprovante_url,comprovante_resubmissao_url,observacao,resposta_aluno,data_resubmissao,status_resubmissao,created_at,comprovante_enviado_em,inscricao:inscricoes(id,evento:eventos(id,titulo,data),livro:livros(titulo))"
+          "id,status,valor,comprovante_url,observacao,created_at,comprovante_enviado_em,inscricao:inscricoes(id,evento:eventos(id,titulo,data),livro:livros(titulo))"
         )
         .in("inscricao_id", ids)
         .order("created_at", { ascending: false });
@@ -253,7 +253,7 @@ function PagPage() {
 
       {error && (
         <p className="text-sm text-destructive">
-          Não foi possível carregar seus pagamentos.
+          Não foi possível carregar seus pagamentos: {error instanceof Error ? error.message : "verifique a conexão com o banco de dados"}.
         </p>
       )}
 
