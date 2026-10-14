@@ -172,46 +172,6 @@ function MinhasInscricoesPage() {
       </div>
 
       <section className="space-y-3">
-        <h2 className="font-serif text-xl font-semibold">Pagamentos</h2>
-        <div className="flex flex-wrap gap-2">
-          {([
-            ["aguardando", "Aguardando", pagamentosAguardando.length],
-            ["aprovados", "Aprovados", pagamentosAprovados.length],
-            ["rejeitados", "Rejeitados", pagamentosRejeitados.length],
-            ["cancelados", "Cancelados", pagamentosCancelados.length],
-          ] as const).map(([id, label, count]) => (
-            <Button key={id} variant={abaPagamento === id ? "default" : "outline"} onClick={() => setAbaPagamento(id)} className="gap-2">
-              {label}<Badge variant="secondary">{count}</Badge>
-            </Button>
-          ))}
-        </div>
-        {mostrarArquivados && <p className="text-xs text-muted-foreground">Exibindo comprovantes arquivados.</p>}
-        <div className="space-y-3">
-          {listaPagamentos.map((inscricao) => {
-            const pag = inscricao.pagamentos?.[0];
-            const titulo = inscricao.evento?.titulo || inscricao.livro?.titulo || inscricao.turma?.nome || "Inscrição não informada";
-            return (
-              <Card key={`${inscricao.id}-pag-${pag?.id}`}>
-                <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="space-y-2">
-                    <p className="font-serif text-lg font-semibold">{titulo}</p>
-                    <Badge variant={pag?.status === "aprovado" ? "default" : pag?.status === "rejeitado" ? "destructive" : "secondary"}>{pag?.status === "aprovado" ? "Aprovado" : pag?.status === "rejeitado" ? "Rejeitado" : pag?.status === "cancelado" || pag?.status === "cancelada" ? "Cancelado" : "Aguardando"}</Badge>
-                    {pag?.observacao && <p className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-sm text-destructive">Motivo/observação: {pag.observacao}</p>}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-serif text-lg font-semibold">{Number(pag?.valor ?? 0).toLocaleString("pt-BR", {style:"currency",currency:"BRL"})}</span>
-                    {pag?.comprovante_url && <Button size="sm" variant="outline" onClick={() => downloadComprovante(pag.comprovante_url!, "comprovante")}><Download className="mr-1 h-3.5 w-3.5" />Comprovante</Button>}
-                    {pag?.status === "rejeitado" && <Button size="sm" onClick={() => { window.location.href = "/pagamentos"; }}>Reenviar comprovante</Button>}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-          {listaPagamentos.length === 0 && <Card><CardContent className="p-4 text-sm text-muted-foreground">Nenhum pagamento nesta categoria.</CardContent></Card>}
-        </div>
-      </section>
-
-      <section className="space-y-3">
         <h2 className="font-serif text-xl font-semibold">Minhas inscrições</h2>
         <div className="flex flex-wrap gap-2">
           {([
