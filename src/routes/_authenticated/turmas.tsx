@@ -27,7 +27,9 @@ type Turma = {
   sala: string | null;
   categoria: string | null;
   valor: number | null;
-  vagas: number | null;
+  vagas_max: number | null;
+  inscritos: number | null;
+  vagas_restantes: number | null;
   ativo: boolean;
   livro?: { titulo: string | null } | null;
 };
@@ -39,8 +41,8 @@ function TurmasPage() {
     queryFn: async () => {
       let query = supabase
         .from("turmas")
-        .select("id, nome, data_inicio, data_fim, horario, sala, categoria, valor, vagas, ativo, livro:livros(titulo)")
-        .gt("vagas", 0)
+        .select("id, nome, data_inicio, data_fim, horario, sala, categoria, valor, vagas_max, inscritos, vagas_restantes, ativo, livro:livros(titulo)")
+        .gt("vagas_restantes", 0)
         .eq("ativo", true)
         .order("data_inicio");
 
@@ -147,10 +149,10 @@ function TurmasPage() {
                       </span>
                     )}
 
-                    {turma.vagas !== null && (
+                    {turma.vagas_restantes !== null && (
                       <span className="inline-flex items-center gap-1">
                         <Users className="h-3.5 w-3.5" />
-                        {turma.vagas} vaga{turma.vagas !== 1 ? "s" : ""} disponível{turma.vagas !== 1 ? "s" : ""}
+                        {turma.vagas_restantes} vaga{turma.vagas_restantes !== 1 ? "s" : ""} disponível{turma.vagas_restantes !== 1 ? "s" : ""}
                       </span>
                     )}
                   </div>
