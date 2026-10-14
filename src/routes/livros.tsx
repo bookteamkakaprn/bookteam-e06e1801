@@ -70,7 +70,7 @@ function LivrosPage() {
                           <img
                             src={capa}
                             alt={livro.titulo}
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            className="h-full w-full object-cover"
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center flex-col gap-2">
@@ -100,12 +100,12 @@ function LivrosPage() {
                         </Badge>
                         <Button
                           size="sm"
-                          variant="ghost"
-                          className="gap-1 group-hover:text-gold"
+                          variant="default"
+                          className="gap-1 bg-gold text-primary-foreground hover:bg-gold/90"
                           asChild
                         >
                           <Link to="/livros/$id" params={{ id: livro.id }}>
-                            Ver
+                            Ver detalhes e turmas
                             <ChevronRight className="h-3.5 w-3.5" />
                           </Link>
                         </Button>
