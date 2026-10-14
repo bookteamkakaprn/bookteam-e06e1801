@@ -19,40 +19,45 @@ export async function resubmeterComprovante(
   respostaAluno: string
 ): Promise<{ url: string }> {
   try {
-    // 1. Upload do arquivo para o Supabase Storage
-    const nomeArquivo = `comprovante-resubmissao-${pagamentoId}-${Date.now()}.pdf`;
+    // Usa uma pasta associada ao usuário autenticado, compatível com políticas de Storage.
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError) throw authError;
+    if (!authData.user) throw new Error("Sua sessão expirou. Entre novamente.");
+
+    const extensao = novoComprovanteFile.name.split(".").pop()?.toLowerCase() || "bin";
+    const nomeArquivo = `${authData.user.id}/resubmissao/${pagamentoId}-${Date.now()}.${extensao}`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("comprovantes")
       .upload(nomeArquivo, novoComprovanteFile, {
         cacheControl: "3600",
         upsert: false,
+        contentType: novoComprovanteFile.type || "application/octet-stream",
       });
 
     if (uploadError) throw uploadError;
 
-    // 2. Obter URL pública
-    const { data: publicUrl } = supabase.storage
-      .from("comprovantes")
-      .getPublicUrl(uploadData.path);
-
+    // 2. Atualizar o registro com o caminho privado do Storage.
+    // A tela administrativa usa o mesmo campo comprovante_url para abrir o arquivo.
     // 3. Atualizar pagamento no banco
     const { error: updateError } = await supabase
       .from("pagamentos")
       .update({
-        comprovante_resubmissao_url: publicUrl.publicUrl,
+        comprovante_resubmissao_url: uploadData.path,
+        comprovante_url: uploadData.path,
+        comprovante_enviado_em: new Date().toISOString(),
         resposta_aluno: respostaAluno,
         data_resubmissao: new Date().toISOString(),
-        status_resubmissao: "aguardando", // Admin precisa revisar de novo
+        status_resubmissao: "aguardando",
+        status: "aguardando",
       })
       .eq("id", pagamentoId);
 
     if (updateError) throw updateError;
 
-    return { url: publicUrl.publicUrl };
+    return { url: uploadData.path };
   } catch (erro) {
-    throw new Error(
-      `Erro ao resubmeter comprovante: ${erro instanceof Error ? erro.message : "erro desconhecido"}`
-    );
+    const detalhe = erro instanceof Error ? erro.message : String(erro ?? "erro desconhecido");
+    throw new Error(`Erro ao resubmeter comprovante: ${detalhe}`);
   }
 }
 
@@ -66,7 +71,7 @@ export async function buscarPagamentoRejeitado(
     .from("pagamentos")
     .select("id, valor, status, observacao, data_resubmissao, resposta_aluno, status_resubmissao")
     .eq("id", pagamentoId)
-    .eq("status", "rejeitada")
+    .eq("status", "rejeitado")
     .maybeSingle();
 
   if (error) throw error;
