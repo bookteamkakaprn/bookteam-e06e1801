@@ -306,7 +306,8 @@ function LivroDetalhesPage() {
               {!carregandoTurmas && !erroTurmas && !turmas.length && (
                 <div className="mt-4 rounded-xl border border-border/60 bg-card/40 p-5">
                   <p className="text-sm text-muted-foreground">Ainda não há turmas disponíveis para este curso.</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Registre seu interesse e avisaremos por e-mail quando uma nova turma for aberta.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Acesse Turmas e verifique se há uma turma aberta para este curso. Se não houver, registre seu interesse para receber aviso quando uma nova turma for aberta.</p>
+                  <Button asChild variant="outline" className="mt-3 gap-2"><Link to="/turmas">Ver turmas abertas <ArrowRight className="h-4 w-4" /></Link></Button>
                   {user ? (
                     <Button
                       type="button"
