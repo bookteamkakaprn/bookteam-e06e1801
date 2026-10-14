@@ -114,69 +114,43 @@ export function StudentSidebar() {
           <span>Encontros</span>
         </Link>
 
-        {/* 7. Minhas inscrições + Pagamentos */}
-        <div>
-          <button
-            type="button"
-            onClick={() => setInscricoesAbertas((aberto) => !aberto)}
-            className={cn(
-              "flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-              pathname === "/minhas-inscricoes" || pathname.startsWith("/pagamentos")
-                ? "bg-primary text-primary-foreground font-semibold"
-                : "text-foreground hover:bg-secondary",
-            )}
-          >
-            <span className="flex items-center gap-3">
-              <BookOpen className="h-4 w-4 shrink-0" />
-              <span>Minhas inscrições</span>
-            </span>
-            <ChevronDown
-              className={cn(
-                "h-4 w-4 shrink-0 transition-transform",
-                inscricoesAbertas && "rotate-180",
-              )}
-            />
-          </button>
+        {/* 7. Pagamentos: etapa anterior à inscrição */}
+        <Link to="/pagamentos" className={linkClass("/pagamentos")}>
+          <span className="flex h-4 w-4 shrink-0 items-center justify-center text-xs font-bold">R$</span>
+          <span>Pagamentos</span>
+        </Link>
 
-          {inscricoesAbertas && (
-            <div className="mt-1 space-y-1 border-l border-border pl-2">
-              <Link to="/minhas-inscricoes" className={subLinkClass("/minhas-inscricoes")}>
-                <BookOpen className="h-4 w-4 shrink-0" />
-                <span>Minhas inscrições</span>
-              </Link>
-              <Link to="/pagamentos" className={subLinkClass("/pagamentos")}>
-                <span className="h-4 w-4 shrink-0 text-center text-xs font-bold">R$</span>
-                <span>Pagamentos</span>
-              </Link>
-            </div>
-          )}
-        </div>
+        {/* 8. Minhas inscrições: situação da inscrição, independente do pagamento */}
+        <Link to="/minhas-inscricoes" className={linkClass("/minhas-inscricoes")}>
+          <BookOpen className="h-4 w-4 shrink-0" />
+          <span>Minhas inscrições</span>
+        </Link>
 
-        {/* 8. Materiais */}
+        {/* 9. Materiais */}
         <Link to="/materiais" className={linkClass("/materiais")}>
           <FolderOpen className="h-4 w-4 shrink-0" />
           <span>Materiais</span>
         </Link>
 
-        {/* 9. Tarefas */}
+        {/* 10. Tarefas */}
         <Link to="/tarefas" className={linkClass("/tarefas")}>
           <ListTodo className="h-4 w-4 shrink-0" />
           <span>Tarefas</span>
         </Link>
 
-        {/* 10. Presença */}
+        {/* 11. Presença */}
         <Link to="/presenca" className={linkClass("/presenca")}>
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <span>Presença</span>
         </Link>
 
-        {/* 11. Certificados */}
+        {/* 12. Certificados */}
         <Link to="/certificados" className={linkClass("/certificados")}>
           <Award className="h-4 w-4 shrink-0" />
           <span>Certificados</span>
         </Link>
 
-        {/* 12. Fale com ADM */}
+        {/* 13. Fale com ADM */}
         <Link to="/mensagens" className={linkClass("/mensagens")}>
           <MessageSquare className="h-4 w-4 shrink-0" />
           <span>Fale com ADM</span>
