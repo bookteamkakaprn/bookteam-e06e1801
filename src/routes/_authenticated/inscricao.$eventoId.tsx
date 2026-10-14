@@ -111,10 +111,10 @@ function InscricaoEventoPage() {
 
       return inscricao;
     },
-    onSuccess: () => {
+    onSuccess: (inscricao) => {
       if (evento && Number(evento.valor ?? 0) > 0) {
         toast.success("Inscrição criada. Envie o comprovante na área Pagamentos para concluir a etapa financeira.");
-        window.location.assign("/pagamentos");
+        window.location.assign(`/matricula/${inscricao.id}`);
       } else {
         toast.success("Inscrição realizada com sucesso!");
         window.location.assign("/minhas-inscricoes");
