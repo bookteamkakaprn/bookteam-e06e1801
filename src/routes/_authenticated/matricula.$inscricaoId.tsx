@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Clock, Loader2, Upload } from "lucide-react";
+import { Clock, Copy, Loader2, Upload } from "lucide-react";
 
 const pixField = (id: string, value: string) => `${id}${String(value.length).padStart(2, "0")}${value}`;
 const crc16 = (value: string) => {
@@ -358,18 +358,44 @@ function MatriculaPage() {
         </Card>
       )}
 
-      {/* QR Code PIX — sem valor fixado */}
+      {/* Pagamento PIX: QR Code e chave copiável */}
       {pix?.pix_chave && (
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 p-5">
-            <p className="text-center text-sm font-medium">Escaneie o QR Code para pagar via PIX</p>
+          <CardHeader>
+            <CardTitle className="text-base">Pague via PIX</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-4 p-5">
+            <p className="text-center text-sm font-medium">Opção 1: escaneie o QR Code</p>
             <img
               src={`https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=10&data=${encodeURIComponent(gerarPixPayload(pix.pix_chave, pix.beneficiario))}`}
               alt="QR Code PIX"
               loading="eager"
               className="h-64 w-64 rounded-xl border bg-white p-2 object-contain"
             />
-            <p className="text-center text-xs text-muted-foreground">O valor não está definido no QR Code. Informe o valor no aplicativo do seu banco.</p>
+            <p className="text-center text-xs text-muted-foreground">O QR Code não fixa o valor. Confira e informe o valor da inscrição no aplicativo do banco.</p>
+            <div className="w-full space-y-2 rounded-lg border p-4">
+              <p className="text-sm font-semibold">Opção 2: copie a chave PIX</p>
+              {pix.beneficiario && (
+                <p className="text-sm text-muted-foreground">Beneficiário: {pix.beneficiario}</p>
+              )}
+              <p className="break-all text-base font-medium" aria-label="Chave PIX">{pix.pix_chave}</p>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full gap-2"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(pix.pix_chave);
+                    toast.success("Chave PIX copiada. Cole no aplicativo do seu banco.");
+                  } catch {
+                    toast.error("Não foi possível copiar automaticamente. Selecione e copie a chave.");
+                  }
+                }}
+              >
+                <Copy className="h-4 w-4" />
+                Copiar chave PIX
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
