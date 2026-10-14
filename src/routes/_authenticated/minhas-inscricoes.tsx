@@ -167,7 +167,7 @@ function MinhasInscricoesPage() {
       <div>
         <h1 className="font-serif text-3xl font-bold">Minhas inscrições</h1>
         <p className="text-sm text-muted-foreground">
-          Consulte separadamente a situação das suas inscrições e dos pagamentos.
+          Acompanhe aqui apenas o status das inscrições. Pagamento aprovado não garante inscrição confirmada; confira a situação nesta página.
         </p>
       </div>
 
