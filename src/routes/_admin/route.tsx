@@ -177,12 +177,6 @@ const menuPrincipal: MenuItem[] = [
     icon: Users,
   },
   {
-    to: "/admin/pedido-materiais",
-    label: "Pedido de materiais",
-    permission: "pedido_materiais",
-    icon: ShoppingCart,
-  },
-  {
     to: "/admin/presencas",
     label: "Lista de presença",
     permission: "presencas",

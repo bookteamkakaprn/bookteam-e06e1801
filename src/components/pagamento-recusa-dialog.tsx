@@ -8,7 +8,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
@@ -53,14 +52,20 @@ export function PagamentoRecusaDialog({
       // Resubmeter comprovante
       await resubmeterComprovante(pagamentoId, arquivo, resposta);
 
-      // Notificar admin
-      await notificarAdminResubmissao(
-        pagamentoId,
-        aluno.nome,
-        aluno.email,
-        livroTitulo,
-        valor
-      );
+      // O comprovante já foi salvo. Falha no e-mail não deve desfazer nem
+      // apresentar como falha o reenvio concluído.
+      try {
+        await notificarAdminResubmissao(
+          pagamentoId,
+          aluno.nome,
+          aluno.email,
+          livroTitulo,
+          valor
+        );
+      } catch (erro) {
+        console.error("Comprovante salvo, mas o aviso ao administrador falhou:", erro);
+        toast.warning("Comprovante salvo. A notificação automática falhou; o administrador precisará conferir os pagamentos.");
+      }
     },
     onSuccess: () => {
       toast.success(

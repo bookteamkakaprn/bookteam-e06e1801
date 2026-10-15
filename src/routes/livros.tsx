@@ -65,7 +65,7 @@ function LivrosPage() {
                 <Card key={livro.id} className="h-full overflow-hidden transition-all hover:shadow-lg hover:border-gold/50 group">
                     <CardContent className="p-0">
                       {/* Imagem/Capa */}
-                      <div className="relative aspect-[3/4] overflow-hidden bg-secondary">
+                      <Link to="/turmas" search={{ livroId: livro.id }} aria-label={`Ver turmas de ${livro.titulo}`} className="block relative aspect-[3/4] overflow-hidden bg-secondary">
                         {capa ? (
                           <img
                             src={capa}
@@ -91,7 +91,7 @@ function LivrosPage() {
                             <p className="text-xs text-gold/80">{livro.autor}</p>
                           )}
                         </div>
-                      </div>
+                      </Link>
 
                       {/* Badge e botão */}
                       <div className="flex items-center justify-between gap-2 border-t border-border/50 bg-card/50 p-3">
@@ -104,7 +104,7 @@ function LivrosPage() {
                           className="gap-1 bg-gold text-primary-foreground hover:bg-gold/90"
                           asChild
                         >
-                          <Link to="/livros/$id" params={{ id: livro.id }}>
+                          <Link to="/turmas" search={{ livroId: livro.id }}>
                             Ver detalhes e turmas
                             <ChevronRight className="h-3.5 w-3.5" />
                           </Link>

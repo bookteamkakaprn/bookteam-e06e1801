@@ -23,7 +23,7 @@ function FaleComADM() {
     queryKey: ["admin-fale-com-adm"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("contato_admin")
+        .from("mensagens_admin")
         .select(
           `id, participante_id, assunto, mensagem, lida, created_at,
            participante:participantes(nome, email)`

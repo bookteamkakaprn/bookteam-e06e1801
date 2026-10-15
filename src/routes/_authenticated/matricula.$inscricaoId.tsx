@@ -65,7 +65,7 @@ function MatriculaPage() {
       const { data, error } = await supabase
         .from("inscricoes")
         .select(
-          "*, turmas(*, livros(titulo)), pagamentos(id, status, valor, created_at, comprovante_enviado_em)"
+          "*, turmas(*, livros(titulo)), eventos(titulo, data, valor), pagamentos(id, status, valor, created_at, comprovante_enviado_em)"
         )
         .eq("id", inscricaoId)
         .maybeSingle();
@@ -101,7 +101,7 @@ function MatriculaPage() {
 
       if (
         !window.confirm(
-          "Tem certeza que deseja se desinscrever deste curso? Esta ação não pode ser desfeita."
+          "Tem certeza que deseja cancelar esta inscrição? Esta ação não pode ser desfeita."
         )
       ) {
         return false;
@@ -119,7 +119,7 @@ function MatriculaPage() {
     onSuccess: (ok) => {
       if (!ok) return;
 
-      toast.success("Você foi desinscrito do curso.");
+      toast.success("Sua inscrição foi cancelada.");
 
       setTimeout(() => {
         window.location.href = "/inicio";
@@ -209,7 +209,7 @@ function MatriculaPage() {
           .from("pagamentos")
           .insert({
             inscricao_id: inscricaoId,
-            valor: Number(data.turmas?.valor ?? 0),
+            valor: Number(data.turmas?.valor ?? data.eventos?.valor ?? 0),
             comprovante_url: path,
             comprovante_enviado_em: new Date().toISOString(),
             status: "aguardando",
@@ -228,8 +228,8 @@ function MatriculaPage() {
           await emailComprovanteRecebido(
             user.email,
             data.participantes?.nome || user.user_metadata?.nome || "Aluno(a)",
-            data.turmas?.livros?.titulo || "Curso",
-            data.turmas?.nome || "Turma",
+            data.turmas?.livros?.titulo || data.eventos?.titulo || "Curso/Evento",
+            data.turmas?.nome || (data.eventos?.data ? new Date(data.eventos.data + "T00:00:00").toLocaleDateString("pt-BR") : "Evento"),
           );
         } catch (emailError) {
           console.error("Erro ao enviar email de recebimento do comprovante:", emailError);
@@ -294,7 +294,7 @@ function MatriculaPage() {
       {/* Cabeçalho da matrícula */}
       <div>
         <h1 className="font-serif text-2xl font-semibold">
-          {turma?.livros?.titulo ?? "Matrícula"}
+          {turma?.livros?.titulo ?? data.eventos?.titulo ?? "Matrícula"}
         </h1>
 
         <p className="text-sm text-muted-foreground">
@@ -411,11 +411,11 @@ function MatriculaPage() {
 
         <CardContent className="space-y-4">
 
-          {turma?.valor != null && (
+          {(turma?.valor ?? data.eventos?.valor) != null && (
             <p className="text-sm text-muted-foreground">
               Valor:{" "}
               <span className="font-semibold text-foreground">
-                {Number(turma.valor).toLocaleString(
+                {Number(turma?.valor ?? data.eventos?.valor ?? 0).toLocaleString(
                   "pt-BR",
                   {
                     style: "currency",
@@ -505,7 +505,7 @@ function MatriculaPage() {
         >
           {desinscrever.isPending
             ? "Desinscrever..."
-            : "Desinscrever do curso"}
+            : "Cancelar inscrição"}
         </Button>
       </div>
 

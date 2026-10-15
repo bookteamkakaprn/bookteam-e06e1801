@@ -6,6 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, Users, DollarSign } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/turmas")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    livroId: typeof search.livroId === "string" ? search.livroId : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Turmas abertas — Book Team" },
@@ -24,22 +27,27 @@ type Turma = {
   sala: string | null;
   categoria: string | null;
   valor: number | null;
-  vagas: number | null;
+  vagas_max: number | null;
+  inscritos: number | null;
+  vagas_restantes: number | null;
   ativo: boolean;
   livro?: { titulo: string | null } | null;
 };
 
 function TurmasPage() {
+  const { livroId } = Route.useSearch();
   const { data: turmas = [], isLoading } = useQuery({
-    queryKey: ["turmas-abertas"],
+    queryKey: ["turmas-abertas", livroId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("turmas")
-        .select("id, nome, data_inicio, data_fim, horario, sala, categoria, valor, vagas, ativo, livro:livros(titulo)")
-        .gt("vagas", 0)
+        .select("id, nome, data_inicio, data_fim, horario, sala, categoria, valor, vagas_max, inscritos, vagas_restantes, ativo, livro:livros(titulo)")
+        .gt("vagas_restantes", 0)
         .eq("ativo", true)
         .order("data_inicio");
 
+      if (livroId) query = query.eq("livro_id", livroId);
+      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as unknown as Turma[];
     },
@@ -67,9 +75,9 @@ function TurmasPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-serif text-3xl font-bold">Turmas abertas</h1>
+        <h1 className="font-serif text-3xl font-bold">{livroId ? "Turmas disponíveis deste livro" : "Turmas abertas"}</h1>
         <p className="text-sm text-muted-foreground">
-          Confira todas as turmas disponíveis com vagas abertas.
+          {livroId ? "Confira as turmas com vagas abertas para o livro selecionado." : "Confira todas as turmas disponíveis com vagas abertas."}
         </p>
       </div>
 
@@ -141,10 +149,10 @@ function TurmasPage() {
                       </span>
                     )}
 
-                    {turma.vagas !== null && (
+                    {turma.vagas_restantes !== null && (
                       <span className="inline-flex items-center gap-1">
                         <Users className="h-3.5 w-3.5" />
-                        {turma.vagas} vaga{turma.vagas !== 1 ? "s" : ""} disponível{turma.vagas !== 1 ? "s" : ""}
+                        {turma.vagas_restantes} vaga{turma.vagas_restantes !== 1 ? "s" : ""} disponível{turma.vagas_restantes !== 1 ? "s" : ""}
                       </span>
                     )}
                   </div>

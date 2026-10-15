@@ -50,12 +50,12 @@ type Turma = {
   horario: string | null;
   sala: string | null;
   professor: string | null;
-  vagas_max: number;
+  vagas_max: number | null;
+  inscritos: number | null;
   vagas_restantes: number | null;
   ativo: boolean;
   livro_id: string | null;
   valor: number | null;
-  inscritos: number;
 };
 
 function LivroDetalhesPage() {
@@ -83,14 +83,14 @@ function LivroDetalhesPage() {
       const { data, error } = await supabase
         .from("turmas")
         .select(
-          "id,nome,data_inicio,data_fim,horario,sala,professor,vagas_max,inscritos,ativo,livro_id,valor",
+          "id,nome,data_inicio,data_fim,horario,sala,professor,vagas_max,inscritos,vagas_restantes,ativo,livro_id,valor",
         )
         .eq("livro_id", id)
         .eq("ativo", true)
         .gte("data_inicio", new Date().toISOString().slice(0, 10))
         .order("data_inicio", { ascending: true });
       if (error) throw error;
-      return (data ?? []).map((t) => ({ ...t, vagas_restantes: Math.max(Number(t.vagas_max ?? 0) - Number(t.inscritos ?? 0), 0) })) as Turma[];
+      return (data ?? []).map((t) => ({ ...t, vagas_restantes: Math.max(Number(t.vagas_restantes ?? (Number(t.vagas_max ?? 0) - Number(t.inscritos ?? 0))), 0) })) as Turma[];
     },
   });
   const interesse = useMutation({
@@ -120,7 +120,7 @@ function LivroDetalhesPage() {
         return { id: existente.id, existente: true };
       }
       const status =
-        turma.vagas_max > 0 && (turma.vagas_restantes ?? 0) <= 0
+        Number(turma.vagas_restantes ?? 0) <= 0
           ? "lista_espera"
           : "aguardando_pagamento";
       const { data: insc, error: inscError } = await supabase
@@ -363,9 +363,9 @@ function LivroDetalhesPage() {
                           )}
                           {turma.professor && <span>Professor: {turma.professor}</span>}
                           <span>
-                            {turma.vagas_max > 0
+                            {turma.vagas_max !== null && turma.vagas_max > 0
                               ? `${turma.vagas_restantes ?? 0} vagas restantes`
-                              : "Vagas disponíveis"}
+                              : "Sem vagas disponíveis"}
                           </span>
                         </div>
                       </div>
