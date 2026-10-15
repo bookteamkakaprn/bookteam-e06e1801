@@ -4,14 +4,12 @@ export interface PagamentoRejeitado {
   id: string;
   valor: number;
   status: "rejeitado";
-  observacao: string;
-  data_resubmissao?: string | null;
-  resposta_aluno?: string | null;
-  status_resubmissao?: string | null;
+  observacao: string | null;
 }
 
 /**
- * Fazer upload de novo comprovante após rejeição
+ * Fazer upload de novo comprovante após rejeição.
+ * Atualiza somente colunas existentes na tabela pagamentos.
  */
 export async function resubmeterComprovante(
   pagamentoId: string,
@@ -22,6 +20,9 @@ export async function resubmeterComprovante(
     const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError) throw authError;
     if (!authData.user) throw new Error("Sua sessão expirou. Entre novamente.");
+    if (!novoComprovanteFile || novoComprovanteFile.size === 0) {
+      throw new Error("Selecione um comprovante antes de enviar.");
+    }
 
     const extensao = novoComprovanteFile.name.split(".").pop()?.toLowerCase() || "bin";
     const nomeArquivo = `${authData.user.id}/resubmissao/${pagamentoId}-${Date.now()}.${extensao}`;
@@ -35,22 +36,26 @@ export async function resubmeterComprovante(
 
     if (uploadError) throw uploadError;
 
-    const agora = new Date().toISOString();
-    const { error: updateError } = await supabase
+    // A tabela pagamentos não possui colunas de resposta/data de ressubmissão.
+    // O comprovante novo fica no campo existente e o pagamento volta para análise.
+    const { data: pagamentoAtualizado, error: updateError } = await supabase
       .from("pagamentos")
       .update({
-        comprovante_resubmissao_url: uploadData.path,
         comprovante_url: uploadData.path,
-        comprovante_enviado_em: agora,
-        resposta_aluno: respostaAluno,
-        data_resubmissao: agora,
-        status_resubmissao: "aguardando",
         status: "aguardando",
+        updated_at: new Date().toISOString(),
       })
-      .eq("id", pagamentoId);
+      .eq("id", pagamentoId)
+      .select("id")
+      .maybeSingle();
 
     if (updateError) throw updateError;
+    if (!pagamentoAtualizado) {
+      throw new Error("Pagamento não encontrado ou sem permissão para atualizar.");
+    }
 
+    // A resposta é mantida na confirmação da interface; não gravar em coluna inexistente.
+    void respostaAluno;
     return { url: uploadData.path };
   } catch (erro) {
     const objeto = erro && typeof erro === "object"
@@ -75,7 +80,7 @@ export async function buscarPagamentoRejeitado(
 ): Promise<PagamentoRejeitado | null> {
   const { data, error } = await supabase
     .from("pagamentos")
-    .select("id, valor, status, observacao, data_resubmissao, resposta_aluno, status_resubmissao")
+    .select("id, valor, status, observacao")
     .eq("id", pagamentoId)
     .eq("status", "rejeitado")
     .maybeSingle();
@@ -98,16 +103,14 @@ export async function notificarAdminResubmissao(
     "https://vvkadbiytmgholjduyqi.supabase.co/functions/v1/bookteam-send-notification-email",
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         to: "admin@ministeriobookteam.com.br",
         tipo: "comprovante_resubmetido",
         nome: nomeAluno,
         aluno_email: emailAluno,
         livro: livroTitulo,
-        valor: valor,
+        valor,
         pagamento_id: pagamentoId,
       }),
     }
