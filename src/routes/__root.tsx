@@ -79,25 +79,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Book Clube — Clube de Leitura & Trilhas de Desenvolvimento" },
+      { title: "Book Team | Escola Ministerial" },
       {
         name: "description",
         content:
-          "Plataforma oficial do Book Clube: trilhas de leitura, encontros presenciais e certificados. Inscreva-se, participe e evolua com a gente.",
+          "Book Team Escola Ministerial: trilhas de leitura cristã, encontros e formação ministerial.",
       },
-      { name: "author", content: "Book Clube" },
-      { property: "og:title", content: "Book Clube — Clube de Leitura" },
+      { name: "author", content: "Book Team | Escola Ministerial" },
+      { property: "og:title", content: "Book Team | Escola Ministerial" },
       {
         property: "og:description",
         content:
-          "Trilhas de leitura, encontros presenciais e certificados. Junte-se ao Book Clube.",
+          "Trilhas de leitura cristã, encontros e formação ministerial.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.svg?v=2", type: "image/svg+xml" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
