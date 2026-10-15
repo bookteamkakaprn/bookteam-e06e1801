@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface PagamentoRejeitado {
   id: string;
   valor: number;
-  status: "rejeitada";
+  status: "rejeitado";
   observacao: string;
   data_resubmissao?: string | null;
   resposta_aluno?: string | null;
@@ -19,7 +19,6 @@ export async function resubmeterComprovante(
   respostaAluno: string
 ): Promise<{ url: string }> {
   try {
-    // Usa uma pasta associada ao usuário autenticado, compatível com políticas de Storage.
     const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError) throw authError;
     if (!authData.user) throw new Error("Sua sessão expirou. Entre novamente.");
@@ -36,17 +35,15 @@ export async function resubmeterComprovante(
 
     if (uploadError) throw uploadError;
 
-    // 2. Atualizar o registro com o caminho privado do Storage.
-    // A tela administrativa usa o mesmo campo comprovante_url para abrir o arquivo.
-    // 3. Atualizar pagamento no banco
+    const agora = new Date().toISOString();
     const { error: updateError } = await supabase
       .from("pagamentos")
       .update({
         comprovante_resubmissao_url: uploadData.path,
         comprovante_url: uploadData.path,
-        comprovante_enviado_em: new Date().toISOString(),
+        comprovante_enviado_em: agora,
         resposta_aluno: respostaAluno,
-        data_resubmissao: new Date().toISOString(),
+        data_resubmissao: agora,
         status_resubmissao: "aguardando",
         status: "aguardando",
       })
@@ -56,7 +53,16 @@ export async function resubmeterComprovante(
 
     return { url: uploadData.path };
   } catch (erro) {
-    const detalhe = erro instanceof Error ? erro.message : String(erro ?? "erro desconhecido");
+    const objeto = erro && typeof erro === "object"
+      ? erro as { message?: unknown; details?: unknown; hint?: unknown; code?: unknown }
+      : null;
+    const detalhe = [
+      objeto?.message,
+      objeto?.details,
+      objeto?.hint,
+      objeto?.code,
+      erro instanceof Error ? erro.message : typeof erro === "string" ? erro : null,
+    ].filter(Boolean).map(String).join(" | ") || "Falha sem detalhes retornados pelo servidor";
     throw new Error(`Erro ao resubmeter comprovante: ${detalhe}`);
   }
 }
@@ -96,7 +102,7 @@ export async function notificarAdminResubmissao(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        to: "admin@ministeriobookteam.com.br", // Email do admin
+        to: "admin@ministeriobookteam.com.br",
         tipo: "comprovante_resubmetido",
         nome: nomeAluno,
         aluno_email: emailAluno,
