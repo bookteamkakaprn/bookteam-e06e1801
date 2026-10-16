@@ -293,9 +293,9 @@ function HeroQuemSomos() {
               size="lg"
               className="h-12 bg-gold px-6 text-[15px] font-semibold text-primary-foreground shadow-glow-gold hover:bg-gold/90"
             >
-              <a href="#como-funciona">
+              <Link to="/auth" search={{ mode: "signup" }}>
                 Quero participar <ArrowRight className="ml-2 h-4 w-4" />
-              </a>
+              </Link>
             </Button>
             <Button
               asChild
