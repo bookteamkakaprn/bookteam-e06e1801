@@ -39,6 +39,7 @@ export function NotificacoesSino({ destinatario }: { destinatario: "admin" | "al
         .from("notificacoes_app")
         .select("id,titulo,mensagem,link,lida,created_at")
         .eq("destinatario", destinatario)
+        .eq("lida", false)
         .order("created_at", { ascending: false })
         .limit(30);
       if (destinatario === "aluno") query = query.eq("participante_id", user!.id);
