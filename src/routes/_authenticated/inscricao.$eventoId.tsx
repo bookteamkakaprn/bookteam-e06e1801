@@ -95,7 +95,6 @@ function InscricaoEventoPage() {
         .from("pagamentos")
         .insert({
           inscricao_id: inscricao.id,
-          participante_id: user.id,
           valor: evento.valor,
           status: evento.valor === 0 ? "aprovado" : "aguardando",
         });
