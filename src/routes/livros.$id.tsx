@@ -117,7 +117,7 @@ function LivroDetalhesPage() {
       if (consultaError) throw consultaError;
       if (existente) {
         navigate({ to: "/matricula/$inscricaoId", params: { inscricaoId: existente.id } });
-        return { id: existente.id, existente: true };
+        return { id: existente.id, existente: true, status: existente.status };
       }
       const status =
         turma.vagas_max > 0 && (turma.vagas_restantes ?? 0) <= 0
@@ -145,8 +145,10 @@ function LivroDetalhesPage() {
     onSuccess: (res) => {
       toast.success(
         res.existente
-          ? "Você já está inscrito nesta turma."
-          : "Inscrição realizada! Agora faça o pagamento via PIX.",
+          ? res.status === "confirmada"
+            ? "Você já está inscrito nesta turma."
+            : "Sua pré-inscrição já existe. Envie o comprovante para confirmar sua vaga."
+          : "Pré-inscrição criada. Envie o comprovante para confirmar sua vaga.",
       );
       navigate({ to: "/matricula/$inscricaoId", params: { inscricaoId: res.id } });
     },
