@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_admin/admin/mensagens")({ component: Adm
 
 type Msg = { id:string; participante_id:string; remetente_id:string; remetente_tipo:string; assunto:string|null; mensagem:string; lida:boolean; created_at:string; participantes?: { nome:string|null; email:string|null }|null };
 
-function AdminMensagensPage(){
+export function AdminMensagensPage(){
  const qc=useQueryClient(); const [resposta,setResposta]=useState(""); const [selecionada,setSelecionada]=useState<Msg|null>(null);
  const q=useQuery({queryKey:["admin-mensagens"],queryFn:async()=>{const {data,error}=await supabase.from("mensagens_admin").select("*, participantes(nome,email)").order("created_at",{ascending:false});if(error)throw error;return (data??[]) as Msg[]}});
  const responder=useMutation({mutationFn:async()=>{if(!selecionada||!resposta.trim())throw new Error("Digite uma resposta.");const {data:u}=await supabase.auth.getUser();if(!u.user)throw new Error("Sessão expirada.");const {error}=await supabase.from("mensagens_admin").insert({participante_id:selecionada.participante_id,remetente_id:u.user.id,remetente_tipo:"admin",assunto:selecionada.assunto||"Mensagem do Book Team",mensagem:resposta.trim()});if(error)throw error;await supabase.from("mensagens_admin").update({lida:true}).eq("id",selecionada.id)},onSuccess:()=>{toast.success("Resposta enviada.");setResposta("");setSelecionada(null);qc.invalidateQueries({queryKey:["admin-mensagens"]})},onError:(e:unknown)=>toast.error(e instanceof Error?e.message:"Não foi possível enviar.")});
