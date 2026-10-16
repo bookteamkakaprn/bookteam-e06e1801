@@ -54,14 +54,14 @@ function LivrosPage() {
           className="gap-1"
           onClick={() => {
             if (window.history.length > 1) window.history.back();
-            else window.location.href = "/";
+            else window.location.href = "/inicio";
           }}
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </Button>
         <Button asChild variant="ghost" size="sm">
-          <Link to="/">Início</Link>
+          <Link to="/inicio">Início</Link>
         </Button>
       </div>
 
