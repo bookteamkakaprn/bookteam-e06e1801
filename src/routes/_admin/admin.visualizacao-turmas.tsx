@@ -158,7 +158,7 @@ function AdminVisualizacaoTurmasPage() {
               <CardTitle className="flex items-center gap-2"><Users className="h-5 w-5" /> Alunos inscritos ({confirmados.length})</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Estoque de <strong>{turma.livro?.titulo ?? "livro"}</strong>: {estoqueDisponivel} unidade(s) disponível(is).
-                A entrega baixa automaticamente 1 unidade do estoque.
+                A entrega é manual: ao clicar em "Entregar livro", é dado baixa de 1 unidade no estoque.
               </p>
             </CardHeader>
             <CardContent className="space-y-2">
