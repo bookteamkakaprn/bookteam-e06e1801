@@ -51,13 +51,13 @@ import capaAtive from "@/assets/ative.jpg.asset.json";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Book Team — Amor & Honra | Trilhas de leitura cristã" },
+      { title: "Book Team | Escola Ministerial" },
       {
         name: "description",
         content:
-          "Ministério Book Team: trilhas de leitura, encontros presenciais e uma comunidade que vive amor e honra todos os dias.",
+          "Escola Ministerial Book Team: trilhas de leitura, encontros presenciais e uma comunidade cristã que vive amor e honra todos os dias.",
       },
-      { property: "og:title", content: "Book Team — Amor & Honra" },
+      { property: "og:title", content: "Book Team | Escola Ministerial" },
       {
         property: "og:description",
         content:
