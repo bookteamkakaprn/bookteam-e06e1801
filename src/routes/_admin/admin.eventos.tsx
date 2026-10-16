@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { emailNovoEvento } from "@/lib/email-service";
-import { Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Loader2, Plus, Save, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_admin/admin/eventos")({
   component: AdminEventosPage,
@@ -36,6 +36,7 @@ type Evento = {
   vagas: number;
   livro_id: string | null;
   status: string;
+  arquivado_em: string | null;
 };
 
 const CATEGORIAS: Categoria[] = [
@@ -51,14 +52,15 @@ function AdminEventosPage() {
   const qc = useQueryClient();
   const [editando, setEditando] = useState<Partial<Evento> | null>(null);
   const [filtroCategoria, setFiltroCategoria] = useState("todas");
+  const [aba, setAba] = useState<"ativos" | "arquivados">("ativos");
 
   const eventosQ = useQuery({
     queryKey: ["admin-eventos-todos"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("eventos")
         .select(
-          "id,titulo,descricao,categoria,data,hora,local,cidade,valor,vagas,livro_id,status",
+          "id,titulo,descricao,categoria,data,hora,local,cidade,valor,vagas,livro_id,status,arquivado_em",
         )
         .is("livro_id", null)
         .order("data")
@@ -71,10 +73,50 @@ function AdminEventosPage() {
 
   const eventos = eventosQ.data ?? [];
 
-  const eventosFiltrados = eventos.filter(
+  const eventosDaAba = eventos.filter((evento) =>
+    aba === "arquivados" ? !!evento.arquivado_em : !evento.arquivado_em,
+  );
+  const totalArquivados = eventos.filter((e) => !!e.arquivado_em).length;
+  const totalAtivos = eventos.length - totalArquivados;
+
+  const eventosFiltrados = eventosDaAba.filter(
     (evento) =>
       filtroCategoria === "todas" || evento.categoria === filtroCategoria,
   );
+
+  const inicioMesAtual = (() => {
+    const hoje = new Date();
+    return `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-01`;
+  })();
+  const anterioresAtivos = eventos.filter(
+    (e) => !e.arquivado_em && e.data < inicioMesAtual,
+  ).length;
+
+  const arquivar = useMutation({
+    mutationFn: async ({ id, arquivar }: { id?: string; arquivar: boolean }) => {
+      let query = (supabase as any)
+        .from("eventos")
+        .update({ arquivado_em: arquivar ? new Date().toISOString() : null })
+        .is("livro_id", null);
+      query = id ? query.eq("id", id) : query.is("arquivado_em", null).lt("data", inicioMesAtual);
+      const { error } = await query;
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(
+        vars.id
+          ? vars.arquivar ? "Evento arquivado." : "Evento restaurado."
+          : "Eventos de meses anteriores arquivados.",
+      );
+      qc.invalidateQueries({ queryKey: ["admin-eventos-todos"] });
+      qc.invalidateQueries({ queryKey: ["admin-eventos"] });
+      qc.invalidateQueries({ queryKey: ["eventos-abertos"] });
+      qc.invalidateQueries({ queryKey: ["eventos-home"] });
+      qc.invalidateQueries({ queryKey: ["aluno-calendario-eventos"] });
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Não foi possível arquivar."),
+  });
 
   const salvar = useMutation({
     mutationFn: async (evento: Partial<Evento>) => {
@@ -194,9 +236,48 @@ function AdminEventosPage() {
           </p>
         </div>
 
-        <Button type="button" className="gap-2" onClick={novoEvento}>
-          <Plus className="h-4 w-4" />
-          Novo evento
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2"
+            disabled={anterioresAtivos === 0 || arquivar.isPending}
+            onClick={() => {
+              if (
+                window.confirm(
+                  `Arquivar ${anterioresAtivos} evento(s) de meses anteriores?\n\nEles saem do calendário e das telas do aluno. Você pode restaurar depois na aba Arquivados.`,
+                )
+              ) {
+                arquivar.mutate({ arquivar: true });
+              }
+            }}
+          >
+            <Archive className="h-4 w-4" />
+            Arquivar meses anteriores ({anterioresAtivos})
+          </Button>
+          <Button type="button" className="gap-2" onClick={novoEvento}>
+            <Plus className="h-4 w-4" />
+            Novo evento
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant={aba === "ativos" ? "default" : "outline"}
+          onClick={() => setAba("ativos")}
+        >
+          Ativos ({totalAtivos})
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant={aba === "arquivados" ? "default" : "outline"}
+          onClick={() => setAba("arquivados")}
+        >
+          Arquivados ({totalArquivados})
         </Button>
       </div>
 
@@ -280,6 +361,27 @@ function AdminEventosPage() {
                   onClick={() => setEditando(evento)}
                 >
                   Editar
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={arquivar.isPending}
+                  onClick={() =>
+                    arquivar.mutate({
+                      id: evento.id,
+                      arquivar: !evento.arquivado_em,
+                    })
+                  }
+                  title={evento.arquivado_em ? "Restaurar evento" : "Arquivar evento"}
+                >
+                  {evento.arquivado_em ? (
+                    <ArchiveRestore className="h-4 w-4" />
+                  ) : (
+                    <Archive className="h-4 w-4" />
+                  )}
+                  {evento.arquivado_em ? "Restaurar" : "Arquivar"}
                 </Button>
 
                 <Button

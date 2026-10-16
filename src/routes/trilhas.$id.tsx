@@ -34,6 +34,7 @@ function TrilhaPage() {
           .from("eventos")
           .select("*, livros!inner(trilha_id, titulo)")
           .eq("livros.trilha_id", id)
+          .is("arquivado_em", null)
           .eq("status", "aberto")
           .gte("data", today)
           .order("data"),

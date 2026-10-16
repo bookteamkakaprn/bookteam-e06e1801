@@ -1000,6 +1000,7 @@ function EventosEspeciais() {
         .from("eventos")
         .select("id, titulo, data, hora, local, categoria, vagas, valor")
         .is("livro_id", null)
+        .is("arquivado_em", null)
         .gte("data", dataInicio)
         .lte("data", dataFim)
         .order("data", { ascending: true })

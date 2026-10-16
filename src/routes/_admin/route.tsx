@@ -311,7 +311,7 @@ function AdminLayout() {
         <button
           type="button"
           onClick={() => setGruposAbertos((g) => ({ ...g, [id]: !aberto }))}
-          className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+          className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors ${
             dentro
               ? "bg-primary text-primary-foreground"
               : "text-foreground hover:bg-secondary"
@@ -319,7 +319,7 @@ function AdminLayout() {
         >
           <span className="flex items-center gap-2">
             <Icon className="h-4 w-4 shrink-0" />
-            <span>{rotulo}</span>
+            <span className="min-w-0 break-words">{rotulo}</span>
           </span>
           <ChevronDown
             className={`h-4 w-4 shrink-0 transition-transform ${aberto ? "rotate-180" : ""}`}
@@ -425,7 +425,7 @@ function AdminLayout() {
               <button
                 type="button"
                 onClick={() => setAlunosAberto((aberto) => !aberto)}
-                className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors ${
                   pathname.startsWith("/admin/participantes")
                     ? "bg-primary text-primary-foreground"
                     : "text-foreground hover:bg-secondary"

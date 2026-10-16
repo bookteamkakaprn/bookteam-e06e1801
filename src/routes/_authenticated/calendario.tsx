@@ -106,7 +106,7 @@ function CalendarioPage() {
   const { data: eventos = [], isLoading } = useQuery({
     queryKey: ["aluno-calendario-eventos", inicioMes],
     queryFn: async () => {
-      const { data, error } = await supabase.from("eventos").select("id,titulo,descricao,data,hora,local,cidade,vagas").is("livro_id", null).eq("status", "aberto").gte("data", inicioMes).lte("data", fimMes).order("data").order("hora");
+      const { data, error } = await supabase.from("eventos").select("id,titulo,descricao,data,hora,local,cidade,vagas").is("livro_id", null).is("arquivado_em", null).eq("status", "aberto").gte("data", inicioMes).lte("data", fimMes).order("data").order("hora");
       if (error) throw error;
       return (data ?? []) as Evento[];
     },
