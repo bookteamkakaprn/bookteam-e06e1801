@@ -47,8 +47,6 @@ export function PagamentoRecusaDialog({
   const resubmeter = useMutation({
     mutationFn: async () => {
       if (!arquivo) throw new Error("Selecione um arquivo");
-      if (resposta.trim().length < 10)
-        throw new Error("Deixe um comentário com pelo menos 10 caracteres");
 
       // Resubmeter comprovante (upload + registro no banco)
       await resubmeterComprovante(pagamentoId, arquivo, resposta);
@@ -202,7 +200,7 @@ export function PagamentoRecusaDialog({
             </Button>
             <Button
               onClick={() => resubmeter.mutate()}
-              disabled={!arquivo || resposta.length < 10 || resubmeter.isPending}
+              disabled={!arquivo || resubmeter.isPending}
               className="flex-1 gap-2 bg-gold text-primary-foreground"
             >
               {resubmeter.isPending && (

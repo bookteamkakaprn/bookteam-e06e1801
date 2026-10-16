@@ -64,10 +64,6 @@ export async function resubmeterComprovante(
   const erroValidacao = validarComprovante(novoComprovanteFile);
   if (erroValidacao) throw new Error(erroValidacao);
 
-  if (respostaAluno.trim().length < 10) {
-    throw new Error("Deixe um comentário com pelo menos 10 caracteres");
-  }
-
   const { data: authData, error: authError } = await supabase.auth.getUser();
   if (authError) throw new Error(authError.message);
   if (!authData.user) throw new Error("Sua sessão expirou. Entre novamente.");
