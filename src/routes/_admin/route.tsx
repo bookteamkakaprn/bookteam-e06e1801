@@ -6,12 +6,13 @@ import {
   useRouterState,
   useNavigate,
 } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Archive,
+  Menu,
   LayoutDashboard,
   Users,
   Calendar,
@@ -246,6 +247,12 @@ function AdminLayout() {
     pathname.startsWith("/admin/participantes"),
   );
 
+  // Menu lateral: no celular vira gaveta (aberta pelo hambúrguer); no computador fica fixo.
+  const [menuAberto, setMenuAberto] = useState(false);
+  useEffect(() => {
+    setMenuAberto(false);
+  }, [pathname]);
+
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
@@ -279,6 +286,15 @@ function AdminLayout() {
           </Link>
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="lg:hidden"
+              onClick={() => setMenuAberto(true)}
+              aria-label="Abrir menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
             <Link
               to="/inicio"
               className="inline-flex min-h-10 items-center justify-center gap-1 rounded-md border border-border px-2 text-xs text-foreground hover:bg-secondary sm:gap-1.5 sm:px-3 sm:text-sm"
@@ -299,8 +315,20 @@ function AdminLayout() {
         </div>
       </header>
 
+      {menuAberto && (
+        <div
+          className="fixed inset-x-0 bottom-0 top-16 z-30 bg-black/50 lg:hidden"
+          onClick={() => setMenuAberto(false)}
+          aria-hidden="true"
+        />
+      )}
+
       <div className="flex min-h-[calc(100vh-64px)] min-w-0 flex-col lg:flex-row">
-        <aside className="w-full shrink-0 border-b border-border bg-secondary/20 p-3 lg:sticky lg:top-16 lg:h-[calc(100vh-64px)] lg:w-56 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-4">
+        <aside
+          className={`fixed bottom-0 left-0 top-16 z-40 w-64 max-w-[85vw] overflow-y-auto border-r border-border bg-card p-3 transition-transform duration-200 lg:sticky lg:top-16 lg:z-auto lg:h-[calc(100vh-64px)] lg:w-56 lg:shrink-0 lg:translate-x-0 lg:bg-secondary/20 lg:p-4 ${
+            menuAberto ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
           <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Área administrativa
           </p>
