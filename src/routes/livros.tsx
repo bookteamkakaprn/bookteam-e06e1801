@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -130,7 +130,14 @@ function LivrosPage() {
   );
 }
 
+// Layout da rota /livros: na lista mostra os cursos; nas rotas filhas (ex.: /livros/$id) renderiza a página filha.
+function LivrosLayout() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (pathname.replace(/\/$/, "") !== "/livros") return <Outlet />;
+  return <LivrosPage />;
+}
+
 export const Route = createFileRoute("/livros")({
   head: () => ({ meta: [{ title: "Livros e Cursos — Book Team" }] }),
-  component: LivrosPage,
+  component: LivrosLayout,
 });
