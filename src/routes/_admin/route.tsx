@@ -6,6 +6,7 @@ import {
   useRouterState,
   useNavigate,
 } from "@tanstack/react-router";
+import { NotificacoesSino } from "@/components/notificacoes-sino";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -373,6 +374,7 @@ function AdminLayout() {
           </Link>
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <NotificacoesSino destinatario="admin" />
             <Button
               size="sm"
               variant="ghost"

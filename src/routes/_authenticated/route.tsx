@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet, redirect, Link, useNavigate } from "@tanstack/react-router";
+import { NotificacoesSino } from "@/components/notificacoes-sino";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ function AuthenticatedLayout() {
 
           {/* Right side: Email + Admin + Logout */}
           <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <NotificacoesSino destinatario="aluno" />
             <span className="hidden max-w-[180px] truncate text-xs text-muted-foreground sm:inline">
               {user?.email}
             </span>
