@@ -66,7 +66,7 @@ function MatriculaPage() {
       const { data, error } = await supabase
         .from("inscricoes")
         .select(
-          "*, turmas(*, livros(titulo)), pagamentos(id, status, valor, created_at, comprovante_enviado_em)"
+          "*, turmas(*, livros(titulo)), eventos(id, titulo, valor, data, hora, local, cidade), pagamentos(id, status, valor, created_at, comprovante_enviado_em)"
         )
         .eq("id", inscricaoId)
         .maybeSingle();
@@ -201,7 +201,7 @@ function MatriculaPage() {
           .from("pagamentos")
           .insert({
             inscricao_id: inscricaoId,
-            valor: Number(data.turmas?.valor ?? 0),
+            valor: Number((data.turmas ?? data.eventos)?.valor ?? 0),
             comprovante_url: path,
             comprovante_enviado_em: new Date().toISOString(),
             status: "aguardando",
@@ -221,8 +221,8 @@ function MatriculaPage() {
           await emailComprovanteRecebido(
             user.email,
             data.participantes?.nome || user.user_metadata?.nome || "Aluno(a)",
-            data.turmas?.livros?.titulo || "Curso",
-            data.turmas?.nome || "Turma",
+            data.turmas?.livros?.titulo || data.eventos?.titulo || "Curso",
+            data.turmas?.nome || data.eventos?.titulo || "Turma",
           );
         } catch (emailError) {
           console.error("Erro ao enviar email de recebimento do comprovante:", emailError);
@@ -278,7 +278,11 @@ function MatriculaPage() {
     );
   }
 
+  // Inscrição pode ser de turma (curso) ou de evento pago; o fluxo de pagamento é o mesmo.
   const turma = data.turmas;
+  const evento = data.eventos;
+  const ehEvento = !data.turmas && !!data.eventos;
+  const valorCurso = (turma ?? evento)?.valor;
   const pagamento = data.pagamentos?.[0];
 
   return (
@@ -287,15 +291,21 @@ function MatriculaPage() {
       {/* Cabeçalho da matrícula */}
       <div>
         <h1 className="font-serif text-2xl font-semibold">
-          {turma?.livros?.titulo ?? "Matrícula"}
+          {ehEvento ? evento?.titulo : (turma?.livros?.titulo ?? "Matrícula")}
         </h1>
 
         <p className="text-sm text-muted-foreground">
-          {[
-            turma?.nome,
-            turma?.horario,
-            turma?.sala,
-          ]
+          {(ehEvento
+            ? [
+                evento?.data ? new Date(`${evento.data}T00:00:00`).toLocaleDateString("pt-BR") : null,
+                evento?.hora?.slice(0, 5),
+                evento?.local,
+              ]
+            : [
+                turma?.nome,
+                turma?.horario,
+                turma?.sala,
+              ])
             .filter(Boolean)
             .join(" · ")}
         </p>
@@ -404,11 +414,11 @@ function MatriculaPage() {
 
         <CardContent className="space-y-4">
 
-          {turma?.valor != null && (
+          {valorCurso != null && (
             <p className="text-sm text-muted-foreground">
               Valor:{" "}
               <span className="font-semibold text-foreground">
-                {Number(turma.valor).toLocaleString(
+                {Number(valorCurso).toLocaleString(
                   "pt-BR",
                   {
                     style: "currency",

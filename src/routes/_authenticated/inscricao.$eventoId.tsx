@@ -75,7 +75,7 @@ function InscricaoEventoPage() {
 
       if (existente) {
         if (existente.status === "confirmada") throw new Error("Você já está inscrito neste encontro!");
-        return { pendente: true as const };
+        return { pendente: true as const, id: existente.id };
       }
 
       // Criar inscrição
@@ -108,14 +108,14 @@ function InscricaoEventoPage() {
       if (res && "pendente" in res && res.pendente) {
         toast.info("Sua pré-inscrição já existe. Envie o comprovante para confirmar sua vaga.");
         setTimeout(() => {
-          window.location.href = "/pagamentos";
+          window.location.href = `/matricula/${res.id}`;
         }, 1200);
         return;
       }
       if (evento && evento.valor > 0) {
-        toast.success("Pré-inscrição criada. Envie o comprovante em Pagamentos para confirmar sua vaga.");
+        toast.success("Pré-inscrição criada. Faça o PIX e envie o comprovante para confirmar sua vaga.");
         setTimeout(() => {
-          window.location.href = "/pagamentos";
+          window.location.href = `/matricula/${res.id}`;
         }, 1200);
       } else {
         toast.success("Inscrição realizada com sucesso!");
