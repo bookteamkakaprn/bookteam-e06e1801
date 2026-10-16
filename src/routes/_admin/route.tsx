@@ -88,6 +88,7 @@ export const Route = createFileRoute("/_admin")({
         ["/admin/visualizacao-turmas", "visualizacao_turmas"],
         ["/admin/pedido-materiais", "pedido_materiais"],
         ["/admin/presencas", "presencas"],
+        ["/admin/checklist", "visualizacao_turmas"],
         ["/admin/eventos", "eventos"],
         ["/admin/calendario", "calendario"],
         ["/admin/pagamentos", "pagamentos"],
@@ -188,6 +189,12 @@ const menuPrincipal: MenuItem[] = [
     to: "/admin/presencas",
     label: "Lista de presença",
     permission: "presencas",
+    icon: CheckSquare,
+  },
+  {
+    to: "/admin/checklist",
+    label: "Checklist",
+    permission: "visualizacao_turmas",
     icon: CheckSquare,
   },
   {
@@ -507,6 +514,7 @@ function AdminLayout() {
               "/admin/materiais",
               "/admin/tarefas",
               "/admin/presencas",
+              "/admin/checklist",
             ])}
 
             {/* 9. Financeiro */}

@@ -39,6 +39,7 @@ import { Route as AdminAdminAlunoHistoricoRouteImport } from './routes/_admin/ad
 import { Route as AdminAdminCadastrarLivroRouteImport } from './routes/_admin/admin.cadastrar-livro'
 import { Route as AdminAdminCalendarioRouteImport } from './routes/_admin/admin.calendario'
 import { Route as AdminAdminCertificadosRouteImport } from './routes/_admin/admin.certificados'
+import { Route as AdminAdminChecklistRouteImport } from './routes/_admin/admin.checklist'
 import { Route as AdminAdminComprovantesArquivoRouteImport } from './routes/_admin/admin.comprovantes-arquivo'
 import { Route as AdminAdminConfiguracoesRouteImport } from './routes/_admin/admin.configuracoes'
 import { Route as AdminAdminContaRouteImport } from './routes/_admin/admin.conta'
@@ -214,6 +215,11 @@ const AdminAdminCertificadosRoute = AdminAdminCertificadosRouteImport.update({
   path: '/admin/certificados',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminAdminChecklistRoute = AdminAdminChecklistRouteImport.update({
+  id: '/admin/checklist',
+  path: '/admin/checklist',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminAdminComprovantesArquivoRoute =
   AdminAdminComprovantesArquivoRouteImport.update({
     id: '/admin/comprovantes-arquivo',
@@ -358,6 +364,7 @@ export interface FileRoutesByFullPath {
   '/admin/cadastrar-livro': typeof AdminAdminCadastrarLivroRoute
   '/admin/calendario': typeof AdminAdminCalendarioRoute
   '/admin/certificados': typeof AdminAdminCertificadosRoute
+  '/admin/checklist': typeof AdminAdminChecklistRoute
   '/admin/comprovantes-arquivo': typeof AdminAdminComprovantesArquivoRoute
   '/admin/configuracoes': typeof AdminAdminConfiguracoesRoute
   '/admin/conta': typeof AdminAdminContaRoute
@@ -410,6 +417,7 @@ export interface FileRoutesByTo {
   '/admin/cadastrar-livro': typeof AdminAdminCadastrarLivroRoute
   '/admin/calendario': typeof AdminAdminCalendarioRoute
   '/admin/certificados': typeof AdminAdminCertificadosRoute
+  '/admin/checklist': typeof AdminAdminChecklistRoute
   '/admin/comprovantes-arquivo': typeof AdminAdminComprovantesArquivoRoute
   '/admin/configuracoes': typeof AdminAdminConfiguracoesRoute
   '/admin/conta': typeof AdminAdminContaRoute
@@ -465,6 +473,7 @@ export interface FileRoutesById {
   '/_admin/admin/cadastrar-livro': typeof AdminAdminCadastrarLivroRoute
   '/_admin/admin/calendario': typeof AdminAdminCalendarioRoute
   '/_admin/admin/certificados': typeof AdminAdminCertificadosRoute
+  '/_admin/admin/checklist': typeof AdminAdminChecklistRoute
   '/_admin/admin/comprovantes-arquivo': typeof AdminAdminComprovantesArquivoRoute
   '/_admin/admin/configuracoes': typeof AdminAdminConfiguracoesRoute
   '/_admin/admin/conta': typeof AdminAdminContaRoute
@@ -519,6 +528,7 @@ export interface FileRouteTypes {
     | '/admin/cadastrar-livro'
     | '/admin/calendario'
     | '/admin/certificados'
+    | '/admin/checklist'
     | '/admin/comprovantes-arquivo'
     | '/admin/configuracoes'
     | '/admin/conta'
@@ -571,6 +581,7 @@ export interface FileRouteTypes {
     | '/admin/cadastrar-livro'
     | '/admin/calendario'
     | '/admin/certificados'
+    | '/admin/checklist'
     | '/admin/comprovantes-arquivo'
     | '/admin/configuracoes'
     | '/admin/conta'
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/cadastrar-livro'
     | '/_admin/admin/calendario'
     | '/_admin/admin/certificados'
+    | '/_admin/admin/checklist'
     | '/_admin/admin/comprovantes-arquivo'
     | '/_admin/admin/configuracoes'
     | '/_admin/admin/conta'
@@ -874,6 +886,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminCertificadosRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/_admin/admin/checklist': {
+      id: '/_admin/admin/checklist'
+      path: '/admin/checklist'
+      fullPath: '/admin/checklist'
+      preLoaderRoute: typeof AdminAdminChecklistRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/_admin/admin/comprovantes-arquivo': {
       id: '/_admin/admin/comprovantes-arquivo'
       path: '/admin/comprovantes-arquivo'
@@ -1036,6 +1055,7 @@ interface AdminRouteRouteChildren {
   AdminAdminCadastrarLivroRoute: typeof AdminAdminCadastrarLivroRoute
   AdminAdminCalendarioRoute: typeof AdminAdminCalendarioRoute
   AdminAdminCertificadosRoute: typeof AdminAdminCertificadosRoute
+  AdminAdminChecklistRoute: typeof AdminAdminChecklistRoute
   AdminAdminComprovantesArquivoRoute: typeof AdminAdminComprovantesArquivoRoute
   AdminAdminConfiguracoesRoute: typeof AdminAdminConfiguracoesRoute
   AdminAdminContaRoute: typeof AdminAdminContaRoute
@@ -1064,6 +1084,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAdminCadastrarLivroRoute: AdminAdminCadastrarLivroRoute,
   AdminAdminCalendarioRoute: AdminAdminCalendarioRoute,
   AdminAdminCertificadosRoute: AdminAdminCertificadosRoute,
+  AdminAdminChecklistRoute: AdminAdminChecklistRoute,
   AdminAdminComprovantesArquivoRoute: AdminAdminComprovantesArquivoRoute,
   AdminAdminConfiguracoesRoute: AdminAdminConfiguracoesRoute,
   AdminAdminContaRoute: AdminAdminContaRoute,
