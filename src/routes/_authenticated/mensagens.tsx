@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,21 @@ type Msg = {
   mensagem: string;
   created_at: string;
 };
+
+type Item = { tipo: "divisor"; key: string; assunto: string } | { tipo: "msg"; key: string; m: Msg };
+
+// Intercala um separador "Novo assunto" sempre que o assunto muda.
+function montarItens(msgs: Msg[]): Item[] {
+  const itens: Item[] = [];
+  let topico: string | null = null;
+  for (const m of msgs) {
+    const a = m.assunto?.trim() || null;
+    if (a && a !== topico) itens.push({ tipo: "divisor", key: `d-${m.id}`, assunto: a });
+    if (a) topico = a;
+    itens.push({ tipo: "msg", key: m.id, m });
+  }
+  return itens;
+}
 
 function MensagensPage() {
   const { user } = useAuth();
@@ -60,11 +75,15 @@ function MensagensPage() {
       setMensagem("");
       qc.invalidateQueries({ queryKey: ["minhas-mensagens", user?.id] });
     },
-    onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Não foi possível enviar."),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Não foi possível enviar."),
   });
 
   const msgs = q.data ?? [];
+  const itens = useMemo(() => montarItens(msgs), [msgs]);
+  const topicoAtual = useMemo(() => {
+    for (let i = msgs.length - 1; i >= 0; i--) if (msgs[i].assunto?.trim()) return msgs[i].assunto!.trim();
+    return null;
+  }, [msgs]);
 
   useEffect(() => {
     fimRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -92,18 +111,25 @@ function MensagensPage() {
                 Você ainda não enviou nenhuma mensagem.
               </p>
             )}
-            {msgs.map((m) => {
+            {itens.map((item) => {
+              if (item.tipo === "divisor") {
+                return (
+                  <div key={item.key} className="my-1 flex items-center gap-2 text-xs font-semibold text-primary">
+                    <span className="h-px flex-1 bg-primary/40" />
+                    Novo assunto: {item.assunto}
+                    <span className="h-px flex-1 bg-primary/40" />
+                  </div>
+                );
+              }
+              const m = item.m;
               const minha = m.remetente_tipo !== "admin";
               return (
-                <div key={m.id} className={`flex ${minha ? "justify-end" : "justify-start"}`}>
+                <div key={item.key} className={`flex ${minha ? "justify-end" : "justify-start"}`}>
                   <div
                     className={`max-w-[80%] rounded-2xl px-4 py-2 shadow-sm ${
-                      minha
-                        ? "rounded-br-sm bg-primary text-primary-foreground"
-                        : "rounded-bl-sm border bg-card"
+                      minha ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-bl-sm border bg-card"
                     }`}
                   >
-                    {m.assunto && <p className="mb-0.5 text-xs font-semibold opacity-80">{m.assunto}</p>}
                     <p className="whitespace-pre-wrap text-sm">{m.mensagem}</p>
                     <p className="mt-1 text-right text-[10px] opacity-70">
                       {minha ? "Você" : "ADM"} · {new Date(m.created_at).toLocaleString("pt-BR")}
@@ -116,10 +142,16 @@ function MensagensPage() {
           </div>
 
           <div className="space-y-2 border-t pt-3">
+            {topicoAtual && !assunto.trim() && (
+              <p className="text-xs text-muted-foreground">
+                Você está no assunto: <strong>{topicoAtual}</strong>. Para começar um assunto novo, preencha o campo
+                Assunto.
+              </p>
+            )}
             <Input
               value={assunto}
               onChange={(e) => setAssunto(e.target.value)}
-              placeholder="Assunto (opcional)"
+              placeholder="Assunto — preencha para começar um novo assunto"
             />
             <div className="flex items-end gap-2">
               <Textarea
