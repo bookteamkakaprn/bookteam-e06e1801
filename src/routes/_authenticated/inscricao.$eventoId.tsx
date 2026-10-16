@@ -68,13 +68,14 @@ function InscricaoEventoPage() {
       // Verificar se já está inscrito
       const { data: existente } = await supabase
         .from("inscricoes")
-        .select("id")
+        .select("id,status")
         .eq("participante_id", user.id)
         .eq("evento_id", evento.id)
         .maybeSingle();
 
       if (existente) {
-        throw new Error("Você já está inscrito neste encontro!");
+        if (existente.status === "confirmada") throw new Error("Você já está inscrito neste encontro!");
+        return { pendente: true as const };
       }
 
       // Criar inscrição
@@ -103,9 +104,16 @@ function InscricaoEventoPage() {
 
       return inscricao;
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
+      if (res && "pendente" in res && res.pendente) {
+        toast.info("Sua pré-inscrição já existe. Envie o comprovante para confirmar sua vaga.");
+        setTimeout(() => {
+          window.location.href = "/pagamentos";
+        }, 1200);
+        return;
+      }
       if (evento && evento.valor > 0) {
-        toast.success("Inscrição criada. Envie o comprovante na área Pagamentos para concluir a etapa financeira.");
+        toast.success("Pré-inscrição criada. Envie o comprovante em Pagamentos para confirmar sua vaga.");
         setTimeout(() => {
           window.location.href = "/pagamentos";
         }, 1200);

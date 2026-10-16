@@ -1040,6 +1040,12 @@ function AdminAprovacoes() {
                               : "Pendente"}
                         </Badge>
 
+                        {!pagamento.comprovante_url && pagamento.status === "aguardando" && (
+                          <Badge variant="outline" className="border-amber-500 text-amber-600">
+                            Sem comprovante
+                          </Badge>
+                        )}
+
                         {pagamento.comprovante_url && (
                           <div className="flex flex-col items-start gap-2">
                             <Button
