@@ -138,7 +138,7 @@ const menuPrincipal: MenuItem[] = [
   },
   {
     to: "/admin/inscricoes",
-    label: "Aprovar inscrições / pagamentos",
+    label: "Aprovar inscrições e pagamentos",
     permission: "inscricoes",
     icon: ClipboardCheck,
   },
@@ -156,7 +156,7 @@ const menuPrincipal: MenuItem[] = [
   },
   {
     to: "/admin/materiais",
-    label: "Materiais dos cursos",
+    label: "Materiais de aula",
     permission: "materiais",
     icon: FolderOpen,
   },
@@ -246,6 +246,7 @@ function AdminLayout() {
   const [alunosAberto, setAlunosAberto] = useState(() =>
     pathname.startsWith("/admin/participantes"),
   );
+  const [gruposAbertos, setGruposAbertos] = useState<Record<string, boolean>>({});
 
   // Menu lateral: no celular vira gaveta (aberta pelo hambúrguer); no computador fica fixo.
   const [menuAberto, setMenuAberto] = useState(false);
@@ -270,6 +271,85 @@ function AdminLayout() {
     isAdmin || permissions.includes(permission);
 
   const menuVisivel = menuPrincipal.filter((item) => pode(item.permission));
+
+  const renderItem = (to: string, exact?: boolean) => {
+    const item = menuVisivel.find((i) => i.to === to);
+    if (!item) return null;
+    const Icon = item.icon;
+    return (
+      <Link
+        key={to}
+        to={to}
+        className={`inline-flex min-h-11 min-w-0 items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+          active(to, exact)
+            ? "bg-primary text-primary-foreground"
+            : "text-foreground hover:bg-secondary"
+        }`}
+      >
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="min-w-0 break-words">{item.label}</span>
+      </Link>
+    );
+  };
+
+  const renderGrupo = (
+    id: string,
+    rotulo: string,
+    Icon: typeof LayoutDashboard,
+    tos: string[],
+  ) => {
+    const itens = tos
+      .map((to) => menuVisivel.find((i) => i.to === to))
+      .filter((i): i is MenuItem => !!i);
+    if (itens.length === 0) return null;
+
+    const dentro = tos.some((to) => active(to));
+    const aberto = gruposAbertos[id] ?? dentro;
+
+    return (
+      <div key={id}>
+        <button
+          type="button"
+          onClick={() => setGruposAbertos((g) => ({ ...g, [id]: !aberto }))}
+          className={`flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+            dentro
+              ? "bg-primary text-primary-foreground"
+              : "text-foreground hover:bg-secondary"
+          }`}
+        >
+          <span className="flex items-center gap-2">
+            <Icon className="h-4 w-4 shrink-0" />
+            <span>{rotulo}</span>
+          </span>
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 transition-transform ${aberto ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        {aberto && (
+          <div className="mt-1 space-y-1 border-l border-border pl-2">
+            {itens.map((item) => {
+              const SubIcon = item.icon;
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={`flex min-h-10 items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
+                    active(item.to)
+                      ? "bg-secondary text-foreground"
+                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  }`}
+                >
+                  <SubIcon className="h-4 w-4 shrink-0" />
+                  <span className="min-w-0 break-words">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen min-w-0 overflow-x-hidden bg-muted/30">
@@ -334,23 +414,11 @@ function AdminLayout() {
           </p>
 
           <nav className="flex flex-col gap-1">
-            {menuVisivel.some((item) => item.permission === "visao_geral") && (
-            <>
-            {/* 1. Visão geral */}
-            <Link
-              to="/admin"
-              className={`inline-flex min-h-11 min-w-0 items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                active("/admin", true)
-                  ? "bg-primary text-primary-foreground"
-                  : "text-foreground hover:bg-secondary"
-              }`}
-            >
-              <LayoutDashboard className="h-4 w-4 shrink-0" />
-              <span>Visão geral</span>
-            </Link>
+            {/* 1. Tutorial */}
+            {renderItem("/admin/tutorial")}
 
-            </>
-            )}
+            {/* 2. Visão geral */}
+            {renderItem("/admin", true)}
 
             {/* 2. Alunos */}
             {pode("participantes") && <div>
@@ -416,21 +484,42 @@ function AdminLayout() {
               </Link>
             )}
 
-            {/* Demais itens principais */}
-            {menuVisivel.filter((item) => item.permission !== "visao_geral").map(({ to, label, icon: Icon }) => (
-              <Link
-                key={to}
-                to={to}
-                className={`inline-flex min-h-11 min-w-0 items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ${
-                  active(to)
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-secondary"
-                }`}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span className="min-w-0 break-words">{label}</span>
-              </Link>
-            ))}
+            {/* 5. Cadastro de Cursos */}
+            {renderGrupo("cadastro", "Cadastro de Cursos", BookOpen, [
+              "/admin/livros",
+              "/admin/turmas",
+              "/admin/eventos",
+              "/admin/calendario",
+            ])}
+
+            {/* 6. Materiais */}
+            {renderGrupo("materiais", "Materiais", FolderOpen, [
+              "/admin/pedido-materiais",
+              "/admin/estoque",
+            ])}
+
+            {/* 7. Aprovar inscrições e pagamentos */}
+            {renderItem("/admin/inscricoes")}
+
+            {/* 8. Turmas e Aulas */}
+            {renderGrupo("turmas-aulas", "Turmas e Aulas", GraduationCap, [
+              "/admin/visualizacao-turmas",
+              "/admin/materiais",
+              "/admin/tarefas",
+              "/admin/presencas",
+            ])}
+
+            {/* 9. Financeiro */}
+            {renderGrupo("financeiro", "Financeiro", CreditCard, [
+              "/admin/pagamentos",
+              "/admin/comprovantes-arquivo",
+            ])}
+
+            {/* 10. Fale com ADM */}
+            {renderItem("/admin/fale-com-adm")}
+
+            {/* 11. Configurações */}
+            {renderItem("/admin/configuracoes")}
           </nav>
         </aside>
 
