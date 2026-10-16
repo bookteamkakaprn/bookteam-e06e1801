@@ -267,7 +267,7 @@ function AdminLayout() {
   return (
     <div className="min-h-screen min-w-0 overflow-x-hidden bg-muted/30">
       <header className="sticky top-0 z-30 border-b-2 border-primary bg-primary/10 backdrop-blur">
-        <div className="mx-auto flex min-h-16 max-w-6xl items-center justify-between gap-2 px-3 sm:px-4">
+        <div className="flex min-h-16 items-center justify-between gap-2 px-3 sm:px-4">
           <Link to="/admin" className="flex min-w-0 items-center gap-2">
             <ShieldCheck className="h-6 w-6 shrink-0 text-primary" />
             <span className="truncate font-serif text-lg font-semibold sm:text-xl">
@@ -299,8 +299,8 @@ function AdminLayout() {
         </div>
       </header>
 
-      <div className="mx-auto grid min-w-0 max-w-6xl gap-4 px-3 py-5 sm:gap-6 sm:px-4 sm:py-6 lg:grid-cols-[250px_minmax(0,1fr)]">
-        <aside className="rounded-xl border border-border bg-card p-2 shadow-sm lg:sticky lg:top-24 lg:self-start">
+      <div className="flex min-h-[calc(100vh-64px)] min-w-0 flex-col lg:flex-row">
+        <aside className="w-full shrink-0 border-b border-border bg-secondary/20 p-3 lg:sticky lg:top-16 lg:h-[calc(100vh-64px)] lg:w-56 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-4">
           <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Área administrativa
           </p>
@@ -406,8 +406,10 @@ function AdminLayout() {
           </nav>
         </aside>
 
-        <main className="min-w-0 overflow-hidden">
-          <Outlet />
+        <main className="min-w-0 flex-1 overflow-hidden">
+          <div className="mx-auto w-full max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
