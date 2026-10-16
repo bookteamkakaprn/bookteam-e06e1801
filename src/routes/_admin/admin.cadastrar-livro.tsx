@@ -24,6 +24,7 @@ function CadastrarLivroPage() {
   const [categoria, setCategoria] = useState("");
   const [trilhaId, setTrilhaId] = useState("");
   const [ordem, setOrdem] = useState("1");
+  const [dataLancamento, setDataLancamento] = useState("");
   const [capa, setCapa] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
 
@@ -48,7 +49,7 @@ function CadastrarLivroPage() {
     mutationFn: async () => {
       if (!nome.trim()) throw new Error("Informe o nome do livro ou curso.");
       if (!trilhaId) throw new Error("Selecione uma trilha.");
-      const { data: created, error } = await supabase.from("livros").insert({ titulo: nome.trim(), autor: autor.trim() || null, descricao: descricao.trim() || null, categoria: categoria.trim() || null, trilha_id: trilhaId, ordem: Number(ordem) || 1, status: "ativo" } as never).select("id").single();
+      const { data: created, error } = await supabase.from("livros").insert({ titulo: nome.trim(), autor: autor.trim() || null, descricao: descricao.trim() || null, categoria: categoria.trim() || null, trilha_id: trilhaId, ordem: Number(ordem) || 1, status: "ativo", data_lancamento: dataLancamento || null } as never).select("id").single();
       if (error) throw error;
       if (capa && created) {
         const ext = capa.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -81,6 +82,7 @@ function CadastrarLivroPage() {
           <div><Label>Categoria</Label><Input value={categoria} onChange={(e) => setCategoria(e.target.value)} placeholder="Jornada ou complementar" /></div>
           <div><Label>Trilha *</Label><select value={trilhaId} onChange={(e) => setTrilhaId(e.target.value)} className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="">Selecione a trilha</option>{trilhas.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}</select></div>
           <div><Label>Ordem na Home</Label><Input type="number" min="1" value={ordem} onChange={(e) => setOrdem(e.target.value)} /></div>
+          <div><Label>Data de lançamento</Label><Input type="date" value={dataLancamento} onChange={(e) => setDataLancamento(e.target.value)} /><p className="mt-1 text-xs text-muted-foreground">Aparece em verde no calendário dos alunos.</p></div>
           <div className="sm:col-span-2"><Label>Descrição</Label><Textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={4} /></div>
         </div>
         <div className="space-y-3"><Label>Capa</Label><label className="flex min-h-64 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border bg-muted/30 p-3 text-center hover:bg-secondary/50">{preview ? <img src={preview} alt="Prévia da capa" className="h-56 w-full rounded-lg object-cover" /> : <><ImagePlus className="h-10 w-10 text-muted-foreground" /><span className="mt-2 text-sm font-medium">Adicionar capa</span><span className="text-xs text-muted-foreground">JPG, PNG ou WebP · até 5 MB</span></>}<input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => escolherCapa(e.target.files?.[0])} /></label><Button className="w-full" onClick={() => cadastrar.mutate()} disabled={cadastrar.isPending}>{cadastrar.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}Salvar livro / curso</Button></div>
