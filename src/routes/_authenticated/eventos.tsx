@@ -59,6 +59,7 @@ function EventosPage() {
         .from("eventos")
         .select("id, titulo, descricao, categoria, data, hora, cidade, local, valor, vagas")
         .is("livro_id", null)  // ← Filtrar apenas eventos (não cursos)
+        .is("arquivado_em", null)
         .eq("status", "aberto")
         .gte("data", today)
         .order("data")

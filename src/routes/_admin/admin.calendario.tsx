@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { BookOpen, CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin, Rocket } from "lucide-react";
 
 export const Route = createFileRoute("/_admin/admin/calendario")({
   component: AdminCalendarioPage,
@@ -12,319 +13,332 @@ export const Route = createFileRoute("/_admin/admin/calendario")({
 
 type Evento = {
   id: string;
-  titulo: string;
+  titulo: string | null;
+  descricao: string | null;
   data: string;
   hora: string | null;
   local: string | null;
   cidade: string | null;
-  categoria: string | null;
 };
 
-type Livro = {
+type Lancamento = {
   id: string;
-  titulo: string;
-  ordem: number | null;
+  titulo: string | null;
+  descricao: string | null;
+  data_lancamento: string;
 };
 
 type Turma = {
   id: string;
-  livro_id: string;
-  nome: string;
+  nome: string | null;
   data_inicio: string | null;
   data_fim: string | null;
+  dia_semana: string | null;
   horario: string | null;
-  categoria: string | null;
+  sala: string | null;
+  livro: { titulo: string | null } | null;
 };
 
-type ItemCalendario = {
-  id: string;
-  data: string;
-  fim?: string | null;
-  hora?: string | null;
-  titulo: string;
-  subtitulo: string;
-  tipo: "evento" | "curso";
-  categoria?: string | null;
+type Item =
+  | { kind: "evento"; id: string; data: string; titulo: string; hora: string | null; evento: Evento }
+  | { kind: "lancamento"; id: string; data: string; titulo: string; hora: null; lancamento: Lancamento }
+  | { kind: "aula"; id: string; data: string; titulo: string; hora: string | null; turma: Turma };
+
+type Tipo = Item["kind"];
+
+// Mesmas cores e legenda do calendário do aluno.
+const CORES: Record<Tipo, { dot: string; card: string; icone: string; rotulo: string }> = {
+  evento: { dot: "bg-yellow-400", card: "border-yellow-400/40 bg-yellow-400/10", icone: "text-yellow-400", rotulo: "Eventos" },
+  lancamento: { dot: "bg-green-500", card: "border-green-500/40 bg-green-500/10", icone: "text-green-500", rotulo: "Lançamentos de cursos" },
+  aula: { dot: "bg-red-500", card: "border-red-500/40 bg-red-500/10", icone: "text-red-500", rotulo: "Aulas das turmas" },
 };
+const TIPOS: Tipo[] = ["aula", "evento", "lancamento"];
 
 const DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-const MESES = [
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
-
-const iso = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate(),
-  ).padStart(2, "0")}`;
+function iso(d: Date) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function localDate(v: string) {
+  const [y, m, d] = v.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+function gerarAulas(turma: Turma) {
+  if (!turma.data_inicio || !turma.data_fim || turma.dia_semana === null || turma.dia_semana === "") return [];
+  const dia = Number(turma.dia_semana);
+  const out: string[] = [];
+  const cursor = localDate(turma.data_inicio);
+  const fim = localDate(turma.data_fim);
+  while (cursor <= fim) {
+    if (cursor.getDay() === dia) out.push(iso(cursor));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return out;
+}
 
 function AdminCalendarioPage() {
   const hoje = new Date();
-  const [mes, setMes] = useState(
-    () => new Date(hoje.getFullYear(), hoje.getMonth(), 1),
-  );
+  const hojeIso = iso(hoje);
+  const [mes, setMes] = useState(() => new Date(hoje.getFullYear(), hoje.getMonth(), 1));
+  const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
+  const [listaAberta, setListaAberta] = useState<Tipo | null>(null);
+  const inicioMes = iso(new Date(mes.getFullYear(), mes.getMonth(), 1));
+  const fimMes = iso(new Date(mes.getFullYear(), mes.getMonth() + 1, 0));
 
-  const inicio = iso(new Date(mes.getFullYear(), mes.getMonth(), 1));
-  const fim = iso(new Date(mes.getFullYear(), mes.getMonth() + 1, 0));
-
-  const livrosQ = useQuery({
-    queryKey: ["admin-calendario-livros"],
+  const { data: eventos = [], isLoading } = useQuery({
+    queryKey: ["admin-calendario-eventos", inicioMes],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("livros")
-        .select("id,titulo,ordem")
-        .order("ordem");
-
-      if (error) throw error;
-      return (data ?? []) as Livro[];
-    },
-  });
-
-  const eventosQ = useQuery({
-    queryKey: ["admin-calendario-eventos", inicio],
-    queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("eventos")
-        .select("id,titulo,data,hora,local,cidade,categoria,livro_id")
-        .gte("data", inicio)
-        .lte("data", fim)
+        .select("id,titulo,descricao,data,hora,local,cidade")
+        .is("livro_id", null)
+        .is("arquivado_em", null)
+        .gte("data", inicioMes)
+        .lte("data", fimMes)
         .order("data")
         .order("hora");
-
       if (error) throw error;
-      return (data ?? []) as (Evento & { livro_id: string | null })[];
+      return (data ?? []) as Evento[];
     },
   });
 
-  const turmasQ = useQuery({
-    queryKey: ["admin-calendario-turmas", inicio, fim],
+  const { data: lancamentos = [] } = useQuery({
+    queryKey: ["admin-calendario-lancamentos", inicioMes],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("turmas")
-        .select("id,livro_id,nome,data_inicio,data_fim,horario,categoria")
-        .or(`data_inicio.gte.${inicio},data_fim.gte.${inicio}`)
-        .or(`data_inicio.lte.${fim},data_fim.lte.${fim}`)
-        .order("data_inicio");
+      const { data, error } = await (supabase as any)
+        .from("livros")
+        .select("id,titulo,descricao,data_lancamento")
+        .eq("status", "ativo")
+        .not("data_lancamento", "is", null)
+        .gte("data_lancamento", inicioMes)
+        .lte("data_lancamento", fimMes)
+        .order("data_lancamento");
+      if (error) {
+        console.error("Lançamentos de cursos indisponíveis:", error);
+        return [] as Lancamento[];
+      }
+      return (data ?? []) as Lancamento[];
+    },
+  });
 
+  const { data: turmas = [] } = useQuery({
+    queryKey: ["admin-calendario-turmas"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("turmas")
+        .select("id,nome,data_inicio,data_fim,dia_semana,horario,sala,livro:livros(titulo)")
+        .is("excluida_em", null)
+        .is("arquivada_em", null)
+        .eq("ativo", true);
       if (error) throw error;
       return (data ?? []) as Turma[];
     },
   });
 
-  const livros = livrosQ.data ?? [];
-  const eventos = eventosQ.data ?? [];
-  const turmas = turmasQ.data ?? [];
-
-  const itens = useMemo<ItemCalendario[]>(() => {
-    const porLivro = new Map(livros.map((livro) => [livro.id, livro]));
-
-    const resultado: ItemCalendario[] = [];
-
-    for (const turma of turmas) {
-      if (!turma.data_inicio) continue;
-      const livro = porLivro.get(turma.livro_id);
-      if (!livro) continue;
-
-      resultado.push({
-        id: `curso-${turma.id}`,
-        data: turma.data_inicio,
-        fim: turma.data_fim,
-        hora: turma.horario,
-        titulo: livro.titulo,
-        subtitulo: turma.nome,
-        tipo: "curso",
-        categoria: turma.categoria,
+  const itens = useMemo<Item[]>(() => {
+    const result: Item[] = eventos.map((e) => ({
+      kind: "evento",
+      id: "evento-" + e.id,
+      data: e.data,
+      titulo: e.titulo || "Evento",
+      hora: e.hora,
+      evento: e,
+    }));
+    for (const l of lancamentos) {
+      result.push({
+        kind: "lancamento",
+        id: "lancamento-" + l.id,
+        data: l.data_lancamento,
+        titulo: l.titulo || "Curso",
+        hora: null,
+        lancamento: l,
       });
     }
-
-    for (const evento of eventos) {
-      // Registros vinculados a curso aparecem como curso no calendário,
-      // e os eventos independentes aparecem como eventos.
-      if (evento.livro_id) {
-        const livro = porLivro.get(evento.livro_id);
-        resultado.push({
-          id: `evento-${evento.id}`,
-          data: evento.data,
-          hora: evento.hora,
-          titulo: livro?.titulo ?? evento.titulo,
-          subtitulo: evento.titulo,
-          tipo: "curso",
-          categoria: evento.categoria,
-        });
-      } else {
-        resultado.push({
-          id: `evento-${evento.id}`,
-          data: evento.data,
-          hora: evento.hora,
-          titulo: evento.titulo,
-          subtitulo: "Evento",
-          tipo: "evento",
-          categoria: evento.categoria,
-        });
+    for (const turma of turmas) {
+      for (const data of gerarAulas(turma)) {
+        if (data >= inicioMes && data <= fimMes) {
+          result.push({
+            kind: "aula",
+            id: "aula-" + turma.id + "-" + data,
+            data,
+            titulo: turma.livro?.titulo || turma.nome || "Aula",
+            hora: turma.horario || null,
+            turma,
+          });
+        }
       }
     }
-
-    return resultado.sort((a, b) => {
-      const d = a.data.localeCompare(b.data);
-      if (d !== 0) return d;
-      return (a.hora ?? "").localeCompare(b.hora ?? "");
-    });
-  }, [eventos, livros, turmas]);
+    return result.sort((a, b) => (a.data + (a.hora || "")).localeCompare(b.data + (b.hora || "")));
+  }, [eventos, lancamentos, turmas, inicioMes, fimMes]);
 
   const porDia = useMemo(() => {
-    const mapa: Record<string, ItemCalendario[]> = {};
+    const mapa = new Map<string, Item[]>();
     for (const item of itens) {
-      (mapa[item.data] ??= []).push(item);
+      const list = mapa.get(item.data) ?? [];
+      list.push(item);
+      mapa.set(item.data, list);
     }
     return mapa;
   }, [itens]);
 
+  const itensDoDia = diaSelecionado ? (porDia.get(diaSelecionado) ?? []) : [];
+  const itensDaLista = listaAberta ? itens.filter((i) => i.kind === listaAberta) : [];
+
   const celulas = useMemo(() => {
     const primeiro = new Date(mes.getFullYear(), mes.getMonth(), 1);
-    const dias = new Date(
-      mes.getFullYear(),
-      mes.getMonth() + 1,
-      0,
-    ).getDate();
-
-    return [
-      ...Array.from({ length: primeiro.getDay() }, () => null),
-      ...Array.from(
-        { length: dias },
-        (_, i) => new Date(mes.getFullYear(), mes.getMonth(), i + 1),
-      ),
-    ];
+    const totalDias = new Date(mes.getFullYear(), mes.getMonth() + 1, 0).getDate();
+    return [...Array.from({ length: primeiro.getDay() }, () => null), ...Array.from({ length: totalDias }, (_, i) => new Date(mes.getFullYear(), mes.getMonth(), i + 1))];
   }, [mes]);
-
-  const carregando =
-    livrosQ.isLoading || eventosQ.isLoading || turmasQ.isLoading;
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-          Visão geral
-        </p>
-        <h1 className="font-serif text-2xl font-semibold">
-          Calendário geral
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Aqui aparecem juntos livros/cursos e eventos.
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">Visão geral</p>
+        <h1 className="font-serif text-3xl font-bold">Calendário geral</h1>
+        <p className="text-sm text-muted-foreground">Eventos, lançamentos de cursos e as aulas de todas as turmas. Toque em um dia marcado para ver os detalhes.</p>
       </div>
 
       <Card>
         <CardContent className="p-4">
           <div className="mb-4 flex items-center justify-between">
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              onClick={() =>
-                setMes(
-                  new Date(mes.getFullYear(), mes.getMonth() - 1, 1),
-                )
-              }
-              aria-label="Mês anterior"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <p className="font-serif text-lg font-semibold">
-              {MESES[mes.getMonth()]} {mes.getFullYear()}
-            </p>
-
-            <Button
-              type="button"
-              size="icon"
-              variant="ghost"
-              onClick={() =>
-                setMes(
-                  new Date(mes.getFullYear(), mes.getMonth() + 1, 1),
-                )
-              }
-              aria-label="Próximo mês"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <Button size="icon" variant="ghost" onClick={() => setMes(new Date(mes.getFullYear(), mes.getMonth() - 1, 1))}><ChevronLeft className="h-4 w-4" /></Button>
+            <p className="font-serif text-lg font-semibold">{MESES[mes.getMonth()]} {mes.getFullYear()}</p>
+            <Button size="icon" variant="ghost" onClick={() => setMes(new Date(mes.getFullYear(), mes.getMonth() + 1, 1))}><ChevronRight className="h-4 w-4" /></Button>
+          </div>
+          <div className="grid grid-cols-7 gap-1 text-center text-[10px] uppercase tracking-wider text-muted-foreground sm:text-[11px]">{DIAS.map((d) => <div key={d} className="py-1.5">{d}</div>)}</div>
+          <div className="mt-1 grid grid-cols-7 gap-1">
+            {celulas.map((dia, idx) => {
+              if (!dia) return <div key={"v-" + idx} className="h-12 rounded-md bg-muted/10 sm:h-16" />;
+              const key = iso(dia);
+              const doDia = porDia.get(key) ?? [];
+              const eHoje = key === hojeIso;
+              const tipos = new Set(doDia.map((i) => i.kind));
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => doDia.length > 0 && setDiaSelecionado(key)}
+                  className={"h-12 rounded-md border p-1 text-left transition-colors sm:h-16 sm:p-1.5 " +
+                    (doDia.length ? "cursor-pointer hover:border-gold/50 hover:bg-gold/5" : "cursor-default") +
+                    " " + (eHoje ? "border-primary bg-primary/5" : "border-border/50")}
+                >
+                  <span className={"text-xs " + (eHoje ? "font-semibold text-primary" : "text-muted-foreground")}>{dia.getDate()}</span>
+                  {doDia.length > 0 && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      {TIPOS.filter((t) => tipos.has(t)).map((t) => (
+                        <span key={t} className={`h-2 w-2 rounded-full ${CORES[t].dot}`} title={CORES[t].rotulo} />
+                      ))}
+                      <span className="text-[9px] text-muted-foreground">{doDia.length}</span>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold uppercase text-muted-foreground">
-            {DIAS.map((dia) => (
-              <div key={dia} className="py-1">
-                {dia}
-              </div>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs">
+            {TIPOS.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setListaAberta(t)}
+                className="flex min-h-9 items-center gap-2 rounded-md border border-border px-3 py-1.5 hover:bg-secondary"
+              >
+                <span className={`h-2.5 w-2.5 rounded-full ${CORES[t].dot}`} />
+                {CORES[t].rotulo}
+              </button>
             ))}
           </div>
-
-          <div className="grid grid-cols-7 gap-1">
-            {celulas.map((data, index) =>
-              !data ? (
-                <div key={`vazio-${index}`} className="min-h-24" />
-              ) : (
-                <div
-                  key={iso(data)}
-                  className="min-h-24 rounded-md border border-border p-1"
-                >
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {data.getDate()}
-                  </span>
-
-                  <div className="mt-1 space-y-1">
-                    {(porDia[iso(data)] ?? []).map((item) => (
-                      <div
-                        key={item.id}
-                        title={
-                          item.fim
-                            ? `${item.titulo} — ${item.subtitulo}\n${item.data} a ${item.fim}`
-                            : `${item.titulo} — ${item.subtitulo}`
-                        }
-                        className={`truncate rounded px-1 py-0.5 text-[10px] ${
-                          item.tipo === "curso"
-                            ? "bg-secondary text-secondary-foreground"
-                            : "bg-primary text-primary-foreground"
-                        }`}
-                      >
-                        {item.hora ? `${item.hora.slice(0, 5)} ` : ""}
-                        {item.tipo === "curso" ? item.titulo : item.titulo}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ),
-            )}
-          </div>
-
-          {carregando && (
-            <p className="mt-3 text-sm text-muted-foreground">
-              <Loader2 className="mr-1 inline h-4 w-4 animate-spin" />
-              Carregando calendário...
-            </p>
-          )}
+          {isLoading && <p className="mt-3 text-sm text-muted-foreground">Carregando calendário...</p>}
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
-        <span>
-          <span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-secondary align-middle" />
-          Cursos / turmas
-        </span>
-        <span>
-          <span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-primary align-middle" />
-          Eventos
-        </span>
-      </div>
+      {/* Lista do mês por tipo */}
+      <Dialog open={!!listaAberta} onOpenChange={(open) => !open && setListaAberta(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{listaAberta ? CORES[listaAberta].rotulo : ""} — {MESES[mes.getMonth()]}</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] space-y-2 overflow-y-auto">
+            {itensDaLista.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => { setListaAberta(null); setDiaSelecionado(item.data); }}
+                className={`w-full rounded-lg border p-3 text-left ${CORES[item.kind].card}`}
+              >
+                <p className="text-xs text-muted-foreground">{localDate(item.data).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })}{item.hora ? " · " + item.hora.slice(0, 5) : ""}</p>
+                <p className="font-medium">{item.titulo}</p>
+              </button>
+            ))}
+            {itensDaLista.length === 0 && <p className="text-sm text-muted-foreground">Nada deste tipo neste mês.</p>}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detalhes do dia: evento, lançamento ou aula da turma */}
+      <Dialog open={!!diaSelecionado} onOpenChange={(open) => !open && setDiaSelecionado(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {diaSelecionado ? localDate(diaSelecionado).toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" }) : "Agenda do dia"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            {itensDoDia.map((item) => {
+              if (item.kind === "evento") {
+                return (
+                  <div key={item.id} className={`rounded-xl border p-4 ${CORES.evento.card}`}>
+                    <div className="flex items-start gap-3">
+                      <CalendarDays className={`mt-0.5 h-5 w-5 shrink-0 ${CORES.evento.icone}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold">Evento</p>
+                        <p className="mt-1 text-base font-medium">{item.titulo}</p>
+                        {item.evento.descricao && <p className="mt-1 text-sm text-muted-foreground">{item.evento.descricao}</p>}
+                        {item.hora && <p className="mt-2 flex items-center gap-2 text-sm"><Clock className="h-4 w-4" /> {item.hora.slice(0, 5)}</p>}
+                        {(item.evento.local || item.evento.cidade) && <p className="mt-1 flex items-center gap-2 text-sm"><MapPin className="h-4 w-4" /> {[item.evento.local, item.evento.cidade].filter(Boolean).join(" — ")}</p>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              if (item.kind === "lancamento") {
+                return (
+                  <div key={item.id} className={`rounded-xl border p-4 ${CORES.lancamento.card}`}>
+                    <div className="flex items-start gap-3">
+                      <Rocket className={`mt-0.5 h-5 w-5 shrink-0 ${CORES.lancamento.icone}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold">Lançamento do curso</p>
+                        <p className="mt-1 text-base font-medium">{item.titulo}</p>
+                        {item.lancamento.descricao && <p className="mt-1 line-clamp-4 text-sm text-muted-foreground">{item.lancamento.descricao}</p>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={item.id} className={`rounded-xl border p-4 ${CORES.aula.card}`}>
+                  <div className="flex items-start gap-3">
+                    <BookOpen className={`mt-0.5 h-5 w-5 shrink-0 ${CORES.aula.icone}`} />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold">Aula da turma</p>
+                      <p className="mt-1 text-base font-medium">{item.titulo}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{item.turma.nome || "Turma"}</p>
+                      {item.hora && <p className="mt-2 flex items-center gap-2 text-sm"><Clock className="h-4 w-4" /> {item.hora.slice(0, 5)}</p>}
+                      {item.turma.sala && <p className="mt-1 flex items-center gap-2 text-sm"><MapPin className="h-4 w-4" /> {item.turma.sala}</p>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {itensDoDia.length === 0 && <p className="text-sm text-muted-foreground">Não há itens neste dia.</p>}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
