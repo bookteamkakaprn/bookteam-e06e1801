@@ -49,6 +49,7 @@ function AdminTurmasPage() {
   const qc = useQueryClient();
   const [livroId, setLivroId] = useState<string>("");
   const [editando, setEditando] = useState<Partial<Turma> | null>(null);
+  const [aba, setAba] = useState<"ativas" | "arquivadas" | "excluidas">("ativas");
 
   const { data: livros = [] } = useQuery({
     queryKey: ["admin-livros-min"],
@@ -233,22 +234,61 @@ function AdminTurmasPage() {
       toast.error(e instanceof Error ? e.message : "Erro ao finalizar turma"),
   });
 
-  const excluir = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("turmas")
-        .delete()
-        .eq("id", id);
-
+  // Arquivar, desarquivar, excluir e restaurar só mudam marcações de data: nada é apagado do banco.
+  const alterarTurma = useMutation({
+    mutationFn: async ({
+      id,
+      campos,
+      mensagem,
+    }: {
+      id: string;
+      campos: Record<string, string | null>;
+      mensagem: string;
+    }) => {
+      const { error } = await (supabase as any).from("turmas").update(campos).eq("id", id);
       if (error) throw error;
+      return mensagem;
     },
-    onSuccess: () => {
-      toast.success("Turma removida");
+    onSuccess: (mensagem: string) => {
+      toast.success(mensagem);
       qc.invalidateQueries({ queryKey: ["admin-turmas", livroAtual] });
     },
     onError: (e: unknown) =>
-      toast.error(e instanceof Error ? e.message : "Erro ao remover turma"),
+      toast.error(e instanceof Error ? e.message : "Não foi possível atualizar a turma."),
   });
+
+  const excluirTurma = (t: Turma) => {
+    const aviso =
+      t.inscritos > 0
+        ? `\n\nEsta turma tem ${t.inscritos} inscrito(s). Eles continuam registrados.`
+        : "";
+    if (
+      !window.confirm(
+        `Excluir ${t.nome ?? "esta turma"}?${aviso}\n\nVocê pode restaurar depois na aba Excluídas.`,
+      )
+    ) {
+      return;
+    }
+    alterarTurma.mutate({
+      id: t.id,
+      campos: { excluida_em: new Date().toISOString() },
+      mensagem: "Turma excluída. Você pode restaurar na aba Excluídas.",
+    });
+  };
+
+  const turmasDaAba = turmas.filter((t: any) => {
+    const excluida = !!t.excluida_em;
+    const arquivada = !!t.arquivada_em;
+    if (aba === "excluidas") return excluida;
+    if (excluida) return false;
+    return aba === "arquivadas" ? arquivada : !arquivada;
+  });
+
+  const contagemAbas = {
+    ativas: turmas.filter((t: any) => !t.excluida_em && !t.arquivada_em).length,
+    arquivadas: turmas.filter((t: any) => !t.excluida_em && !!t.arquivada_em).length,
+    excluidas: turmas.filter((t: any) => !!t.excluida_em).length,
+  };
 
   return (
     <div className="space-y-6">
@@ -404,6 +444,25 @@ function AdminTurmasPage() {
         </Card>
       )}
 
+      <div className="flex flex-wrap gap-2">
+        {(
+          [
+            ["ativas", "Ativas"],
+            ["arquivadas", "Arquivadas"],
+            ["excluidas", "Excluídas"],
+          ] as const
+        ).map(([valor, rotulo]) => (
+          <Button
+            key={valor}
+            size="sm"
+            variant={aba === valor ? "default" : "outline"}
+            onClick={() => setAba(valor)}
+          >
+            {rotulo} ({contagemAbas[valor]})
+          </Button>
+        ))}
+      </div>
+
       <div className="space-y-3">
         {isLoading && (
           <p className="text-sm text-muted-foreground">Carregando...</p>
@@ -415,7 +474,7 @@ function AdminTurmasPage() {
           </p>
         )}
 
-        {turmas.map((t) => {
+        {turmasDaAba.map((t) => {
           const esgotada =
             t.vagas_max > 0 && (t.vagas_restantes ?? 0) <= 0;
 
@@ -477,13 +536,57 @@ function AdminTurmasPage() {
 
                       <Button
                         size="sm"
+                        variant="outline"
+                        onClick={() => alterarTurma.mutate({ id: t.id, campos: { arquivada_em: new Date().toISOString() }, mensagem: "Turma arquivada. Você pode desarquivar na aba Arquivadas." })}
+                        disabled={alterarTurma.isPending}
+                      >
+                        <Archive className="mr-1 h-4 w-4" />
+                        Arquivar
+                      </Button>
+
+                      <Button
+                        size="sm"
                         variant="ghost"
-                        onClick={() => excluir.mutate(t.id)}
-                        disabled={excluir.isPending}
+                        onClick={() => excluirTurma(t)}
+                        disabled={alterarTurma.isPending}
+                        aria-label="Excluir turma"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </>
+                  )}
+
+                  {aba === "arquivadas" && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => alterarTurma.mutate({ id: t.id, campos: { arquivada_em: null }, mensagem: "Turma desarquivada." })}
+                        disabled={alterarTurma.isPending}
+                      >
+                        Desarquivar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => excluirTurma(t)}
+                        disabled={alterarTurma.isPending}
+                        aria-label="Excluir turma"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+
+                  {aba === "excluidas" && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => alterarTurma.mutate({ id: t.id, campos: { excluida_em: null }, mensagem: "Turma restaurada." })}
+                      disabled={alterarTurma.isPending}
+                    >
+                      Restaurar
+                    </Button>
                   )}
                 </div>
               </CardContent>

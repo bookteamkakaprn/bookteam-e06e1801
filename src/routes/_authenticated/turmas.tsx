@@ -37,6 +37,8 @@ function TurmasPage() {
         .from("turmas")
         .select("id, nome, data_inicio, data_fim, horario, sala, categoria, valor, vagas_restantes, ativo, livro:livros(titulo)")
         .gt("vagas_restantes", 0)
+        .is("excluida_em", null)
+        .is("arquivada_em", null)
         .eq("ativo", true)
         .order("data_inicio");
 
