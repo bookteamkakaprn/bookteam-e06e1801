@@ -4,7 +4,7 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronRight } from "lucide-react";
+import { ArrowLeft, BookOpen, ChevronRight } from "lucide-react";
 
 function LivrosPage() {
   const { data: livros = [], isLoading } = useQuery({
@@ -46,6 +46,25 @@ function LivrosPage() {
 
   return (
     <div className="space-y-8">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1"
+          onClick={() => {
+            if (window.history.length > 1) window.history.back();
+            else window.location.href = "/";
+          }}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Button>
+        <Button asChild variant="ghost" size="sm">
+          <Link to="/">Início</Link>
+        </Button>
+      </div>
+
       <div>
         <h1 className="font-serif text-3xl font-bold">Livros e Cursos</h1>
         <p className="text-sm text-muted-foreground">
