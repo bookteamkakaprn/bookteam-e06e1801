@@ -246,17 +246,14 @@ function AdminAprovacoes() {
   );
 
   const aprovarPagamento = useMutation({
-    mutationFn: async (pagamento: Pagamento) => {
-      const { error } = await supabase
-        .from("pagamentos")
-        .update({
-          status: "aprovado",
-          pago_em: new Date().toISOString(),
-          observacao: null,
-        })
-        .eq("id", pagamento.id);
+    mutationFn: async (pagamento: Pagamento): Promise<string> => {
+      // A checagem de vagas e a mudança de status acontecem no banco, numa só operação.
+      const { data: resultado, error } = await (supabase as any).rpc("admin_aprovar_pagamento", {
+        p_pagamento_id: pagamento.id,
+      });
 
       if (error) throw error;
+      const statusFinal = String(resultado ?? "");
 
       // 📧 ENVIAR EMAIL AUTOMÁTICO
       // Recarregar dados da inscrição para ter dados frescos
@@ -282,8 +279,9 @@ function AdminAprovacoes() {
           // Não interrompe o fluxo se o email falhar
         }
       }
+      return statusFinal;
     },
-    onSuccess: () => {
+    onSuccess: (statusFinal: string) => {
       toast.success(
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-green-500" />
@@ -294,6 +292,12 @@ function AdminAprovacoes() {
         </div>,
         { duration: 5000 }
       );
+      if (statusFinal === "lista_espera") {
+        toast.warning(
+          "Pagamento aprovado, mas a turma está sem vagas. A inscrição foi para a lista de espera.",
+          { duration: 8000 },
+        );
+      }
       qc.invalidateQueries({
         queryKey: ["admin-aprovacoes-pagamentos-final"],
       });
@@ -467,6 +471,14 @@ function AdminAprovacoes() {
         updateData.observacao = motivo;
       }
 
+      // Aprovar passa pela função do banco, que checa as vagas antes de confirmar a inscrição.
+      if (novoStatus === "aprovado" && pagamento.status !== "aprovado") {
+        const { error: erroAprovacao } = await (supabase as any).rpc("admin_aprovar_pagamento", {
+          p_pagamento_id: pagamento.id,
+        });
+        if (erroAprovacao) throw erroAprovacao;
+      }
+
       const { error } = await supabase
         .from("pagamentos")
         .update(updateData)
@@ -545,19 +557,10 @@ function AdminAprovacoes() {
         throw new Error("O pagamento ainda não foi aprovado.");
       }
 
-      const vagasMax = inscricao.turma?.vagas_max ?? 0;
-      const vagasRestantes = inscricao.turma?.vagas_restantes ?? 0;
-
-      if (vagasMax > 0 && vagasRestantes <= 0) {
-        throw new Error(
-          "Não há vagas disponíveis nesta turma.",
-        );
-      }
-
-      const { error } = await supabase
-        .from("inscricoes")
-        .update({ status: "confirmada" })
-        .eq("id", inscricao.id);
+      // A checagem de vagas é feita no banco, com a turma travada.
+      const { error } = await (supabase as any).rpc("admin_confirmar_inscricao", {
+        p_inscricao_id: inscricao.id,
+      });
 
       if (error) throw error;
 
