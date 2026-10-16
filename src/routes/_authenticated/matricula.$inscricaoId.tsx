@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { emailComprovanteRecebido } from "@/lib/email-service";
+import { registrarComprovante } from "@/lib/pagamento-recusa";
 import { useAuth } from "@/lib/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -187,20 +188,11 @@ function MatriculaPage() {
        *    Isso evita criar vários pagamentos para a mesma matrícula.
        */
       if (pagamentoAtual) {
-        const { error } = await supabase
-          .from("pagamentos")
-          .update({
-            comprovante_url: path,
-            comprovante_enviado_em: new Date().toISOString(),
-            status: "aguardando",
-          })
-          .eq("id", pagamentoAtual.id);
-
-        if (error) {
-          throw new Error(
-            `Erro ao salvar comprovante: ${error.message}`
-          );
-        }
+        // Atualização feita pela função do banco: o aluno não tem UPDATE direto em pagamentos.
+        await registrarComprovante({
+          pagamentoId: pagamentoAtual.id,
+          caminho: path,
+        });
       } else {
         /*
          * 4. Se ainda não existe pagamento, cria um novo.
@@ -216,6 +208,7 @@ function MatriculaPage() {
           });
 
         if (error) {
+          await supabase.storage.from("comprovantes").remove([path]);
           throw new Error(
             `Erro ao registrar pagamento: ${error.message}`
           );

@@ -50,17 +50,21 @@ export function PagamentoRecusaDialog({
       if (resposta.trim().length < 10)
         throw new Error("Deixe um comentário com pelo menos 10 caracteres");
 
-      // Resubmeter comprovante
+      // Resubmeter comprovante (upload + registro no banco)
       await resubmeterComprovante(pagamentoId, arquivo, resposta);
 
-      // Notificar admin
-      await notificarAdminResubmissao(
-        pagamentoId,
-        aluno.nome,
-        aluno.email,
-        livroTitulo,
-        valor
-      );
+      // Notificar admin. O reenvio já foi salvo: falha de e-mail não deve mostrar erro.
+      try {
+        await notificarAdminResubmissao(
+          pagamentoId,
+          aluno.nome,
+          aluno.email,
+          livroTitulo,
+          valor
+        );
+      } catch (erroEmail) {
+        console.error("Comprovante reenviado, mas o e-mail ao admin falhou:", erroEmail);
+      }
     },
     onSuccess: () => {
       toast.success(
