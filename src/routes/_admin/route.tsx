@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import {
+import { Archive,
   LayoutDashboard,
   Users,
   Calendar,
@@ -90,6 +90,7 @@ export const Route = createFileRoute("/_admin")({
         ["/admin/eventos", "eventos"],
         ["/admin/calendario", "calendario"],
         ["/admin/pagamentos", "pagamentos"],
+        ["/admin/comprovantes-arquivo", "pagamentos"],
         ["/admin/configuracoes", "configuracoes"],
         ["/admin/fale-com-adm", "fale_com_adm"],
         ["/admin/tutorial", "tutorial"],
@@ -205,6 +206,12 @@ const menuPrincipal: MenuItem[] = [
     label: "Controle de pagamentos",
     permission: "pagamentos",
     icon: CreditCard,
+  },
+  {
+    to: "/admin/comprovantes-arquivo",
+    label: "Arquivo de comprovantes",
+    permission: "pagamentos",
+    icon: Archive,
   },
   {
     to: "/admin/configuracoes",
