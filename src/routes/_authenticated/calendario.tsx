@@ -5,9 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin, BookOpen, CheckCircle2, AlertCircle } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock, MapPin, BookOpen, CheckCircle2, AlertCircle, Rocket } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/calendario")({
   head: () => ({ meta: [{ title: "Calendário — Book Team" }, { name: "robots", content: "noindex" }] }),
@@ -23,6 +22,13 @@ type Evento = {
   local: string | null;
   cidade: string | null;
   vagas: number | null;
+};
+
+type Lancamento = {
+  id: string;
+  titulo: string | null;
+  descricao: string | null;
+  data_lancamento: string;
 };
 
 type Inscricao = {
@@ -42,7 +48,10 @@ type Inscricao = {
 
 type Item =
   | { kind: "evento"; id: string; data: string; titulo: string; hora: string | null; evento: Evento }
+  | { kind: "lancamento"; id: string; data: string; titulo: string; hora: null; lancamento: Lancamento }
   | { kind: "aula"; id: string; data: string; titulo: string; hora: string | null; inscricao: Inscricao };
+
+type Tipo = Item["kind"];
 
 type Presenca = {
   id: string;
@@ -52,6 +61,14 @@ type Presenca = {
   justificativa: string | null;
   falta_justificada: boolean;
 };
+
+// Cores: eventos em amarelo, lançamentos de cursos em verde, aulas da turma em vermelho.
+const CORES: Record<Tipo, { dot: string; card: string; icone: string; rotulo: string }> = {
+  evento: { dot: "bg-yellow-400", card: "border-yellow-400/40 bg-yellow-400/10", icone: "text-yellow-400", rotulo: "Eventos" },
+  lancamento: { dot: "bg-green-500", card: "border-green-500/40 bg-green-500/10", icone: "text-green-500", rotulo: "Lançamentos de cursos" },
+  aula: { dot: "bg-red-500", card: "border-red-500/40 bg-red-500/10", icone: "text-red-500", rotulo: "Aulas da sua turma" },
+};
+const TIPOS: Tipo[] = ["aula", "evento", "lancamento"];
 
 const DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
@@ -82,6 +99,7 @@ function CalendarioPage() {
   const hojeIso = iso(hoje);
   const [mes, setMes] = useState(() => new Date(hoje.getFullYear(), hoje.getMonth(), 1));
   const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
+  const [listaAberta, setListaAberta] = useState<Tipo | null>(null);
   const inicioMes = iso(new Date(mes.getFullYear(), mes.getMonth(), 1));
   const fimMes = iso(new Date(mes.getFullYear(), mes.getMonth() + 1, 0));
 
@@ -91,6 +109,26 @@ function CalendarioPage() {
       const { data, error } = await supabase.from("eventos").select("id,titulo,descricao,data,hora,local,cidade,vagas").is("livro_id", null).eq("status", "aberto").gte("data", inicioMes).lte("data", fimMes).order("data").order("hora");
       if (error) throw error;
       return (data ?? []) as Evento[];
+    },
+  });
+
+  // Datas de lançamento dos cursos. Se a coluna ainda não existir no banco, o calendário segue sem os lançamentos.
+  const { data: lancamentos = [] } = useQuery({
+    queryKey: ["aluno-calendario-lancamentos", inicioMes],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("livros")
+        .select("id,titulo,descricao,data_lancamento")
+        .eq("status", "ativo")
+        .not("data_lancamento", "is", null)
+        .gte("data_lancamento", inicioMes)
+        .lte("data_lancamento", fimMes)
+        .order("data_lancamento");
+      if (error) {
+        console.error("Lançamentos de cursos indisponíveis:", error);
+        return [] as Lancamento[];
+      }
+      return (data ?? []) as Lancamento[];
     },
   });
 
@@ -130,6 +168,17 @@ function CalendarioPage() {
       hora: e.hora,
       evento: e,
     }));
+    for (const l of lancamentos) {
+      result.push({
+        kind: "lancamento",
+        id: "lancamento-" + l.id,
+        data: l.data_lancamento,
+        titulo: l.titulo || "Curso",
+        hora: null,
+        lancamento: l,
+      });
+    }
+    // Aulas só das turmas em que o aluno está inscrito (inscrição confirmada).
     for (const inscricao of inscricoes) {
       for (const data of gerarAulas(inscricao.turma)) {
         if (data >= inicioMes && data <= fimMes) {
@@ -145,7 +194,7 @@ function CalendarioPage() {
       }
     }
     return result.sort((a, b) => (a.data + (a.hora || "")).localeCompare(b.data + (b.hora || "")));
-  }, [eventos, inscricoes, inicioMes, fimMes]);
+  }, [eventos, lancamentos, inscricoes, inicioMes, fimMes]);
 
   const porDia = useMemo(() => {
     const mapa = new Map<string, Item[]>();
@@ -158,6 +207,7 @@ function CalendarioPage() {
   }, [itens]);
 
   const itensDoDia = diaSelecionado ? (porDia.get(diaSelecionado) ?? []) : [];
+  const itensDaLista = listaAberta ? itens.filter((i) => i.kind === listaAberta) : [];
   const presencaDoDia = (inscricaoId: string, data: string) =>
     presencas.find((p) => p.inscricao_id === inscricaoId && p.data_aula === data);
 
@@ -171,7 +221,7 @@ function CalendarioPage() {
     <div className="space-y-6">
       <div>
         <h1 className="font-serif text-3xl font-bold">Calendário</h1>
-        <p className="text-sm text-muted-foreground">Confira neste calendário as aulas da sua turma e os encontros abertos. Selecione um dia marcado para ver os detalhes.</p>
+        <p className="text-sm text-muted-foreground">Eventos, lançamentos de cursos e as aulas da sua turma. Toque em um dia marcado para ver os detalhes.</p>
       </div>
 
       <Card>
@@ -188,8 +238,7 @@ function CalendarioPage() {
               const key = iso(dia);
               const doDia = porDia.get(key) ?? [];
               const eHoje = key === hojeIso;
-              const temAula = doDia.some((item) => item.kind === "aula");
-              const temEvento = doDia.some((item) => item.kind === "evento");
+              const tipos = new Set(doDia.map((i) => i.kind));
               return (
                 <button
                   key={key}
@@ -201,9 +250,10 @@ function CalendarioPage() {
                 >
                   <span className={"text-xs " + (eHoje ? "font-semibold text-primary" : "text-muted-foreground")}>{dia.getDate()}</span>
                   {doDia.length > 0 && (
-                    <div className="mt-1 flex items-center gap-1">
-                      {temAula && <span className="h-2 w-2 rounded-full bg-gold" title="Aula" />}
-                      {temEvento && <span className="h-2 w-2 rounded-full border border-foreground/60 bg-secondary" title="Evento" />}
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      {TIPOS.filter((t) => tipos.has(t)).map((t) => (
+                        <span key={t} className={`h-2 w-2 rounded-full ${CORES[t].dot}`} title={CORES[t].rotulo} />
+                      ))}
                       <span className="text-[9px] text-muted-foreground">{doDia.length}</span>
                     </div>
                   )}
@@ -212,21 +262,54 @@ function CalendarioPage() {
             })}
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground sm:text-xs">
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-gold" /> Aula</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full border border-foreground/60 bg-secondary" /> Evento</span>
-            <span>Toque em um dia com conteúdo para ver tudo.</span>
+          {/* Legenda: cada item abre a lista do mês daquele tipo */}
+          <div className="mt-4 flex flex-wrap gap-2 text-xs">
+            {TIPOS.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setListaAberta(t)}
+                className="flex min-h-9 items-center gap-2 rounded-md border border-border px-3 py-1.5 hover:bg-secondary"
+              >
+                <span className={`h-2.5 w-2.5 rounded-full ${CORES[t].dot}`} />
+                {CORES[t].rotulo}
+              </button>
+            ))}
           </div>
           {isLoading && <p className="mt-3 text-sm text-muted-foreground">Carregando calendário...</p>}
         </CardContent>
       </Card>
 
-      <div className="flex flex-wrap gap-2 text-xs">
-        <Badge variant="secondary" className="gap-1"><BookOpen className="h-3.5 w-3.5" /> Aula da sua turma</Badge>
-        <Badge variant="outline" className="gap-1"><CalendarDays className="h-3.5 w-3.5" /> Evento</Badge>
-        <Button asChild variant="outline" size="sm"><Link to="/presenca">Ver presença e justificar faltas</Link></Button>
-      </div>
+      {inscricoes.length > 0 && (
+        <div className="flex flex-wrap gap-2 text-xs">
+          <Button asChild variant="outline" size="sm"><Link to="/presenca">Ver presença e justificar faltas</Link></Button>
+        </div>
+      )}
 
+      {/* Lista do mês por tipo */}
+      <Dialog open={!!listaAberta} onOpenChange={(open) => !open && setListaAberta(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{listaAberta ? CORES[listaAberta].rotulo : ""} — {MESES[mes.getMonth()]}</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] space-y-2 overflow-y-auto">
+            {itensDaLista.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => { setListaAberta(null); setDiaSelecionado(item.data); }}
+                className={`w-full rounded-lg border p-3 text-left ${CORES[item.kind].card}`}
+              >
+                <p className="text-xs text-muted-foreground">{localDate(item.data).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })}{item.hora ? " · " + item.hora.slice(0, 5) : ""}</p>
+                <p className="font-medium">{item.titulo}</p>
+              </button>
+            ))}
+            {itensDaLista.length === 0 && <p className="text-sm text-muted-foreground">Nada deste tipo neste mês.</p>}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detalhes do dia */}
       <Dialog open={!!diaSelecionado} onOpenChange={(open) => !open && setDiaSelecionado(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -239,9 +322,9 @@ function CalendarioPage() {
             {itensDoDia.map((item) => {
               if (item.kind === "evento") {
                 return (
-                  <div key={item.id} className="rounded-xl border border-border/60 bg-card/50 p-4">
+                  <div key={item.id} className={`rounded-xl border p-4 ${CORES.evento.card}`}>
                     <div className="flex items-start gap-3">
-                      <CalendarDays className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
+                      <CalendarDays className={`mt-0.5 h-5 w-5 shrink-0 ${CORES.evento.icone}`} />
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold">Evento</p>
                         <p className="mt-1 text-base font-medium">{item.titulo}</p>
@@ -254,11 +337,26 @@ function CalendarioPage() {
                 );
               }
 
+              if (item.kind === "lancamento") {
+                return (
+                  <div key={item.id} className={`rounded-xl border p-4 ${CORES.lancamento.card}`}>
+                    <div className="flex items-start gap-3">
+                      <Rocket className={`mt-0.5 h-5 w-5 shrink-0 ${CORES.lancamento.icone}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold">Lançamento do curso</p>
+                        <p className="mt-1 text-base font-medium">{item.titulo}</p>
+                        {item.lancamento.descricao && <p className="mt-1 line-clamp-4 text-sm text-muted-foreground">{item.lancamento.descricao}</p>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
               const registro = diaSelecionado ? presencaDoDia(item.inscricao.id, diaSelecionado) : undefined;
               return (
-                <div key={item.id} className="rounded-xl border border-gold/20 bg-gold/5 p-4">
+                <div key={item.id} className={`rounded-xl border p-4 ${CORES.aula.card}`}>
                   <div className="flex items-start gap-3">
-                    <BookOpen className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
+                    <BookOpen className={`mt-0.5 h-5 w-5 shrink-0 ${CORES.aula.icone}`} />
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold">Aula da sua turma</p>
                       <p className="mt-1 text-base font-medium">{item.titulo}</p>
@@ -283,7 +381,7 @@ function CalendarioPage() {
                 </div>
               );
             })}
-            {itensDoDia.length === 0 && <p className="text-sm text-muted-foreground">Não há aulas ou eventos neste dia.</p>}
+            {itensDoDia.length === 0 && <p className="text-sm text-muted-foreground">Não há itens neste dia.</p>}
           </div>
         </DialogContent>
       </Dialog>
