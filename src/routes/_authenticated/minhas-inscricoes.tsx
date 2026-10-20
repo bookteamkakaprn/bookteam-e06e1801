@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TrocaCursoAluno } from "@/components/troca-curso-aluno";
 import { Download, AlertCircle, CheckCircle2, XCircle, Archive, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,6 +37,7 @@ type Inscricao = {
     comprovante_url: string | null;
     created_at: string;
     arquivado?: boolean;
+    tipo?: string;
   }>;
 };
 
@@ -130,6 +132,8 @@ function MinhasInscricoesPage() {
 
   inscricoes.forEach((insc) => {
     insc.pagamentos?.forEach((pag) => {
+      // Diferença de troca de curso aparece no cartão "Troca de curso", não como pagamento da inscrição.
+      if (pag.tipo === "diferenca_troca") return;
       const isArquivado = pag.arquivado === true;
       const deveExibir = mostrarArquivados ? isArquivado : !isArquivado;
 
@@ -164,6 +168,7 @@ function MinhasInscricoesPage() {
 
   return (
     <div className="space-y-6">
+      <TrocaCursoAluno />
       <div>
         <h1 className="font-serif text-3xl font-bold">Minhas inscrições</h1>
         <p className="text-sm text-muted-foreground">
@@ -213,7 +218,7 @@ function MinhasInscricoesPage() {
 
       <div className="space-y-3">
         {dados.map((inscricao) => {
-          const pag = temPagamento ? inscricao.pagamentos?.[0] : null;
+          const pag = temPagamento ? inscricao.pagamentos?.find((p) => p.tipo !== "diferenca_troca") ?? null : null;
           const titulo = inscricao.evento?.titulo || inscricao.livro?.titulo || inscricao.turma?.nome || "Inscrição não informada";
           const data = inscricao.evento?.data || inscricao.turma?.data_inicio;
 

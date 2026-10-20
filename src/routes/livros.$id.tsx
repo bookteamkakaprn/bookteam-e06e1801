@@ -76,6 +76,18 @@ function LivroDetalhesPage() {
       return data as Livro | null;
     },
   });
+  const { data: cumpriuPrerequisito = true } = useQuery({
+    queryKey: ["prerequisito-livro", user?.id, id],
+    enabled: !!user?.id && !isPlaceholder,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("aluno_cumpriu_prerequisito", {
+        p_participante_id: user!.id,
+        p_livro_id: id,
+      });
+      if (error) throw error;
+      return Boolean(data);
+    },
+  });
   const { data: turmas = [], isLoading: carregandoTurmas, error: erroTurmas } = useQuery({
     queryKey: ["turmas-livro-publico", id],
     enabled: !isPlaceholder,
@@ -192,15 +204,25 @@ function LivroDetalhesPage() {
     );
   const BotaoInscricao = ({ turma }: { turma: Turma }) =>
     user ? (
-      <Button
-        type="button"
-        disabled={inscrever.isPending}
-        onClick={() => inscrever.mutate(turma)}
-        className="w-full bg-gold text-primary-foreground sm:w-auto"
-      >
-        {inscrever.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Inscreva-se
-        <ArrowRight className="ml-2 h-4 w-4" />
-      </Button>
+      <div className="space-y-2">
+        {!cumpriuPrerequisito && (
+          <p className="text-sm text-amber-700 dark:text-amber-400">
+            Você precisa concluir os cursos anteriores da Jornada antes de se inscrever neste curso.{" "}
+            <Link to="/historico" className="font-medium underline">
+              Registrar no meu histórico
+            </Link>
+          </p>
+        )}
+        <Button
+          type="button"
+          disabled={inscrever.isPending || !cumpriuPrerequisito}
+          onClick={() => inscrever.mutate(turma)}
+          className="w-full bg-gold text-primary-foreground sm:w-auto"
+        >
+          {inscrever.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Inscreva-se
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
     ) : (
       <Button asChild className="w-full bg-gold text-primary-foreground hover:bg-gold/90 sm:w-auto">
         <Link to="/cadastro/$turmaId" params={{ turmaId: turma.id }}>
