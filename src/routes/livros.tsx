@@ -4,7 +4,7 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, BookOpen, ChevronRight } from "lucide-react";
+import { BookOpen, ChevronRight } from "lucide-react";
 
 function LivrosPage() {
   const { data: livros = [], isLoading } = useQuery({
@@ -47,19 +47,6 @@ function LivrosPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="gap-1"
-          onClick={() => {
-            if (window.history.length > 1) window.history.back();
-            else window.location.href = "/inicio";
-          }}
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Button>
         <Button asChild variant="ghost" size="sm">
           <Link to="/inicio">Início</Link>
         </Button>
@@ -76,7 +63,7 @@ function LivrosPage() {
         <div key={categoria} className="space-y-4">
           <h2 className="font-serif text-2xl font-semibold text-gold">{categoria}</h2>
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-5">
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6">
             {livrosCategoria.map((livro) => {
               const capa = livro.imagem_url || livro.capa_url;
 
