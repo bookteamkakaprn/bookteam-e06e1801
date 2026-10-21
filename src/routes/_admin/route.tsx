@@ -24,6 +24,7 @@ import { Archive,
   BookOpen,
   UserPlus,
   ClipboardCheck,
+  ArrowLeftRight,
   UserCog,
   FolderOpen,
   ShieldCheck,
@@ -80,6 +81,7 @@ export const Route = createFileRoute("/_admin")({
         ["/admin/perfis", "perfis"],
         ["/admin/participantes", "participantes"],
         ["/admin/inscricoes", "inscricoes"],
+        ["/admin/troca-curso", "inscricoes"],
         ["/admin/livros", "cursos"],
         ["/admin/cadastrar-livro", "cursos"],
         ["/admin/turmas", "turmas"],
@@ -143,6 +145,12 @@ const menuPrincipal: MenuItem[] = [
     label: "Aprovar inscrições e pagamentos",
     permission: "inscricoes",
     icon: ClipboardCheck,
+  },
+  {
+    to: "/admin/troca-curso",
+    label: "Troca de curso",
+    permission: "inscricoes",
+    icon: ArrowLeftRight,
   },
   {
     to: "/admin/livros",
@@ -509,6 +517,7 @@ function AdminLayout() {
 
             {/* 7. Aprovar inscrições e pagamentos */}
             {renderItem("/admin/inscricoes")}
+            {renderItem("/admin/troca-curso")}
 
             {/* 8. Turmas e Aulas */}
             {renderGrupo("turmas-aulas", "Turmas e Aulas", GraduationCap, [

@@ -186,6 +186,7 @@ export type Database = {
           id: string
           livro_id: string
           observacao: string | null
+          origem: string
           participante_id: string
         }
         Insert: {
@@ -194,6 +195,7 @@ export type Database = {
           id?: string
           livro_id: string
           observacao?: string | null
+          origem?: string
           participante_id: string
         }
         Update: {
@@ -493,6 +495,7 @@ export type Database = {
           observacao: string | null
           participante_id: string
           status: Database["public"]["Enums"]["pagamento_status"]
+          tipo: string
           turma_id: string | null
           updated_at: string
           valor: number
@@ -508,6 +511,7 @@ export type Database = {
           observacao?: string | null
           participante_id: string
           status?: Database["public"]["Enums"]["pagamento_status"]
+          tipo?: string
           turma_id?: string | null
           updated_at?: string
           valor: number
@@ -523,6 +527,7 @@ export type Database = {
           observacao?: string | null
           participante_id?: string
           status?: Database["public"]["Enums"]["pagamento_status"]
+          tipo?: string
           turma_id?: string | null
           updated_at?: string
           valor?: number

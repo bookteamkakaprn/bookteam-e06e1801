@@ -66,7 +66,7 @@ function MatriculaPage() {
       const { data, error } = await supabase
         .from("inscricoes")
         .select(
-          "*, turmas(*, livros(titulo)), eventos(id, titulo, valor, data, hora, local, cidade), pagamentos(id, status, valor, created_at, comprovante_enviado_em)"
+          "*, turmas(*, livros(titulo)), eventos(id, titulo, valor, data, hora, local, cidade), pagamentos(id, status, valor, created_at, comprovante_enviado_em, tipo)"
         )
         .eq("id", inscricaoId)
         .maybeSingle();
@@ -181,7 +181,8 @@ function MatriculaPage() {
       /*
        * 2. Verifica se já existe um pagamento
        */
-      const pagamentoAtual = data.pagamentos?.[0];
+      // Ignora o pagamento da diferença de troca de curso: ele tem tela própria em Minhas inscrições.
+      const pagamentoAtual = (data.pagamentos ?? []).find((p) => (p as { tipo?: string }).tipo !== "diferenca_troca");
 
       /*
        * 3. Se já existe pagamento, atualiza.
@@ -283,7 +284,7 @@ function MatriculaPage() {
   const evento = data.eventos;
   const ehEvento = !data.turmas && !!data.eventos;
   const valorCurso = (turma ?? evento)?.valor;
-  const pagamento = data.pagamentos?.[0];
+  const pagamento = (data.pagamentos ?? []).find((p) => (p as { tipo?: string }).tipo !== "diferenca_troca");
 
   return (
     <div className="space-y-6">
