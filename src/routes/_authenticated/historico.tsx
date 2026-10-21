@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CheckCircle2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { CORTE_DECLARACAO, DATA_MAXIMA_DECLARACAO, PERCENTUAL_CONCLUSAO } from "@/lib/prerequisito";
+import { PERCENTUAL_CONCLUSAO } from "@/lib/prerequisito";
 
 export const Route = createFileRoute("/_authenticated/historico")({
   head: () => ({ meta: [{ title: "Meu histórico — Book Team" }, { name: "robots", content: "noindex" }] }),
@@ -24,7 +24,6 @@ function HistoricoPage() {
   const [livroId, setLivroId] = useState("");
   const [data, setData] = useState("");
   const hoje = new Date().toISOString().slice(0, 10);
-  const dataMax = hoje < DATA_MAXIMA_DECLARACAO ? hoje : DATA_MAXIMA_DECLARACAO;
 
   const livrosQ = useQuery({
     queryKey: ["livros-select"],
@@ -69,8 +68,8 @@ function HistoricoPage() {
     mutationFn: async () => {
       if (!livroId) throw new Error("Selecione o livro.");
       if (!data) throw new Error("Informe a data de conclusão.");
-      if (data > dataMax) {
-        throw new Error(`Só é possível declarar conclusões até ${new Date(DATA_MAXIMA_DECLARACAO + "T00:00:00").toLocaleDateString("pt-BR")}.`);
+      if (data > hoje) {
+        throw new Error("A data de conclusão não pode ser futura.");
       }
       const { error } = await supabase.from("historico_livros").insert({
         participante_id: user!.id,
@@ -109,10 +108,9 @@ function HistoricoPage() {
       <div>
         <h1 className="font-serif text-3xl font-bold">Meu histórico</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Registre aqui os livros da Jornada que você já concluiu, informando a data e o nome do curso. Cada curso só
-          libera o próximo depois de concluído. Conclusões a partir de{" "}
-          {new Date(CORTE_DECLARACAO + "T00:00:00").toLocaleDateString("pt-BR")} são registradas automaticamente quando
-          a presença chegar a {PERCENTUAL_CONCLUSAO}% dos encontros da turma.
+          Registre aqui os livros da Jornada que você já concluiu antes de se inscrever na plataforma, informando a data
+          e o nome do curso. Cada curso só libera o próximo depois de concluído. Os cursos feitos pela plataforma são
+          registrados automaticamente quando a presença chegar a {PERCENTUAL_CONCLUSAO}% dos encontros da turma.
         </p>
       </div>
 
@@ -133,7 +131,7 @@ function HistoricoPage() {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="data">Data de conclusão</Label>
-            <Input id="data" type="date" max={dataMax} value={data} onChange={(e) => setData(e.target.value)} />
+            <Input id="data" type="date" max={hoje} value={data} onChange={(e) => setData(e.target.value)} />
           </div>
           <div className="md:col-span-2">
             <Button
