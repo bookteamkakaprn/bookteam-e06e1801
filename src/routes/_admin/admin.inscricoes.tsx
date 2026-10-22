@@ -37,7 +37,7 @@ export const Route = createFileRoute("/_admin/admin/inscricoes")({
 });
 
 type StatusPagamento = "aguardando" | "aprovado" | "rejeitado";
-type Aba = "pagamentos" | "inscricoes"; type FiltroInscricao = "pendentes" | "aprovadas" | "rejeitadas";
+type Aba = "pagamentos" | "inscricoes" | "lixeira" | "arquivadas"; type FiltroInscricao = "pendentes" | "aprovadas" | "rejeitadas";
 
 type Pagamento = {
   id: string;
@@ -152,6 +152,10 @@ function AdminAprovacoes() {
   const qc = useQueryClient();
 
   const [aba, setAba] = useState<Aba>("pagamentos");
+  function trocarAba(nova: Aba) {
+    setAba(nova);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
   const [filtroPagamento, setFiltroPagamento] =
     useState<StatusPagamento>("aguardando");
   const [filtroInscricao, setFiltroInscricao] = useState<FiltroInscricao>("pendentes");
@@ -915,71 +919,12 @@ function AdminAprovacoes() {
         </p>
       </div>
 
-      <Card>
-        <CardContent className="space-y-3 p-5">
-          <h2 className="font-serif text-lg font-semibold">
-            Lixeira e arquivo de desinscrições
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Inscrições canceladas pelo aluno (desinscrição ou desistência). Restaure a qualquer momento.
-          </p>
-
-          {canceladosPeloAluno.map((i) => (
-            <div key={i.id} className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3 text-sm">
-              <span className="min-w-0 flex-1">
-                <strong>{i.participante?.nome ?? "Aluno"}</strong> · {i.turma?.nome ?? i.livro?.titulo ?? "—"}
-                <span className="block text-xs text-muted-foreground">{i.motivo_cancelamento}</span>
-              </span>
-              <Button size="sm" variant="outline" disabled={gerenciarLixeira.isPending}
-                onClick={() => gerenciarLixeira.mutate({ id: i.id, acao: "lixeira" })}>
-                Mover para lixeira
-              </Button>
-            </div>
-          ))}
-
-          {inscricoesLixeira.length === 0 && inscricoesArquivadas.length === 0 && canceladosPeloAluno.length === 0 && (
-            <p className="text-sm text-muted-foreground">Nenhuma inscrição na lixeira ou arquivada.</p>
-          )}
-
-          {inscricoesLixeira.map((i) => (
-            <div key={i.id} className="flex flex-wrap items-center gap-2 rounded-md border p-3 text-sm">
-              <span className="min-w-0 flex-1">
-                <strong>{i.participante?.nome ?? "Aluno"}</strong> · {i.turma?.nome ?? i.livro?.titulo ?? "—"}
-                <span className="block text-xs text-muted-foreground">{i.motivo_cancelamento}</span>
-              </span>
-              <Badge variant="outline">Na lixeira</Badge>
-              <Button size="sm" variant="outline" disabled={gerenciarLixeira.isPending}
-                onClick={() => gerenciarLixeira.mutate({ id: i.id, acao: "restaurar" })}>
-                Restaurar
-              </Button>
-              <Button size="sm" variant="outline" disabled={gerenciarLixeira.isPending}
-                onClick={() => gerenciarLixeira.mutate({ id: i.id, acao: "arquivar" })}>
-                Arquivar
-              </Button>
-            </div>
-          ))}
-
-          {inscricoesArquivadas.map((i) => (
-            <div key={i.id} className="flex flex-wrap items-center gap-2 rounded-md border p-3 text-sm opacity-75">
-              <span className="min-w-0 flex-1">
-                <strong>{i.participante?.nome ?? "Aluno"}</strong> · {i.turma?.nome ?? i.livro?.titulo ?? "—"}
-                <span className="block text-xs text-muted-foreground">{i.motivo_cancelamento}</span>
-              </span>
-              <Badge variant="secondary">Arquivada</Badge>
-              <Button size="sm" variant="outline" disabled={gerenciarLixeira.isPending}
-                onClick={() => gerenciarLixeira.mutate({ id: i.id, acao: "desarquivar" })}>
-                Desarquivar
-              </Button>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
 
       <div className="flex flex-wrap gap-2">
         <Button
           size="sm"
           variant={aba === "pagamentos" ? "default" : "outline"}
-          onClick={() => setAba("pagamentos")}
+          onClick={() => trocarAba("pagamentos")}
         >
           <CreditCard className="mr-2 h-4 w-4" />
           Aprovar pagamentos
@@ -988,7 +933,7 @@ function AdminAprovacoes() {
         <Button
           size="sm"
           variant={aba === "inscricoes" ? "default" : "outline"}
-          onClick={() => setAba("inscricoes")}
+          onClick={() => trocarAba("inscricoes")}
         >
           <CheckCircle2 className="mr-2 h-4 w-4" />
           Aprovar inscrições
@@ -996,7 +941,100 @@ function AdminAprovacoes() {
             ? ` (${inscricoesPendentes.length})`
             : ""}
         </Button>
+
+        <Button
+          size="sm"
+          variant={aba === "lixeira" ? "default" : "outline"}
+          onClick={() => trocarAba("lixeira")}
+        >
+          Lixeira
+          {inscricoesLixeira.length + canceladosPeloAluno.length > 0
+            ? ` (${inscricoesLixeira.length + canceladosPeloAluno.length})`
+            : ""}
+        </Button>
+
+        <Button
+          size="sm"
+          variant={aba === "arquivadas" ? "default" : "outline"}
+          onClick={() => trocarAba("arquivadas")}
+        >
+          Arquivadas
+          {inscricoesArquivadas.length > 0 ? ` (${inscricoesArquivadas.length})` : ""}
+        </Button>
       </div>
+
+      {aba === "lixeira" && (
+        <Card>
+          <CardContent className="space-y-3 p-5">
+            <p className="text-sm text-muted-foreground">
+              Inscrições canceladas pelo aluno (desinscrição ou desistência). Restaure a qualquer momento.
+            </p>
+
+            {canceladosPeloAluno.map((i) => (
+              <div key={i.id} className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3 text-sm">
+                <span className="min-w-0 flex-1">
+                  <strong>{i.participante?.nome ?? "Aluno"}</strong> · {i.turma?.nome ?? i.livro?.titulo ?? "—"}
+                  <span className="block text-xs text-muted-foreground">{i.motivo_cancelamento}</span>
+                </span>
+                <Button size="sm" variant="outline" disabled={gerenciarLixeira.isPending}
+                  onClick={() => gerenciarLixeira.mutate({ id: i.id, acao: "lixeira" })}>
+                  Mover para lixeira
+                </Button>
+              </div>
+            ))}
+
+            {inscricoesLixeira.map((i) => (
+              <div key={i.id} className="flex flex-wrap items-center gap-2 rounded-md border p-3 text-sm">
+                <span className="min-w-0 flex-1">
+                  <strong>{i.participante?.nome ?? "Aluno"}</strong> · {i.turma?.nome ?? i.livro?.titulo ?? "—"}
+                  <span className="block text-xs text-muted-foreground">{i.motivo_cancelamento}</span>
+                </span>
+                <Badge variant="outline">Na lixeira</Badge>
+                <Button size="sm" variant="outline" disabled={gerenciarLixeira.isPending}
+                  onClick={() => gerenciarLixeira.mutate({ id: i.id, acao: "restaurar" })}>
+                  Restaurar
+                </Button>
+                <Button size="sm" variant="outline" disabled={gerenciarLixeira.isPending}
+                  onClick={() => gerenciarLixeira.mutate({ id: i.id, acao: "arquivar" })}>
+                  Arquivar
+                </Button>
+              </div>
+            ))}
+
+            {inscricoesLixeira.length === 0 && canceladosPeloAluno.length === 0 && (
+              <p className="text-sm text-muted-foreground">Nenhuma inscrição na lixeira.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {aba === "arquivadas" && (
+        <Card>
+          <CardContent className="space-y-3 p-5">
+            <p className="text-sm text-muted-foreground">
+              Inscrições arquivadas. Saem das listas principais e podem voltar a qualquer momento.
+            </p>
+
+            {inscricoesArquivadas.map((i) => (
+              <div key={i.id} className="flex flex-wrap items-center gap-2 rounded-md border p-3 text-sm opacity-75">
+                <span className="min-w-0 flex-1">
+                  <strong>{i.participante?.nome ?? "Aluno"}</strong> · {i.turma?.nome ?? i.livro?.titulo ?? "—"}
+                  <span className="block text-xs text-muted-foreground">{i.motivo_cancelamento}</span>
+                </span>
+                <Badge variant="secondary">Arquivada</Badge>
+                <Button size="sm" variant="outline" disabled={gerenciarLixeira.isPending}
+                  onClick={() => gerenciarLixeira.mutate({ id: i.id, acao: "desarquivar" })}>
+                  Desarquivar
+                </Button>
+              </div>
+            ))}
+
+            {inscricoesArquivadas.length === 0 && (
+              <p className="text-sm text-muted-foreground">Nenhuma inscrição arquivada.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {carregando && (
         <p className="text-sm text-muted-foreground">
