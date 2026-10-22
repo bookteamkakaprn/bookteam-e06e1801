@@ -82,6 +82,8 @@ type Inscricao = {
   motivo_rejeicao: string | null;
   motivo_cancelamento: string | null;
   cancelado_em: string | null;
+  excluida_em: string | null;
+  arquivada_em: string | null;
   participante: {
     id: string;
     nome: string | null;
@@ -203,7 +205,7 @@ function AdminAprovacoes() {
       const { data, error } = await supabase
         .from("inscricoes")
         .select(
-          `id,status,created_at,motivo_rejeicao,motivo_cancelamento,cancelado_em,
+          `id,status,created_at,motivo_rejeicao,motivo_cancelamento,cancelado_em,excluida_em,arquivada_em,
            participante:participantes(id,nome,email,status),
            livro:livros(id,titulo,autor),
            turma:turmas(
@@ -219,7 +221,30 @@ function AdminAprovacoes() {
   });
 
   const pagamentos = pagamentosQ.data ?? [];
-  const inscricoes = inscricoesQ.data ?? [];
+  // Lixeira e arquivo saem das listas principais; têm seção própria abaixo.
+  const inscricoes = (inscricoesQ.data ?? []).filter((i) => !i.excluida_em && !i.arquivada_em);
+  const inscricoesLixeira = (inscricoesQ.data ?? []).filter((i) => !!i.excluida_em && !i.arquivada_em);
+  const inscricoesArquivadas = (inscricoesQ.data ?? []).filter((i) => !!i.arquivada_em);
+  const canceladosPeloAluno = inscricoes.filter(
+    (i) =>
+      i.status === "cancelada" &&
+      /^(Desinscrição|Desistência) solicitada pelo aluno/.test(i.motivo_cancelamento ?? ""),
+  );
+
+  const gerenciarLixeira = useMutation({
+    mutationFn: async ({ id, acao }: { id: string; acao: "lixeira" | "restaurar" | "arquivar" | "desarquivar" }) => {
+      const { error } = await (supabase as any).rpc("admin_gerenciar_inscricao_lixeira", {
+        p_inscricao_id: id,
+        p_acao: acao,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Inscrição atualizada.");
+      qc.invalidateQueries({ queryKey: ["admin-aprovacoes-inscricoes-final"] });
+    },
+    onError: (e) => toast.error(erroTexto(e)),
+  });
 
   const pagamentosFiltrados = pagamentos.filter(
     (pagamento) => pagamento.status === filtroPagamento,
@@ -889,6 +914,66 @@ function AdminAprovacoes() {
           conforme a disponibilidade de vagas.
         </p>
       </div>
+
+      <Card>
+        <CardContent className="space-y-3 p-5">
+          <h2 className="font-serif text-lg font-semibold">
+            Lixeira e arquivo de desinscrições
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Inscrições canceladas pelo aluno (desinscrição ou desistência). Restaure a qualquer momento.
+          </p>
+
+          {canceladosPeloAluno.map((i) => (
+            <div key={i.id} className="flex flex-wrap items-center gap-2 rounded-md border border-dashed p-3 text-sm">
+              <span className="min-w-0 flex-1">
+                <strong>{i.participante?.nome ?? "Aluno"}</strong> · {i.turma?.nome ?? i.livro?.titulo ?? "—"}
+                <span className="block text-xs text-muted-foreground">{i.motivo_cancelamento}</span>
+              </span>
+              <Button size="sm" variant="outline" disabled={gerenciarLixeira.isPending}
+                onClick={() => gerenciarLixeira.mutate({ id: i.id, acao: "lixeira" })}>
+                Mover para lixeira
+              </Button>
+            </div>
+          ))}
+
+          {inscricoesLixeira.length === 0 && inscricoesArquivadas.length === 0 && canceladosPeloAluno.length === 0 && (
+            <p className="text-sm text-muted-foreground">Nenhuma inscrição na lixeira ou arquivada.</p>
+          )}
+
+          {inscricoesLixeira.map((i) => (
+            <div key={i.id} className="flex flex-wrap items-center gap-2 rounded-md border p-3 text-sm">
+              <span className="min-w-0 flex-1">
+                <strong>{i.participante?.nome ?? "Aluno"}</strong> · {i.turma?.nome ?? i.livro?.titulo ?? "—"}
+                <span className="block text-xs text-muted-foreground">{i.motivo_cancelamento}</span>
+              </span>
+              <Badge variant="outline">Na lixeira</Badge>
+              <Button size="sm" variant="outline" disabled={gerenciarLixeira.isPending}
+                onClick={() => gerenciarLixeira.mutate({ id: i.id, acao: "restaurar" })}>
+                Restaurar
+              </Button>
+              <Button size="sm" variant="outline" disabled={gerenciarLixeira.isPending}
+                onClick={() => gerenciarLixeira.mutate({ id: i.id, acao: "arquivar" })}>
+                Arquivar
+              </Button>
+            </div>
+          ))}
+
+          {inscricoesArquivadas.map((i) => (
+            <div key={i.id} className="flex flex-wrap items-center gap-2 rounded-md border p-3 text-sm opacity-75">
+              <span className="min-w-0 flex-1">
+                <strong>{i.participante?.nome ?? "Aluno"}</strong> · {i.turma?.nome ?? i.livro?.titulo ?? "—"}
+                <span className="block text-xs text-muted-foreground">{i.motivo_cancelamento}</span>
+              </span>
+              <Badge variant="secondary">Arquivada</Badge>
+              <Button size="sm" variant="outline" disabled={gerenciarLixeira.isPending}
+                onClick={() => gerenciarLixeira.mutate({ id: i.id, acao: "desarquivar" })}>
+                Desarquivar
+              </Button>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       <div className="flex flex-wrap gap-2">
         <Button
