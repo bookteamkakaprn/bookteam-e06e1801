@@ -76,7 +76,7 @@ function LivroDetalhesPage() {
       return data as Livro | null;
     },
   });
-  const { data: cumpriuPrerequisito = true } = useQuery({
+  const { data: cumpriuPrerequisito = false } = useQuery({
     queryKey: ["prerequisito-livro", user?.id, id],
     enabled: !!user?.id && !isPlaceholder,
     queryFn: async () => {
