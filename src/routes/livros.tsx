@@ -12,7 +12,7 @@ function LivrosPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("livros")
-        .select("id, titulo, autor, imagem_url, capa_url, status, categoria")
+        .select("id, titulo, autor, imagem_url, capa_url, status, trilha:trilhas(nome)")
         .eq("status", "ativo")
         .order("ordem", { ascending: true });
 
@@ -38,7 +38,7 @@ function LivrosPage() {
   }
 
   const livrosPorCategoria = livros.reduce((acc, livro) => {
-    const cat = livro.categoria || "Sem categoria";
+    const cat = livro.trilha?.nome || "Cursos Complementares";
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(livro);
     return acc;
@@ -59,7 +59,9 @@ function LivrosPage() {
         </p>
       </div>
 
-      {Object.entries(livrosPorCategoria).map(([categoria, livrosCategoria]) => (
+      {Object.entries(livrosPorCategoria)
+        .sort(([a], [b]) => (a === "Jornada" ? -1 : b === "Jornada" ? 1 : 0))
+        .map(([categoria, livrosCategoria]) => (
         <div key={categoria} className="space-y-4">
           <h2 className="font-serif text-2xl font-semibold text-gold">{categoria}</h2>
 
