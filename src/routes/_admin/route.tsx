@@ -542,7 +542,7 @@ function AdminLayout() {
           </nav>
         </aside>
 
-        <main className="admin-conteudo-claro min-w-0 flex-1 overflow-hidden bg-background text-foreground">
+        <main className="min-w-0 flex-1 overflow-hidden">
           <div className="mx-auto w-full max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
             <Outlet />
           </div>
