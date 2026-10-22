@@ -63,7 +63,7 @@ function LivrosPage() {
         <div key={categoria} className="space-y-4">
           <h2 className="font-serif text-2xl font-semibold text-gold">{categoria}</h2>
 
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {livrosCategoria.map((livro) => {
               const capa = livro.imagem_url || livro.capa_url;
 
@@ -100,7 +100,7 @@ function LivrosPage() {
                       </div>
 
                       {/* Badge e botão */}
-                      <div className="flex items-center justify-between gap-2 border-t border-border/50 bg-card/50 p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/50 bg-card/50 p-3">
                         <Badge variant="secondary" className="text-xs">
                           {categoria}
                         </Badge>
