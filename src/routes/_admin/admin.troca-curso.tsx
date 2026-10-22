@@ -19,6 +19,7 @@ type Turma = {
   valor: number | null;
   vagas_max: number;
   livro_id: string | null;
+  livro: { titulo: string } | null;
 };
 type Inscrito = {
   id: string;
@@ -48,6 +49,10 @@ function moeda(v: number) {
   return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function rotuloTurma(t: Turma) {
+  return t.livro?.titulo ? `${t.livro.titulo} — ${t.nome}` : t.nome;
+}
+
 function erroTexto(e: unknown) {
   return e instanceof Error ? e.message : "Não foi possível concluir a ação.";
 }
@@ -63,7 +68,7 @@ function AdminTrocaCursoPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("turmas")
-        .select("id,nome,valor,vagas_max,livro_id")
+        .select("id,nome,valor,vagas_max,livro_id,livro:livros(titulo)")
         .is("arquivada_em", null)
         .is("excluida_em", null)
         .order("data_inicio", { ascending: true, nullsFirst: false });
@@ -112,7 +117,7 @@ function AdminTrocaCursoPage() {
   const criar = useMutation({
     mutationFn: async () => {
       if (!inscricaoId || !turmaDestinoId)
-        throw new Error("Selecione o aluno e a turma de destino.");
+        throw new Error("Selecione o aluno e o curso de destino.");
       const { data, error } = await (supabase as any).rpc("criar_solicitacao_troca_curso", {
         p_inscricao_id: inscricaoId,
         p_turma_destino_id: turmaDestinoId,
@@ -173,8 +178,8 @@ function AdminTrocaCursoPage() {
       <div>
         <h1 className="font-serif text-3xl font-bold">Troca de curso</h1>
         <p className="text-sm text-muted-foreground">
-          Troque a turma de um aluno com inscrição confirmada. A troca só é permitida antes da
-          entrega do livro e da primeira presença, e se houver vaga na turma de destino. O aluno
+          Troque o curso de um aluno com inscrição confirmada. A troca só é permitida antes da
+          entrega do livro e da primeira presença, e se houver vaga no curso de destino. O aluno
           confirma pelo link recebido por e-mail.
         </p>
       </div>
@@ -188,7 +193,7 @@ function AdminTrocaCursoPage() {
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="text-sm font-medium">Turma atual</label>
+              <label className="text-sm font-medium">Curso atual</label>
               <select
                 className="h-10 w-full rounded-md border bg-background px-3 text-sm"
                 value={turmaOrigemId}
@@ -200,7 +205,7 @@ function AdminTrocaCursoPage() {
                 <option value="">Selecione...</option>
                 {turmas.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.nome}
+                    {rotuloTurma(t)}
                   </option>
                 ))}
               </select>
@@ -214,7 +219,7 @@ function AdminTrocaCursoPage() {
                 onChange={(e) => setInscricaoId(e.target.value)}
               >
                 <option value="">
-                  {turmaOrigemId ? "Selecione..." : "Escolha a turma atual primeiro"}
+                  {turmaOrigemId ? "Selecione..." : "Escolha o curso atual primeiro"}
                 </option>
                 {inscritos.map((i) => (
                   <option key={i.id} value={i.id}>
@@ -230,7 +235,7 @@ function AdminTrocaCursoPage() {
               )}
             </div>
             <div className="space-y-1.5 md:col-span-2">
-              <label className="text-sm font-medium">Turma de destino</label>
+              <label className="text-sm font-medium">Curso de destino</label>
               <select
                 className="h-10 w-full rounded-md border bg-background px-3 text-sm"
                 value={turmaDestinoId}
@@ -241,7 +246,7 @@ function AdminTrocaCursoPage() {
                   .filter((t) => t.id !== turmaOrigemId)
                   .map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.nome} — {moeda(Number(t.valor ?? 0))}
+                      {rotuloTurma(t)} — {moeda(Number(t.valor ?? 0))}
                     </option>
                   ))}
               </select>
