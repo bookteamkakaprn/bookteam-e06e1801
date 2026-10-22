@@ -65,16 +65,20 @@ function MinhasInscricoesPage() {
   });
 
   const desinscrever = useMutation({
-    mutationFn: async (inscricaoId: string) => {
-      const { error } = await supabase
-        .from("inscricoes")
-        .update({ status: "cancelada", cancelado_em: new Date().toISOString() })
-        .eq("id", inscricaoId);
+    mutationFn: async (inscricaoId: string): Promise<string> => {
+      const { data, error } = await (supabase as any).rpc("aluno_cancelar_inscricao", {
+        p_inscricao_id: inscricaoId,
+      });
 
       if (error) throw error;
+      return data as string;
     },
-    onSuccess: () => {
-      toast.success("Você foi desinscrito do curso!");
+    onSuccess: (resultado) => {
+      toast.success(
+        resultado === "desistencia"
+          ? "Desistência registrada. A equipe vai entrar em contato para a devolução."
+          : "Você foi desinscrito do curso!",
+      );
       refetch();
     },
     onError: (e: Error) => {
@@ -354,12 +358,18 @@ function MinhasInscricoesPage() {
                         )}
                       </>
                     )}
-                    {!temPagamento && inscricao.status === "confirmada" && (
+                    {(inscricao.status === "confirmada" ||
+                      inscricao.status === "aguardando" ||
+                      inscricao.status === "aguardando_pagamento") && (
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => {
-                          if (window.confirm("Tem certeza que deseja desinscrever deste curso?")) {
+                          const desistencia = pag?.status === "aprovado";
+                          const pergunta = desistencia
+                            ? "Tem certeza que deseja desistir deste curso? Como o pagamento já foi aprovado, a desistência só é possível em até 5 dias após a aprovação. O valor pago será devolvido pela equipe."
+                            : "Tem certeza que deseja desinscrever deste curso?";
+                          if (window.confirm(pergunta)) {
                             desinscrever.mutate(inscricao.id);
                           }
                         }}
@@ -367,7 +377,11 @@ function MinhasInscricoesPage() {
                         className="gap-1"
                       >
                         <LogOut className="h-3.5 w-3.5" />
-                        {desinscrever.isPending ? "Desinscrevi..." : "Desinscrever"}
+                        {desinscrever.isPending
+                          ? "Aguarde..."
+                          : pag?.status === "aprovado"
+                            ? "Desistir"
+                            : "Desinscrever"}
                       </Button>
                     )}
                   </div>
