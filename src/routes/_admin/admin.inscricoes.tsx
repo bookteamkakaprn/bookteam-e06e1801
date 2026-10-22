@@ -152,6 +152,10 @@ function AdminAprovacoes() {
   const qc = useQueryClient();
 
   const [aba, setAba] = useState<Aba>("pagamentos");
+  function trocarAba(nova: Aba) {
+    setAba(nova);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
   const [filtroPagamento, setFiltroPagamento] =
     useState<StatusPagamento>("aguardando");
   const [filtroInscricao, setFiltroInscricao] = useState<FiltroInscricao>("pendentes");
@@ -920,7 +924,7 @@ function AdminAprovacoes() {
         <Button
           size="sm"
           variant={aba === "pagamentos" ? "default" : "outline"}
-          onClick={() => setAba("pagamentos")}
+          onClick={() => trocarAba("pagamentos")}
         >
           <CreditCard className="mr-2 h-4 w-4" />
           Aprovar pagamentos
@@ -929,7 +933,7 @@ function AdminAprovacoes() {
         <Button
           size="sm"
           variant={aba === "inscricoes" ? "default" : "outline"}
-          onClick={() => setAba("inscricoes")}
+          onClick={() => trocarAba("inscricoes")}
         >
           <CheckCircle2 className="mr-2 h-4 w-4" />
           Aprovar inscrições
@@ -941,7 +945,7 @@ function AdminAprovacoes() {
         <Button
           size="sm"
           variant={aba === "lixeira" ? "default" : "outline"}
-          onClick={() => setAba("lixeira")}
+          onClick={() => trocarAba("lixeira")}
         >
           Lixeira
           {inscricoesLixeira.length + canceladosPeloAluno.length > 0
@@ -952,7 +956,7 @@ function AdminAprovacoes() {
         <Button
           size="sm"
           variant={aba === "arquivadas" ? "default" : "outline"}
-          onClick={() => setAba("arquivadas")}
+          onClick={() => trocarAba("arquivadas")}
         >
           Arquivadas
           {inscricoesArquivadas.length > 0 ? ` (${inscricoesArquivadas.length})` : ""}
